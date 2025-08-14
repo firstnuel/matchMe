@@ -1,192 +1,144 @@
-# Match-Me Backend
+# Match-Me Server
 
-## 🚀 **PHASE 2 COMPLETED: DATABASE MODELS & SCHEMA**
+A Go-based backend server for the Match-Me application, built with Gin web framework and Ent ORM for database operations.
 
-### **What's Been Implemented:**
+## Architecture Overview
 
-#### **1. Core Models (`internal/models/`)**
-- ✅ **User Model** - Core user entity with authentication and profile data
-- ✅ **UserBio Model** - 7+ biographical data points for matching algorithm
-- ✅ **UserProfile Model** - Profile information separate from bio (API requirement)
-- ✅ **Connection Model** - User connections and relationships
-- ✅ **UserInteraction Model** - Like/pass interactions
-- ✅ **Conversation Model** - Chat conversations
-- ✅ **Message Model** - Individual chat messages
-- ✅ **ConnectionMode Model** - Multi-mode system (dating, BFF, networking, events)
-- ✅ **Event Model** - Local events and meetups
-- ✅ **UserStatus Model** - Real-time status indicators
-- ✅ **TypingIndicator Model** - Real-time typing status
+This server implements a clean architecture pattern with distinct layers for API routing, business logic, data models, and database operations. The application uses PostgreSQL as its primary database with automatic schema migration via Ent ORM.
 
-#### **2. Database Schema (`migrations/`)**
-- ✅ **Complete SQL Schema** - All tables with proper constraints
-- ✅ **Performance Indexes** - Optimized for queries and matching
-- ✅ **Geospatial Support** - PostGIS integration for location-based queries
-- ✅ **Triggers** - Automatic timestamp updates
-- ✅ **Sample Data** - Default connection modes
-- ✅ **Data Validation** - Check constraints and foreign keys
+## Directory Structure
 
-#### **3. Database Package (`pkg/database/`)**
-- ✅ **Connection Management** - PostgreSQL connection with connection pooling
-- ✅ **Migration System** - Automatic schema creation
-- ✅ **Sample Data Generation** - 5 sample users with bios and profiles
-- ✅ **Health Checks** - Database connectivity verification
-- ✅ **Environment Configuration** - Configurable via environment variables
-
-### **Key Features:**
-
-#### **🔒 Security & Privacy**
-- Password hashes never exposed in JSON responses
-- Email addresses kept private (not shown to other users)
-- Proper foreign key constraints with cascade deletes
-
-#### **📊 Matching Algorithm Ready**
-- **7 Biographical Data Points** (exceeds 5+ requirement):
-  1. Interests (array)
-  2. Music Preferences (array)
-  3. Food Preferences (array)
-  4. Travel Style
-  5. Communication Style
-  6. Long Walks Preference
-  7. Movie Preferences (array)
-
-#### **🌍 Location-Based Features**
-- PostGIS integration for geospatial queries
-- Proximity-based matching ready
-- Event location support
-
-#### **⚡ Real-Time Ready**
-- User status tracking
-- Typing indicators
-- Online/offline status
-- WebSocket-ready data structures
-
-#### **🎯 Multi-Mode System**
-- Dating, BFF, Networking, Events
-- Color-coded mode system
-- User mode preferences
-
-### **Database Schema Overview:**
-
-```sql
--- Core Tables (Required)
-users              -- User accounts and basic info
-user_bios          -- Biographical data for matching
-user_profiles      -- Profile information
-connections        -- User relationships
-user_interactions  -- Like/pass actions
-conversations      -- Chat conversations
-messages           -- Chat messages
-
--- Enhancement Tables (Optional)
-connection_modes           -- Multi-mode system
-user_mode_preferences      -- User mode choices
-events                     -- Local meetups
-event_participants        -- Event participation
-user_status               -- Real-time status
-typing_indicators        -- Typing status
+```
+server/
+  api/                    # HTTP API layer
+  cmd/                    # Application entry points
+  config/                 # Configuration management
+  ent/                    # Ent ORM generated code and schemas
+  internal/               # Private application code
+  go.mod                  # Go module definition
+  go.sum                  # Go module checksums
+  README.md               # This documentation
 ```
 
-### **Performance Optimizations:**
+## Core Components
 
-#### **Indexes Created:**
-- **User Lookups**: Email, username, location, online status
-- **Matching**: Age, gender, interests, music, food preferences
-- **Connections**: User relationships, interaction types
-- **Chat**: Conversation participants, message timestamps
-- **Events**: Location, creator, active status
-- **Geospatial**: Spatial indexes for location queries
+### API Layer (`api/`)
 
-#### **Connection Pooling:**
-- Max Open Connections: 25
-- Max Idle Connections: 5
-- Connection Lifetime: 5 minutes
+**`server.go`**
+- HTTP server initialization and configuration
+- Gin router setup with middleware integration
+- Server timeout and connection limits configuration
+- Environment-based mode switching (development/production)
 
-### **Environment Variables:**
+**`routes.go`**
+- HTTP route definitions and handlers
+- Currently minimal implementation (placeholder for future endpoints)
 
-```bash
-DB_HOST=localhost          # Database host
-DB_PORT=5432              # Database port
-DB_USER=postgres          # Database user
-DB_PASSWORD=              # Database password
-DB_NAME=match_me          # Database name
-DB_SSLMODE=disable        # SSL mode
-```
+**`middleware/middlewares.go`**
+- Custom middleware implementations
+- **Ping Middleware**: Health check endpoint responding to `/ping` with "pong"
 
-### **Usage Examples:**
+### Application Entry Point (`cmd/server/`)
 
-#### **1. Create Database Connection:**
-```go
-import "match-me/pkg/database"
+**`main.go`**
+- Application bootstrap and initialization
+- Configuration loading via environment variables
+- Database client setup with automatic migration
+- HTTP server lifecycle management
+- Graceful shutdown handling with configurable timeouts
 
-config := database.NewConfig()
-db, err := database.NewDatabase(config)
-if err != nil {
-    log.Fatal(err)
-}
-defer db.Close()
-```
+**`lifecycle.go`**
+- Server lifecycle management utilities
+- Signal handling for graceful shutdown (SIGTERM, SIGINT)
+- Background server monitoring and error handling
+- Clean shutdown procedures with timeout controls
 
-#### **2. Run Migrations:**
-```go
-err := db.RunMigrations("./migrations")
-if err != nil {
-    log.Fatal(err)
-}
-```
+### Configuration (`config/`)
 
-#### **3. Create Sample Data:**
-```go
-err := db.CreateSampleData()
-if err != nil {
-    log.Printf("Warning: Failed to create sample data: %v", err)
-}
-```
+**`config.go`**
+- Environment-based configuration loading using godotenv
+- Singleton pattern implementation for configuration management
+- Database connection and server address configuration
 
-#### **4. Reset Database:**
-```go
-err := db.DropAllData()
-if err != nil {
-    log.Printf("Warning: Failed to drop data: %v", err)
-}
-```
+**`structs.go`**
+- Configuration structure definitions
+- Environment variable helper functions with validation
+- Support for string, integer, and boolean environment variables
+- Required vs optional configuration parameters
 
-### **Testing:**
+**Configuration Parameters:**
+- `APP_ENV`: Application environment (development/production)
+- `PORT`: HTTP server port (default: 8080)
+- `HOST`: Server host address
+- `DATABASE_URL`: PostgreSQL connection string
+- `DATABASE_NAME`: Database name/driver
+- `JWT_SECRET`: JWT signing secret
+- `SERVER_ADDR`: Server address configuration
+- `CLIENT_ADDR`: Client address configuration
 
-```bash
-# Run all tests
-go test ./...
+### Database Schema (`ent/schema/`)
 
-# Run specific package tests
-go test ./internal/models/...
-go test ./pkg/database/...
+**`user.go`**
+- User entity schema definition using Ent ORM
+- **Fields:**
+  - `id`: UUID primary key with auto-generation
+  - `email`: Unique, validated email address
+  - `password_hash`: Sensitive password storage
+  - `first_name`: User's first name (max 50 chars)
+  - `username`: Unique username (3-30 chars, alphanumeric)
+  - `created_at`/`updated_at`: Timestamp tracking
+  - `is_online`: Real-time presence indicator
+  - `age`: User age (18-100 range validation)
+  - `gender`: Gender specification
+  - `looking_for`: JSON array of relationship types sought
+  - `interests`: JSON array of user interests
+  - `music_preferences`: JSON array of music preferences
+  - `food_preferences`: JSON array of food preferences
+  - `communication_style`: Communication preference
+  - `prompts`: JSON array of profile prompts and responses
+- **Relationships:** One-to-many relationship with user photos
 
-# Run tests with coverage
-go test -cover ./...
-```
+**`user_photo.go`**
+- User photo entity schema for profile images
+- **Fields:**
+  - `id`: UUID primary key
+  - `photo_url`: Image URL storage
+  - `order`: Photo display order (minimum 1)
+  - `user_id`: Foreign key to user entity
+- **Relationships:** Many-to-one relationship with users (cascade delete)
 
-### **Next Steps - Phase 3:**
+### Internal Models (`internal/models/`)
+Contains core business models and validation logic for different Match-Me features.
+Each file is self-descriptive by name (`user.go`, `chat.go`, `event.go`, etc.) and defines the corresponding domain model along with any necessary validation rules.
+Validation helpers and shared types are also kept here to support entity integrity across the application.
 
-1. **Authentication Service** - JWT + bcrypt implementation
-2. **User Services** - CRUD operations for users, bios, profiles
-3. **Matching Service** - Recommendation algorithm implementation
-4. **Real Handler Implementation** - Replace stubs with actual logic
+### Repository Layer (`internal/repositories/`)
 
-### **Current Status:**
+**`entclient.go`**
+- Database client initialization and connection management
+- Automatic schema migration on application startup
+- PostgreSQL driver integration with connection string configuration
+- Error handling for database connection failures
 
-- ✅ **Models**: Complete and tested
-- ✅ **Database Schema**: Complete with migrations
-- ✅ **Database Package**: Connection management ready
-- ✅ **Tests**: All passing
-- ✅ **Documentation**: Complete
+### Dependencies
 
-### **Ready For:**
+The application uses the following key dependencies:
 
-- Database setup and testing
-- Authentication implementation
-- Service layer development
-- Handler implementation
-- Frontend integration
+- **Web Framework**: Gin (github.com/gin-gonic/gin) - HTTP web framework
+- **ORM**: Ent (entgo.io/ent) - Entity framework for Go
+- **Database**: PostgreSQL (github.com/lib/pq) - PostgreSQL driver
+- **Validation**: go-playground/validator - Struct validation
+- **Configuration**: godotenv (github.com/joho/godotenv) - Environment variable loading
+- **UUID**: Google UUID (github.com/google/uuid) - UUID generation
 
----
 
-**🎯 The foundation is solid and ready for the next phase of development!**
+## Getting Started
+
+1. Set up required environment variables in `.env` file
+2. Ensure PostgreSQL database is running and accessible
+3. Run `go mod tidy` to install dependencies
+4. Execute `go run cmd/server/main.go` to start the server
+5. Server will automatically create database schema on first run
+6. Health check available at `GET /ping`
+
+The server implements graceful shutdown and will handle SIGTERM/SIGINT signals properly, allowing for clean database connection closure and ongoing request completion.
