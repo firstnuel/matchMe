@@ -88,6 +88,26 @@ func (_u *UserUpdate) SetNillableLastName(v *string) *UserUpdate {
 	return _u
 }
 
+// SetAboutMe sets the "about_me" field.
+func (_u *UserUpdate) SetAboutMe(v string) *UserUpdate {
+	_u.mutation.SetAboutMe(v)
+	return _u
+}
+
+// SetNillableAboutMe sets the "about_me" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableAboutMe(v *string) *UserUpdate {
+	if v != nil {
+		_u.SetAboutMe(*v)
+	}
+	return _u
+}
+
+// ClearAboutMe clears the value of the "about_me" field.
+func (_u *UserUpdate) ClearAboutMe() *UserUpdate {
+	_u.mutation.ClearAboutMe()
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *UserUpdate) SetUpdatedAt(v time.Time) *UserUpdate {
 	_u.mutation.SetUpdatedAt(v)
@@ -233,6 +253,33 @@ func (_u *UserUpdate) SetCoordinates(v *schema.Point) *UserUpdate {
 // ClearCoordinates clears the value of the "coordinates" field.
 func (_u *UserUpdate) ClearCoordinates() *UserUpdate {
 	_u.mutation.ClearCoordinates()
+	return _u
+}
+
+// SetPreferredDistance sets the "preferred_distance" field.
+func (_u *UserUpdate) SetPreferredDistance(v int) *UserUpdate {
+	_u.mutation.ResetPreferredDistance()
+	_u.mutation.SetPreferredDistance(v)
+	return _u
+}
+
+// SetNillablePreferredDistance sets the "preferred_distance" field if the given value is not nil.
+func (_u *UserUpdate) SetNillablePreferredDistance(v *int) *UserUpdate {
+	if v != nil {
+		_u.SetPreferredDistance(*v)
+	}
+	return _u
+}
+
+// AddPreferredDistance adds value to the "preferred_distance" field.
+func (_u *UserUpdate) AddPreferredDistance(v int) *UserUpdate {
+	_u.mutation.AddPreferredDistance(v)
+	return _u
+}
+
+// ClearPreferredDistance clears the value of the "preferred_distance" field.
+func (_u *UserUpdate) ClearPreferredDistance() *UserUpdate {
+	_u.mutation.ClearPreferredDistance()
 	return _u
 }
 
@@ -475,6 +522,11 @@ func (_u *UserUpdate) check() error {
 			return &ValidationError{Name: "preferred_gender", err: fmt.Errorf(`ent: validator failed for field "User.preferred_gender": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.PreferredDistance(); ok {
+		if err := user.PreferredDistanceValidator(v); err != nil {
+			return &ValidationError{Name: "preferred_distance", err: fmt.Errorf(`ent: validator failed for field "User.preferred_distance": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -501,6 +553,12 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.LastName(); ok {
 		_spec.SetField(user.FieldLastName, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.AboutMe(); ok {
+		_spec.SetField(user.FieldAboutMe, field.TypeString, value)
+	}
+	if _u.mutation.AboutMeCleared() {
+		_spec.ClearField(user.FieldAboutMe, field.TypeString)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
@@ -549,6 +607,15 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.CoordinatesCleared() {
 		_spec.ClearField(user.FieldCoordinates, field.TypeOther)
+	}
+	if value, ok := _u.mutation.PreferredDistance(); ok {
+		_spec.SetField(user.FieldPreferredDistance, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedPreferredDistance(); ok {
+		_spec.AddField(user.FieldPreferredDistance, field.TypeInt, value)
+	}
+	if _u.mutation.PreferredDistanceCleared() {
+		_spec.ClearField(user.FieldPreferredDistance, field.TypeInt)
 	}
 	if value, ok := _u.mutation.LookingFor(); ok {
 		_spec.SetField(user.FieldLookingFor, field.TypeJSON, value)
@@ -732,6 +799,26 @@ func (_u *UserUpdateOne) SetNillableLastName(v *string) *UserUpdateOne {
 	return _u
 }
 
+// SetAboutMe sets the "about_me" field.
+func (_u *UserUpdateOne) SetAboutMe(v string) *UserUpdateOne {
+	_u.mutation.SetAboutMe(v)
+	return _u
+}
+
+// SetNillableAboutMe sets the "about_me" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableAboutMe(v *string) *UserUpdateOne {
+	if v != nil {
+		_u.SetAboutMe(*v)
+	}
+	return _u
+}
+
+// ClearAboutMe clears the value of the "about_me" field.
+func (_u *UserUpdateOne) ClearAboutMe() *UserUpdateOne {
+	_u.mutation.ClearAboutMe()
+	return _u
+}
+
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *UserUpdateOne) SetUpdatedAt(v time.Time) *UserUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
@@ -877,6 +964,33 @@ func (_u *UserUpdateOne) SetCoordinates(v *schema.Point) *UserUpdateOne {
 // ClearCoordinates clears the value of the "coordinates" field.
 func (_u *UserUpdateOne) ClearCoordinates() *UserUpdateOne {
 	_u.mutation.ClearCoordinates()
+	return _u
+}
+
+// SetPreferredDistance sets the "preferred_distance" field.
+func (_u *UserUpdateOne) SetPreferredDistance(v int) *UserUpdateOne {
+	_u.mutation.ResetPreferredDistance()
+	_u.mutation.SetPreferredDistance(v)
+	return _u
+}
+
+// SetNillablePreferredDistance sets the "preferred_distance" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillablePreferredDistance(v *int) *UserUpdateOne {
+	if v != nil {
+		_u.SetPreferredDistance(*v)
+	}
+	return _u
+}
+
+// AddPreferredDistance adds value to the "preferred_distance" field.
+func (_u *UserUpdateOne) AddPreferredDistance(v int) *UserUpdateOne {
+	_u.mutation.AddPreferredDistance(v)
+	return _u
+}
+
+// ClearPreferredDistance clears the value of the "preferred_distance" field.
+func (_u *UserUpdateOne) ClearPreferredDistance() *UserUpdateOne {
+	_u.mutation.ClearPreferredDistance()
 	return _u
 }
 
@@ -1132,6 +1246,11 @@ func (_u *UserUpdateOne) check() error {
 			return &ValidationError{Name: "preferred_gender", err: fmt.Errorf(`ent: validator failed for field "User.preferred_gender": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.PreferredDistance(); ok {
+		if err := user.PreferredDistanceValidator(v); err != nil {
+			return &ValidationError{Name: "preferred_distance", err: fmt.Errorf(`ent: validator failed for field "User.preferred_distance": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -1175,6 +1294,12 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if value, ok := _u.mutation.LastName(); ok {
 		_spec.SetField(user.FieldLastName, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.AboutMe(); ok {
+		_spec.SetField(user.FieldAboutMe, field.TypeString, value)
+	}
+	if _u.mutation.AboutMeCleared() {
+		_spec.ClearField(user.FieldAboutMe, field.TypeString)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
@@ -1223,6 +1348,15 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if _u.mutation.CoordinatesCleared() {
 		_spec.ClearField(user.FieldCoordinates, field.TypeOther)
+	}
+	if value, ok := _u.mutation.PreferredDistance(); ok {
+		_spec.SetField(user.FieldPreferredDistance, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedPreferredDistance(); ok {
+		_spec.AddField(user.FieldPreferredDistance, field.TypeInt, value)
+	}
+	if _u.mutation.PreferredDistanceCleared() {
+		_spec.ClearField(user.FieldPreferredDistance, field.TypeInt)
 	}
 	if value, ok := _u.mutation.LookingFor(); ok {
 		_spec.SetField(user.FieldLookingFor, field.TypeJSON, value)

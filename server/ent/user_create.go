@@ -47,6 +47,20 @@ func (_c *UserCreate) SetLastName(v string) *UserCreate {
 	return _c
 }
 
+// SetAboutMe sets the "about_me" field.
+func (_c *UserCreate) SetAboutMe(v string) *UserCreate {
+	_c.mutation.SetAboutMe(v)
+	return _c
+}
+
+// SetNillableAboutMe sets the "about_me" field if the given value is not nil.
+func (_c *UserCreate) SetNillableAboutMe(v *string) *UserCreate {
+	if v != nil {
+		_c.SetAboutMe(*v)
+	}
+	return _c
+}
+
 // SetCreatedAt sets the "created_at" field.
 func (_c *UserCreate) SetCreatedAt(v time.Time) *UserCreate {
 	_c.mutation.SetCreatedAt(v)
@@ -146,6 +160,20 @@ func (_c *UserCreate) SetNillablePreferredGender(v *user.PreferredGender) *UserC
 // SetCoordinates sets the "coordinates" field.
 func (_c *UserCreate) SetCoordinates(v *schema.Point) *UserCreate {
 	_c.mutation.SetCoordinates(v)
+	return _c
+}
+
+// SetPreferredDistance sets the "preferred_distance" field.
+func (_c *UserCreate) SetPreferredDistance(v int) *UserCreate {
+	_c.mutation.SetPreferredDistance(v)
+	return _c
+}
+
+// SetNillablePreferredDistance sets the "preferred_distance" field if the given value is not nil.
+func (_c *UserCreate) SetNillablePreferredDistance(v *int) *UserCreate {
+	if v != nil {
+		_c.SetPreferredDistance(*v)
+	}
 	return _c
 }
 
@@ -354,6 +382,11 @@ func (_c *UserCreate) check() error {
 			return &ValidationError{Name: "preferred_gender", err: fmt.Errorf(`ent: validator failed for field "User.preferred_gender": %w`, err)}
 		}
 	}
+	if v, ok := _c.mutation.PreferredDistance(); ok {
+		if err := user.PreferredDistanceValidator(v); err != nil {
+			return &ValidationError{Name: "preferred_distance", err: fmt.Errorf(`ent: validator failed for field "User.preferred_distance": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -405,6 +438,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldLastName, field.TypeString, value)
 		_node.LastName = value
 	}
+	if value, ok := _c.mutation.AboutMe(); ok {
+		_spec.SetField(user.FieldAboutMe, field.TypeString, value)
+		_node.AboutMe = value
+	}
 	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -440,6 +477,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Coordinates(); ok {
 		_spec.SetField(user.FieldCoordinates, field.TypeOther, value)
 		_node.Coordinates = value
+	}
+	if value, ok := _c.mutation.PreferredDistance(); ok {
+		_spec.SetField(user.FieldPreferredDistance, field.TypeInt, value)
+		_node.PreferredDistance = value
 	}
 	if value, ok := _c.mutation.LookingFor(); ok {
 		_spec.SetField(user.FieldLookingFor, field.TypeJSON, value)

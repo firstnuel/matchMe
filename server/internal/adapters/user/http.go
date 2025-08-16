@@ -35,19 +35,19 @@ func (h *UserHandler) RegisterRoutes(r *gin.Engine) *gin.Engine {
 	usersGroup := r.Group("/users", middleware.VerifyUser(h.userUsecase, h.cfg))
 	{
 		usersGroup.GET("/:id", h.GetUserByID)
+		usersGroup.GET("/:id/bio", h.GetUserBio)
+		usersGroup.GET("/:id/profile", h.GetUserProfile)
 	}
 
 	// Convenience route for getting current user
-	userMeGroup := r.Group("/user", middleware.VerifyUser(h.userUsecase, h.cfg))
+	userMeGroup := r.Group("/me", middleware.VerifyUser(h.userUsecase, h.cfg))
 	{
-		userMeGroup.GET("/me", h.GetCurrentUser)
-		userMeGroup.PUT("/me", h.UpdateCurrentUser)
-		userMeGroup.DELETE("/me", h.DeleteCurrentUser)
-		userMeGroup.PUT("/me/password", h.UpdateCurrentUserPassword)
-		userMeGroup.POST("/me/photos", h.UploadCurrentUserPhotos)
+		userMeGroup.GET("/", h.GetCurrentUser)
+		userMeGroup.PUT("/", h.UpdateCurrentUser)
+		userMeGroup.DELETE("/", h.DeleteCurrentUser)
+		userMeGroup.PUT("/password", h.UpdateCurrentUserPassword)
+		userMeGroup.POST("/photos", h.UploadCurrentUserPhotos)
 	}
 
 	return r
 }
-
-

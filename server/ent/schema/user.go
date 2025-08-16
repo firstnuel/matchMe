@@ -50,6 +50,9 @@ func (User) Fields() []ent.Field {
 			MinLen(3).
 			MaxLen(30),
 
+		field.String("about_me").
+			Optional(),
+
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
@@ -101,6 +104,12 @@ func (User) Fields() []ent.Field {
 				dialect.Postgres: "geography(POINT, 4326)",
 			}).
 			Optional(),
+
+		field.Int("preferred_distance").
+			Optional().
+			Min(0).
+			Max(100).
+			Comment("Maximum preferred distance (km) for user matches"),
 
 		field.JSON("looking_for", []string{}).
 			Optional(),

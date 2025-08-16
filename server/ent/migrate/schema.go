@@ -16,6 +16,7 @@ var (
 		{Name: "password_hash", Type: field.TypeString},
 		{Name: "first_name", Type: field.TypeString, Size: 50},
 		{Name: "last_name", Type: field.TypeString, Size: 30},
+		{Name: "about_me", Type: field.TypeString, Nullable: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "age", Type: field.TypeInt},
@@ -25,6 +26,7 @@ var (
 		{Name: "gender", Type: field.TypeEnum, Enums: []string{"male", "female", "non_binary", "prefer_not_to_say"}},
 		{Name: "preferred_gender", Type: field.TypeEnum, Enums: []string{"male", "female", "non_binary", "all"}, Default: "all"},
 		{Name: "coordinates", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "geography(POINT, 4326)"}},
+		{Name: "preferred_distance", Type: field.TypeInt, Nullable: true},
 		{Name: "looking_for", Type: field.TypeJSON, Nullable: true},
 		{Name: "interests", Type: field.TypeJSON, Nullable: true},
 		{Name: "music_preferences", Type: field.TypeJSON, Nullable: true},
@@ -41,7 +43,7 @@ var (
 			{
 				Name:    "user_coordinates",
 				Unique:  false,
-				Columns: []*schema.Column{UsersColumns[13]},
+				Columns: []*schema.Column{UsersColumns[14]},
 				Annotation: &entsql.IndexAnnotation{
 					Type: "GIST",
 				},

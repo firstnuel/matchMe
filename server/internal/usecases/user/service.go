@@ -49,7 +49,7 @@ func (u *userUsecase) Register(ctx context.Context, req requests.RegisterUser) (
 		return nil, "", fmt.Errorf("failed to generate token: %w", err)
 	}
 
-	user := models.ToUser(entUser)
+	user := models.ToUser(entUser, models.AccessLevelFull)
 	return user, token, nil
 }
 
@@ -66,19 +66,13 @@ func (u *userUsecase) Login(ctx context.Context, email, password string) (*model
 		return nil, "", fmt.Errorf("failed to generate token: %w", err)
 	}
 
-	user := models.ToUser(entUser)
+	user := models.ToUser(entUser, models.AccessLevelFull)
 	return user, token, nil
 }
 
 func (u *userUsecase) UpdatePassword(ctx context.Context, userID uuid.UUID, newPassword string) error {
-
 	// Update password in repository
-	err := u.userRepo.UpdatePassword(ctx, userID, newPassword)
-	if err != nil {
-		return fmt.Errorf("failed to update password: %w", err)
-	}
-
-	return nil
+	return u.userRepo.UpdatePassword(ctx, userID, newPassword)
 }
 
 func (u *userUsecase) UpdateUser(ctx context.Context, id uuid.UUID, req *requests.UpdateUser) (*models.User, error) {
@@ -94,17 +88,17 @@ func (u *userUsecase) UpdateUser(ctx context.Context, id uuid.UUID, req *request
 		return nil, fmt.Errorf("failed to update user: %w", err)
 	}
 
-	user := models.ToUser(entUser)
+	user := models.ToUser(entUser, models.AccessLevelFull)
 	return user, nil
 }
 
-func (u *userUsecase) GetUserByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
-	entUser, err := u.userRepo.GetByID(ctx, id)
+func (u *userUsecase) GetUserByID(ctx context.Context, userID uuid.UUID, accessLevel models.AccessLevel) (*models.User, error) {
+	entUser, err := u.userRepo.GetByID(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	user := models.ToUser(entUser)
+	user := models.ToUser(entUser, accessLevel)
 	return user, nil
 }
 

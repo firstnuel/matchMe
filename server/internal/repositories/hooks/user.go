@@ -102,9 +102,12 @@ func calculateCompletion(u *ent.User) int {
 
 	// Optional profile fields that contribute to completion
 	optionalFields := []bool{
+		u.AboutMe != "",
 		u.PreferredAgeMin != 0,
 		u.PreferredAgeMax != 0,
+		u.PreferredGender != "",
 		u.Coordinates != nil,
+		u.PreferredDistance != 0,
 		len(u.LookingFor) > 0,
 		len(u.Interests) > 0,
 		len(u.MusicPreferences) > 0,

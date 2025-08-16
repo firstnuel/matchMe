@@ -26,15 +26,17 @@ type UpdatePasswordRequest struct {
 }
 
 type UpdateUser struct {
-	FirstName       *string   `json:"first_name" validate:"omitempty,min=2,max=50"`
-	LastName        *string   `json:"last_name" validate:"omitempty,min=3,max=30"`
-	Age             *int      `json:"age" validate:"omitempty,min=18,max=100"`
-	Gender          *string   `json:"gender" validate:"omitempty,oneof=male female non_binary prefer_not_to_say"`
-	Location        *Location `json:"location" validate:"omitempty"`
-	Bio             *UserBio  `json:"bio" validate:"omitempty"`
-	PreferredAgeMin *int      `json:"preferred_age_min" validate:"omitempty,min=18,max=100"`
-	PreferredAgeMax *int      `json:"preferred_age_max" validate:"omitempty,min=18,max=100"`
-	PreferredGender *string   `json:"preferred_gender" validate:"omitempty,oneof=male female non_binary all"`
+	FirstName         *string   `json:"first_name" validate:"omitempty,min=2,max=50"`
+	LastName          *string   `json:"last_name" validate:"omitempty,min=3,max=30"`
+	Age               *int      `json:"age" validate:"omitempty,min=18,max=100"`
+	Gender            *string   `json:"gender" validate:"omitempty,oneof=male female non_binary prefer_not_to_say"`
+	Location          *Location `json:"location" validate:"omitempty"`
+	AboutMe           *string   `json:"about_me" validate:"required,min=10,max=500"`
+	Bio               *UserBio  `json:"bio" validate:"omitempty"`
+	PreferredAgeMin   *int      `json:"preferred_age_min" validate:"omitempty,min=18,max=100"`
+	PreferredAgeMax   *int      `json:"preferred_age_max" validate:"omitempty,min=18,max=100"`
+	PreferredGender   *string   `json:"preferred_gender" validate:"omitempty,oneof=male female non_binary all"`
+	PreferredDistance *int      `json:"preferred_distance" validate:"omitempty,min=0,max=100"`
 }
 
 type UserPhoto struct {
@@ -47,7 +49,6 @@ type Location struct {
 	Longitude float64 `json:"longitude" validate:"required"`
 }
 
-// UserBio represents biographical data for matching
 type UserBio struct {
 	LookingFor         []string `json:"looking_for" validate:"required,min=1,dive,oneof=friendship relationship casual networking"`
 	Interests          []string `json:"interests" validate:"required,min=1,max=10"`

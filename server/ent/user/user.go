@@ -24,6 +24,8 @@ const (
 	FieldFirstName = "first_name"
 	// FieldLastName holds the string denoting the last_name field in the database.
 	FieldLastName = "last_name"
+	// FieldAboutMe holds the string denoting the about_me field in the database.
+	FieldAboutMe = "about_me"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -42,6 +44,8 @@ const (
 	FieldPreferredGender = "preferred_gender"
 	// FieldCoordinates holds the string denoting the coordinates field in the database.
 	FieldCoordinates = "coordinates"
+	// FieldPreferredDistance holds the string denoting the preferred_distance field in the database.
+	FieldPreferredDistance = "preferred_distance"
 	// FieldLookingFor holds the string denoting the looking_for field in the database.
 	FieldLookingFor = "looking_for"
 	// FieldInterests holds the string denoting the interests field in the database.
@@ -74,6 +78,7 @@ var Columns = []string{
 	FieldPasswordHash,
 	FieldFirstName,
 	FieldLastName,
+	FieldAboutMe,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 	FieldAge,
@@ -83,6 +88,7 @@ var Columns = []string{
 	FieldGender,
 	FieldPreferredGender,
 	FieldCoordinates,
+	FieldPreferredDistance,
 	FieldLookingFor,
 	FieldInterests,
 	FieldMusicPreferences,
@@ -124,6 +130,8 @@ var (
 	PreferredAgeMaxValidator func(int) error
 	// ProfileCompletionValidator is a validator for the "profile_completion" field. It is called by the builders before save.
 	ProfileCompletionValidator func(int) error
+	// PreferredDistanceValidator is a validator for the "preferred_distance" field. It is called by the builders before save.
+	PreferredDistanceValidator func(int) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -209,6 +217,11 @@ func ByLastName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastName, opts...).ToFunc()
 }
 
+// ByAboutMe orders the results by the about_me field.
+func ByAboutMe(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAboutMe, opts...).ToFunc()
+}
+
 // ByCreatedAt orders the results by the created_at field.
 func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
@@ -252,6 +265,11 @@ func ByPreferredGender(opts ...sql.OrderTermOption) OrderOption {
 // ByCoordinates orders the results by the coordinates field.
 func ByCoordinates(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCoordinates, opts...).ToFunc()
+}
+
+// ByPreferredDistance orders the results by the preferred_distance field.
+func ByPreferredDistance(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPreferredDistance, opts...).ToFunc()
 }
 
 // ByCommunicationStyle orders the results by the communication_style field.

@@ -14,7 +14,7 @@ type UserUsecase interface {
 	UpdatePassword(ctx context.Context, userID uuid.UUID, newPassword string) error
 	UpdateUser(ctx context.Context, id uuid.UUID, req *requests.UpdateUser) (*models.User, error)
 
-	GetUserByID(ctx context.Context, id uuid.UUID) (*models.User, error)
+	GetUserByID(ctx context.Context, userID uuid.UUID, accessLevel models.AccessLevel) (*models.User, error)
 	DeleteUser(ctx context.Context, userID uuid.UUID) error
 	UploadUserPhotos(ctx context.Context, userID uuid.UUID, files []interface{}) ([]*models.UserPhoto, error)
 }

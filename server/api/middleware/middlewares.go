@@ -80,7 +80,7 @@ func VerifyUser(userUC user.UserUsecase, cfg *config.Config) gin.HandlerFunc {
 		}
 
 		// Load user from DB
-		user, err := userUC.GetUserByID(c.Request.Context(), userID)
+		user, err := userUC.GetUserByID(c.Request.Context(), userID, models.AccessLevelFull)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"error":   "Unauthorized",

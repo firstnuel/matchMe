@@ -77,6 +77,11 @@ func LastName(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldLastName, v))
 }
 
+// AboutMe applies equality check predicate on the "about_me" field. It's identical to AboutMeEQ.
+func AboutMe(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldAboutMe, v))
+}
+
 // CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
 func CreatedAt(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldCreatedAt, v))
@@ -110,6 +115,11 @@ func ProfileCompletion(v int) predicate.User {
 // Coordinates applies equality check predicate on the "coordinates" field. It's identical to CoordinatesEQ.
 func Coordinates(v *schema.Point) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldCoordinates, v))
+}
+
+// PreferredDistance applies equality check predicate on the "preferred_distance" field. It's identical to PreferredDistanceEQ.
+func PreferredDistance(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldPreferredDistance, v))
 }
 
 // CommunicationStyle applies equality check predicate on the "communication_style" field. It's identical to CommunicationStyleEQ.
@@ -375,6 +385,81 @@ func LastNameEqualFold(v string) predicate.User {
 // LastNameContainsFold applies the ContainsFold predicate on the "last_name" field.
 func LastNameContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldLastName, v))
+}
+
+// AboutMeEQ applies the EQ predicate on the "about_me" field.
+func AboutMeEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldAboutMe, v))
+}
+
+// AboutMeNEQ applies the NEQ predicate on the "about_me" field.
+func AboutMeNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldAboutMe, v))
+}
+
+// AboutMeIn applies the In predicate on the "about_me" field.
+func AboutMeIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldAboutMe, vs...))
+}
+
+// AboutMeNotIn applies the NotIn predicate on the "about_me" field.
+func AboutMeNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldAboutMe, vs...))
+}
+
+// AboutMeGT applies the GT predicate on the "about_me" field.
+func AboutMeGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldAboutMe, v))
+}
+
+// AboutMeGTE applies the GTE predicate on the "about_me" field.
+func AboutMeGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldAboutMe, v))
+}
+
+// AboutMeLT applies the LT predicate on the "about_me" field.
+func AboutMeLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldAboutMe, v))
+}
+
+// AboutMeLTE applies the LTE predicate on the "about_me" field.
+func AboutMeLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldAboutMe, v))
+}
+
+// AboutMeContains applies the Contains predicate on the "about_me" field.
+func AboutMeContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldAboutMe, v))
+}
+
+// AboutMeHasPrefix applies the HasPrefix predicate on the "about_me" field.
+func AboutMeHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldAboutMe, v))
+}
+
+// AboutMeHasSuffix applies the HasSuffix predicate on the "about_me" field.
+func AboutMeHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldAboutMe, v))
+}
+
+// AboutMeIsNil applies the IsNil predicate on the "about_me" field.
+func AboutMeIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldAboutMe))
+}
+
+// AboutMeNotNil applies the NotNil predicate on the "about_me" field.
+func AboutMeNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldAboutMe))
+}
+
+// AboutMeEqualFold applies the EqualFold predicate on the "about_me" field.
+func AboutMeEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldAboutMe, v))
+}
+
+// AboutMeContainsFold applies the ContainsFold predicate on the "about_me" field.
+func AboutMeContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldAboutMe, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -735,6 +820,56 @@ func CoordinatesIsNil() predicate.User {
 // CoordinatesNotNil applies the NotNil predicate on the "coordinates" field.
 func CoordinatesNotNil() predicate.User {
 	return predicate.User(sql.FieldNotNull(FieldCoordinates))
+}
+
+// PreferredDistanceEQ applies the EQ predicate on the "preferred_distance" field.
+func PreferredDistanceEQ(v int) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldPreferredDistance, v))
+}
+
+// PreferredDistanceNEQ applies the NEQ predicate on the "preferred_distance" field.
+func PreferredDistanceNEQ(v int) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldPreferredDistance, v))
+}
+
+// PreferredDistanceIn applies the In predicate on the "preferred_distance" field.
+func PreferredDistanceIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldIn(FieldPreferredDistance, vs...))
+}
+
+// PreferredDistanceNotIn applies the NotIn predicate on the "preferred_distance" field.
+func PreferredDistanceNotIn(vs ...int) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldPreferredDistance, vs...))
+}
+
+// PreferredDistanceGT applies the GT predicate on the "preferred_distance" field.
+func PreferredDistanceGT(v int) predicate.User {
+	return predicate.User(sql.FieldGT(FieldPreferredDistance, v))
+}
+
+// PreferredDistanceGTE applies the GTE predicate on the "preferred_distance" field.
+func PreferredDistanceGTE(v int) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldPreferredDistance, v))
+}
+
+// PreferredDistanceLT applies the LT predicate on the "preferred_distance" field.
+func PreferredDistanceLT(v int) predicate.User {
+	return predicate.User(sql.FieldLT(FieldPreferredDistance, v))
+}
+
+// PreferredDistanceLTE applies the LTE predicate on the "preferred_distance" field.
+func PreferredDistanceLTE(v int) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldPreferredDistance, v))
+}
+
+// PreferredDistanceIsNil applies the IsNil predicate on the "preferred_distance" field.
+func PreferredDistanceIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldPreferredDistance))
+}
+
+// PreferredDistanceNotNil applies the NotNil predicate on the "preferred_distance" field.
+func PreferredDistanceNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldPreferredDistance))
 }
 
 // LookingForIsNil applies the IsNil predicate on the "looking_for" field.

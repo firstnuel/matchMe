@@ -168,6 +168,9 @@ func (r *userRepository) UpdateUser(ctx context.Context, userID uuid.UUID, userD
 			update = update.SetPrompts(prompts)
 		}
 	}
+	if userData.AboutMe != nil {
+		update = update.SetAboutMe(*userData.AboutMe)
+	}
 
 	// Optional: Preferred Age Min
 	if userData.PreferredAgeMin != nil {
@@ -177,6 +180,11 @@ func (r *userRepository) UpdateUser(ctx context.Context, userID uuid.UUID, userD
 	// Optional: Preferred Age Max
 	if userData.PreferredAgeMax != nil {
 		update = update.SetPreferredAgeMax(*userData.PreferredAgeMax)
+	}
+
+	// Optional: Preferred Distance
+	if userData.PreferredDistance != nil {
+		update = update.SetPreferredDistance(*userData.PreferredDistance)
 	}
 
 	// Optional: Preferred Gender

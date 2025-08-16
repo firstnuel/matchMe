@@ -41,6 +41,7 @@ type UserMutation struct {
 	password_hash           *string
 	first_name              *string
 	last_name               *string
+	about_me                *string
 	created_at              *time.Time
 	updated_at              *time.Time
 	age                     *int
@@ -54,6 +55,8 @@ type UserMutation struct {
 	gender                  *user.Gender
 	preferred_gender        *user.PreferredGender
 	coordinates             **schema.Point
+	preferred_distance      *int
+	addpreferred_distance   *int
 	looking_for             *[]string
 	appendlooking_for       []string
 	interests               *[]string
@@ -320,6 +323,55 @@ func (m *UserMutation) OldLastName(ctx context.Context) (v string, err error) {
 // ResetLastName resets all changes to the "last_name" field.
 func (m *UserMutation) ResetLastName() {
 	m.last_name = nil
+}
+
+// SetAboutMe sets the "about_me" field.
+func (m *UserMutation) SetAboutMe(s string) {
+	m.about_me = &s
+}
+
+// AboutMe returns the value of the "about_me" field in the mutation.
+func (m *UserMutation) AboutMe() (r string, exists bool) {
+	v := m.about_me
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAboutMe returns the old "about_me" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldAboutMe(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAboutMe is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAboutMe requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAboutMe: %w", err)
+	}
+	return oldValue.AboutMe, nil
+}
+
+// ClearAboutMe clears the value of the "about_me" field.
+func (m *UserMutation) ClearAboutMe() {
+	m.about_me = nil
+	m.clearedFields[user.FieldAboutMe] = struct{}{}
+}
+
+// AboutMeCleared returns if the "about_me" field was cleared in this mutation.
+func (m *UserMutation) AboutMeCleared() bool {
+	_, ok := m.clearedFields[user.FieldAboutMe]
+	return ok
+}
+
+// ResetAboutMe resets all changes to the "about_me" field.
+func (m *UserMutation) ResetAboutMe() {
+	m.about_me = nil
+	delete(m.clearedFields, user.FieldAboutMe)
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -779,6 +831,76 @@ func (m *UserMutation) CoordinatesCleared() bool {
 func (m *UserMutation) ResetCoordinates() {
 	m.coordinates = nil
 	delete(m.clearedFields, user.FieldCoordinates)
+}
+
+// SetPreferredDistance sets the "preferred_distance" field.
+func (m *UserMutation) SetPreferredDistance(i int) {
+	m.preferred_distance = &i
+	m.addpreferred_distance = nil
+}
+
+// PreferredDistance returns the value of the "preferred_distance" field in the mutation.
+func (m *UserMutation) PreferredDistance() (r int, exists bool) {
+	v := m.preferred_distance
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPreferredDistance returns the old "preferred_distance" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldPreferredDistance(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPreferredDistance is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPreferredDistance requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPreferredDistance: %w", err)
+	}
+	return oldValue.PreferredDistance, nil
+}
+
+// AddPreferredDistance adds i to the "preferred_distance" field.
+func (m *UserMutation) AddPreferredDistance(i int) {
+	if m.addpreferred_distance != nil {
+		*m.addpreferred_distance += i
+	} else {
+		m.addpreferred_distance = &i
+	}
+}
+
+// AddedPreferredDistance returns the value that was added to the "preferred_distance" field in this mutation.
+func (m *UserMutation) AddedPreferredDistance() (r int, exists bool) {
+	v := m.addpreferred_distance
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearPreferredDistance clears the value of the "preferred_distance" field.
+func (m *UserMutation) ClearPreferredDistance() {
+	m.preferred_distance = nil
+	m.addpreferred_distance = nil
+	m.clearedFields[user.FieldPreferredDistance] = struct{}{}
+}
+
+// PreferredDistanceCleared returns if the "preferred_distance" field was cleared in this mutation.
+func (m *UserMutation) PreferredDistanceCleared() bool {
+	_, ok := m.clearedFields[user.FieldPreferredDistance]
+	return ok
+}
+
+// ResetPreferredDistance resets all changes to the "preferred_distance" field.
+func (m *UserMutation) ResetPreferredDistance() {
+	m.preferred_distance = nil
+	m.addpreferred_distance = nil
+	delete(m.clearedFields, user.FieldPreferredDistance)
 }
 
 // SetLookingFor sets the "looking_for" field.
@@ -1243,7 +1365,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 19)
+	fields := make([]string, 0, 21)
 	if m.email != nil {
 		fields = append(fields, user.FieldEmail)
 	}
@@ -1255,6 +1377,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.last_name != nil {
 		fields = append(fields, user.FieldLastName)
+	}
+	if m.about_me != nil {
+		fields = append(fields, user.FieldAboutMe)
 	}
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
@@ -1282,6 +1407,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.coordinates != nil {
 		fields = append(fields, user.FieldCoordinates)
+	}
+	if m.preferred_distance != nil {
+		fields = append(fields, user.FieldPreferredDistance)
 	}
 	if m.looking_for != nil {
 		fields = append(fields, user.FieldLookingFor)
@@ -1317,6 +1445,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.FirstName()
 	case user.FieldLastName:
 		return m.LastName()
+	case user.FieldAboutMe:
+		return m.AboutMe()
 	case user.FieldCreatedAt:
 		return m.CreatedAt()
 	case user.FieldUpdatedAt:
@@ -1335,6 +1465,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.PreferredGender()
 	case user.FieldCoordinates:
 		return m.Coordinates()
+	case user.FieldPreferredDistance:
+		return m.PreferredDistance()
 	case user.FieldLookingFor:
 		return m.LookingFor()
 	case user.FieldInterests:
@@ -1364,6 +1496,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldFirstName(ctx)
 	case user.FieldLastName:
 		return m.OldLastName(ctx)
+	case user.FieldAboutMe:
+		return m.OldAboutMe(ctx)
 	case user.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case user.FieldUpdatedAt:
@@ -1382,6 +1516,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldPreferredGender(ctx)
 	case user.FieldCoordinates:
 		return m.OldCoordinates(ctx)
+	case user.FieldPreferredDistance:
+		return m.OldPreferredDistance(ctx)
 	case user.FieldLookingFor:
 		return m.OldLookingFor(ctx)
 	case user.FieldInterests:
@@ -1430,6 +1566,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLastName(v)
+		return nil
+	case user.FieldAboutMe:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAboutMe(v)
 		return nil
 	case user.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -1494,6 +1637,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetCoordinates(v)
 		return nil
+	case user.FieldPreferredDistance:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPreferredDistance(v)
+		return nil
 	case user.FieldLookingFor:
 		v, ok := value.([]string)
 		if !ok {
@@ -1556,6 +1706,9 @@ func (m *UserMutation) AddedFields() []string {
 	if m.addprofile_completion != nil {
 		fields = append(fields, user.FieldProfileCompletion)
 	}
+	if m.addpreferred_distance != nil {
+		fields = append(fields, user.FieldPreferredDistance)
+	}
 	return fields
 }
 
@@ -1572,6 +1725,8 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedPreferredAgeMax()
 	case user.FieldProfileCompletion:
 		return m.AddedProfileCompletion()
+	case user.FieldPreferredDistance:
+		return m.AddedPreferredDistance()
 	}
 	return nil, false
 }
@@ -1609,6 +1764,13 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddProfileCompletion(v)
 		return nil
+	case user.FieldPreferredDistance:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPreferredDistance(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User numeric field %s", name)
 }
@@ -1617,6 +1779,9 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *UserMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(user.FieldAboutMe) {
+		fields = append(fields, user.FieldAboutMe)
+	}
 	if m.FieldCleared(user.FieldPreferredAgeMin) {
 		fields = append(fields, user.FieldPreferredAgeMin)
 	}
@@ -1628,6 +1793,9 @@ func (m *UserMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(user.FieldCoordinates) {
 		fields = append(fields, user.FieldCoordinates)
+	}
+	if m.FieldCleared(user.FieldPreferredDistance) {
+		fields = append(fields, user.FieldPreferredDistance)
 	}
 	if m.FieldCleared(user.FieldLookingFor) {
 		fields = append(fields, user.FieldLookingFor)
@@ -1661,6 +1829,9 @@ func (m *UserMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *UserMutation) ClearField(name string) error {
 	switch name {
+	case user.FieldAboutMe:
+		m.ClearAboutMe()
+		return nil
 	case user.FieldPreferredAgeMin:
 		m.ClearPreferredAgeMin()
 		return nil
@@ -1672,6 +1843,9 @@ func (m *UserMutation) ClearField(name string) error {
 		return nil
 	case user.FieldCoordinates:
 		m.ClearCoordinates()
+		return nil
+	case user.FieldPreferredDistance:
+		m.ClearPreferredDistance()
 		return nil
 	case user.FieldLookingFor:
 		m.ClearLookingFor()
@@ -1711,6 +1885,9 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldLastName:
 		m.ResetLastName()
 		return nil
+	case user.FieldAboutMe:
+		m.ResetAboutMe()
+		return nil
 	case user.FieldCreatedAt:
 		m.ResetCreatedAt()
 		return nil
@@ -1737,6 +1914,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldCoordinates:
 		m.ResetCoordinates()
+		return nil
+	case user.FieldPreferredDistance:
+		m.ResetPreferredDistance()
 		return nil
 	case user.FieldLookingFor:
 		m.ResetLookingFor()

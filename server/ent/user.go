@@ -28,6 +28,8 @@ type User struct {
 	FirstName string `json:"first_name,omitempty"`
 	// LastName holds the value of the "last_name" field.
 	LastName string `json:"last_name,omitempty"`
+	// AboutMe holds the value of the "about_me" field.
+	AboutMe string `json:"about_me,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -46,6 +48,8 @@ type User struct {
 	PreferredGender user.PreferredGender `json:"preferred_gender,omitempty"`
 	// Coordinates holds the value of the "coordinates" field.
 	Coordinates *schema.Point `json:"coordinates,omitempty"`
+	// Maximum preferred distance (km) for user matches
+	PreferredDistance int `json:"preferred_distance,omitempty"`
 	// LookingFor holds the value of the "looking_for" field.
 	LookingFor []string `json:"looking_for,omitempty"`
 	// Interests holds the value of the "interests" field.
@@ -91,9 +95,9 @@ func (*User) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case user.FieldCoordinates:
 			values[i] = new(schema.Point)
-		case user.FieldAge, user.FieldPreferredAgeMin, user.FieldPreferredAgeMax, user.FieldProfileCompletion:
+		case user.FieldAge, user.FieldPreferredAgeMin, user.FieldPreferredAgeMax, user.FieldProfileCompletion, user.FieldPreferredDistance:
 			values[i] = new(sql.NullInt64)
-		case user.FieldEmail, user.FieldPasswordHash, user.FieldFirstName, user.FieldLastName, user.FieldGender, user.FieldPreferredGender, user.FieldCommunicationStyle:
+		case user.FieldEmail, user.FieldPasswordHash, user.FieldFirstName, user.FieldLastName, user.FieldAboutMe, user.FieldGender, user.FieldPreferredGender, user.FieldCommunicationStyle:
 			values[i] = new(sql.NullString)
 		case user.FieldCreatedAt, user.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -143,6 +147,12 @@ func (_m *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field last_name", values[i])
 			} else if value.Valid {
 				_m.LastName = value.String
+			}
+		case user.FieldAboutMe:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field about_me", values[i])
+			} else if value.Valid {
+				_m.AboutMe = value.String
 			}
 		case user.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -197,6 +207,12 @@ func (_m *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field coordinates", values[i])
 			} else if value != nil {
 				_m.Coordinates = value
+			}
+		case user.FieldPreferredDistance:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field preferred_distance", values[i])
+			} else if value.Valid {
+				_m.PreferredDistance = int(value.Int64)
 			}
 		case user.FieldLookingFor:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -296,6 +312,9 @@ func (_m *User) String() string {
 	builder.WriteString("last_name=")
 	builder.WriteString(_m.LastName)
 	builder.WriteString(", ")
+	builder.WriteString("about_me=")
+	builder.WriteString(_m.AboutMe)
+	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
@@ -322,6 +341,9 @@ func (_m *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("coordinates=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Coordinates))
+	builder.WriteString(", ")
+	builder.WriteString("preferred_distance=")
+	builder.WriteString(fmt.Sprintf("%v", _m.PreferredDistance))
 	builder.WriteString(", ")
 	builder.WriteString("looking_for=")
 	builder.WriteString(fmt.Sprintf("%v", _m.LookingFor))

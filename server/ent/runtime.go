@@ -78,17 +78,17 @@ func init() {
 		}
 	}()
 	// userDescCreatedAt is the schema descriptor for created_at field.
-	userDescCreatedAt := userFields[5].Descriptor()
+	userDescCreatedAt := userFields[6].Descriptor()
 	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
 	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
 	// userDescUpdatedAt is the schema descriptor for updated_at field.
-	userDescUpdatedAt := userFields[6].Descriptor()
+	userDescUpdatedAt := userFields[7].Descriptor()
 	// user.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
 	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// userDescAge is the schema descriptor for age field.
-	userDescAge := userFields[7].Descriptor()
+	userDescAge := userFields[8].Descriptor()
 	// user.AgeValidator is a validator for the "age" field. It is called by the builders before save.
 	user.AgeValidator = func() func(int) error {
 		validators := userDescAge.Validators
@@ -106,7 +106,7 @@ func init() {
 		}
 	}()
 	// userDescPreferredAgeMin is the schema descriptor for preferred_age_min field.
-	userDescPreferredAgeMin := userFields[8].Descriptor()
+	userDescPreferredAgeMin := userFields[9].Descriptor()
 	// user.PreferredAgeMinValidator is a validator for the "preferred_age_min" field. It is called by the builders before save.
 	user.PreferredAgeMinValidator = func() func(int) error {
 		validators := userDescPreferredAgeMin.Validators
@@ -124,7 +124,7 @@ func init() {
 		}
 	}()
 	// userDescPreferredAgeMax is the schema descriptor for preferred_age_max field.
-	userDescPreferredAgeMax := userFields[9].Descriptor()
+	userDescPreferredAgeMax := userFields[10].Descriptor()
 	// user.PreferredAgeMaxValidator is a validator for the "preferred_age_max" field. It is called by the builders before save.
 	user.PreferredAgeMaxValidator = func() func(int) error {
 		validators := userDescPreferredAgeMax.Validators
@@ -142,7 +142,7 @@ func init() {
 		}
 	}()
 	// userDescProfileCompletion is the schema descriptor for profile_completion field.
-	userDescProfileCompletion := userFields[10].Descriptor()
+	userDescProfileCompletion := userFields[11].Descriptor()
 	// user.ProfileCompletionValidator is a validator for the "profile_completion" field. It is called by the builders before save.
 	user.ProfileCompletionValidator = func() func(int) error {
 		validators := userDescProfileCompletion.Validators
@@ -153,6 +153,24 @@ func init() {
 		return func(profile_completion int) error {
 			for _, fn := range fns {
 				if err := fn(profile_completion); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// userDescPreferredDistance is the schema descriptor for preferred_distance field.
+	userDescPreferredDistance := userFields[15].Descriptor()
+	// user.PreferredDistanceValidator is a validator for the "preferred_distance" field. It is called by the builders before save.
+	user.PreferredDistanceValidator = func() func(int) error {
+		validators := userDescPreferredDistance.Validators
+		fns := [...]func(int) error{
+			validators[0].(func(int) error),
+			validators[1].(func(int) error),
+		}
+		return func(preferred_distance int) error {
+			for _, fn := range fns {
+				if err := fn(preferred_distance); err != nil {
 					return err
 				}
 			}
