@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"match-me/ent/predicate"
+	"match-me/ent/schema"
 	"match-me/ent/user"
 	"match-me/ent/userphoto"
 	"sync"
@@ -39,13 +40,20 @@ type UserMutation struct {
 	email                   *string
 	password_hash           *string
 	first_name              *string
-	username                *string
+	last_name               *string
 	created_at              *time.Time
 	updated_at              *time.Time
-	is_online               *bool
 	age                     *int
 	addage                  *int
-	gender                  *string
+	preferred_age_min       *int
+	addpreferred_age_min    *int
+	preferred_age_max       *int
+	addpreferred_age_max    *int
+	profile_completion      *int
+	addprofile_completion   *int
+	gender                  *user.Gender
+	preferred_gender        *user.PreferredGender
+	coordinates             **schema.Point
 	looking_for             *[]string
 	appendlooking_for       []string
 	interests               *[]string
@@ -55,8 +63,8 @@ type UserMutation struct {
 	food_preferences        *[]string
 	appendfood_preferences  []string
 	communication_style     *string
-	prompts                 *[]map[string]string
-	appendprompts           []map[string]string
+	prompts                 *[]schema.Prompt
+	appendprompts           []schema.Prompt
 	clearedFields           map[string]struct{}
 	photos                  map[uuid.UUID]struct{}
 	removedphotos           map[uuid.UUID]struct{}
@@ -278,40 +286,40 @@ func (m *UserMutation) ResetFirstName() {
 	m.first_name = nil
 }
 
-// SetUsername sets the "username" field.
-func (m *UserMutation) SetUsername(s string) {
-	m.username = &s
+// SetLastName sets the "last_name" field.
+func (m *UserMutation) SetLastName(s string) {
+	m.last_name = &s
 }
 
-// Username returns the value of the "username" field in the mutation.
-func (m *UserMutation) Username() (r string, exists bool) {
-	v := m.username
+// LastName returns the value of the "last_name" field in the mutation.
+func (m *UserMutation) LastName() (r string, exists bool) {
+	v := m.last_name
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldUsername returns the old "username" field's value of the User entity.
+// OldLastName returns the old "last_name" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldUsername(ctx context.Context) (v string, err error) {
+func (m *UserMutation) OldLastName(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUsername is only allowed on UpdateOne operations")
+		return v, errors.New("OldLastName is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUsername requires an ID field in the mutation")
+		return v, errors.New("OldLastName requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUsername: %w", err)
+		return v, fmt.Errorf("querying old value for OldLastName: %w", err)
 	}
-	return oldValue.Username, nil
+	return oldValue.LastName, nil
 }
 
-// ResetUsername resets all changes to the "username" field.
-func (m *UserMutation) ResetUsername() {
-	m.username = nil
+// ResetLastName resets all changes to the "last_name" field.
+func (m *UserMutation) ResetLastName() {
+	m.last_name = nil
 }
 
 // SetCreatedAt sets the "created_at" field.
@@ -386,42 +394,6 @@ func (m *UserMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
-// SetIsOnline sets the "is_online" field.
-func (m *UserMutation) SetIsOnline(b bool) {
-	m.is_online = &b
-}
-
-// IsOnline returns the value of the "is_online" field in the mutation.
-func (m *UserMutation) IsOnline() (r bool, exists bool) {
-	v := m.is_online
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldIsOnline returns the old "is_online" field's value of the User entity.
-// If the User object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldIsOnline(ctx context.Context) (v bool, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldIsOnline is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldIsOnline requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldIsOnline: %w", err)
-	}
-	return oldValue.IsOnline, nil
-}
-
-// ResetIsOnline resets all changes to the "is_online" field.
-func (m *UserMutation) ResetIsOnline() {
-	m.is_online = nil
-}
-
 // SetAge sets the "age" field.
 func (m *UserMutation) SetAge(i int) {
 	m.age = &i
@@ -478,13 +450,223 @@ func (m *UserMutation) ResetAge() {
 	m.addage = nil
 }
 
+// SetPreferredAgeMin sets the "preferred_age_min" field.
+func (m *UserMutation) SetPreferredAgeMin(i int) {
+	m.preferred_age_min = &i
+	m.addpreferred_age_min = nil
+}
+
+// PreferredAgeMin returns the value of the "preferred_age_min" field in the mutation.
+func (m *UserMutation) PreferredAgeMin() (r int, exists bool) {
+	v := m.preferred_age_min
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPreferredAgeMin returns the old "preferred_age_min" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldPreferredAgeMin(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPreferredAgeMin is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPreferredAgeMin requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPreferredAgeMin: %w", err)
+	}
+	return oldValue.PreferredAgeMin, nil
+}
+
+// AddPreferredAgeMin adds i to the "preferred_age_min" field.
+func (m *UserMutation) AddPreferredAgeMin(i int) {
+	if m.addpreferred_age_min != nil {
+		*m.addpreferred_age_min += i
+	} else {
+		m.addpreferred_age_min = &i
+	}
+}
+
+// AddedPreferredAgeMin returns the value that was added to the "preferred_age_min" field in this mutation.
+func (m *UserMutation) AddedPreferredAgeMin() (r int, exists bool) {
+	v := m.addpreferred_age_min
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearPreferredAgeMin clears the value of the "preferred_age_min" field.
+func (m *UserMutation) ClearPreferredAgeMin() {
+	m.preferred_age_min = nil
+	m.addpreferred_age_min = nil
+	m.clearedFields[user.FieldPreferredAgeMin] = struct{}{}
+}
+
+// PreferredAgeMinCleared returns if the "preferred_age_min" field was cleared in this mutation.
+func (m *UserMutation) PreferredAgeMinCleared() bool {
+	_, ok := m.clearedFields[user.FieldPreferredAgeMin]
+	return ok
+}
+
+// ResetPreferredAgeMin resets all changes to the "preferred_age_min" field.
+func (m *UserMutation) ResetPreferredAgeMin() {
+	m.preferred_age_min = nil
+	m.addpreferred_age_min = nil
+	delete(m.clearedFields, user.FieldPreferredAgeMin)
+}
+
+// SetPreferredAgeMax sets the "preferred_age_max" field.
+func (m *UserMutation) SetPreferredAgeMax(i int) {
+	m.preferred_age_max = &i
+	m.addpreferred_age_max = nil
+}
+
+// PreferredAgeMax returns the value of the "preferred_age_max" field in the mutation.
+func (m *UserMutation) PreferredAgeMax() (r int, exists bool) {
+	v := m.preferred_age_max
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPreferredAgeMax returns the old "preferred_age_max" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldPreferredAgeMax(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPreferredAgeMax is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPreferredAgeMax requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPreferredAgeMax: %w", err)
+	}
+	return oldValue.PreferredAgeMax, nil
+}
+
+// AddPreferredAgeMax adds i to the "preferred_age_max" field.
+func (m *UserMutation) AddPreferredAgeMax(i int) {
+	if m.addpreferred_age_max != nil {
+		*m.addpreferred_age_max += i
+	} else {
+		m.addpreferred_age_max = &i
+	}
+}
+
+// AddedPreferredAgeMax returns the value that was added to the "preferred_age_max" field in this mutation.
+func (m *UserMutation) AddedPreferredAgeMax() (r int, exists bool) {
+	v := m.addpreferred_age_max
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearPreferredAgeMax clears the value of the "preferred_age_max" field.
+func (m *UserMutation) ClearPreferredAgeMax() {
+	m.preferred_age_max = nil
+	m.addpreferred_age_max = nil
+	m.clearedFields[user.FieldPreferredAgeMax] = struct{}{}
+}
+
+// PreferredAgeMaxCleared returns if the "preferred_age_max" field was cleared in this mutation.
+func (m *UserMutation) PreferredAgeMaxCleared() bool {
+	_, ok := m.clearedFields[user.FieldPreferredAgeMax]
+	return ok
+}
+
+// ResetPreferredAgeMax resets all changes to the "preferred_age_max" field.
+func (m *UserMutation) ResetPreferredAgeMax() {
+	m.preferred_age_max = nil
+	m.addpreferred_age_max = nil
+	delete(m.clearedFields, user.FieldPreferredAgeMax)
+}
+
+// SetProfileCompletion sets the "profile_completion" field.
+func (m *UserMutation) SetProfileCompletion(i int) {
+	m.profile_completion = &i
+	m.addprofile_completion = nil
+}
+
+// ProfileCompletion returns the value of the "profile_completion" field in the mutation.
+func (m *UserMutation) ProfileCompletion() (r int, exists bool) {
+	v := m.profile_completion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldProfileCompletion returns the old "profile_completion" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldProfileCompletion(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldProfileCompletion is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldProfileCompletion requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldProfileCompletion: %w", err)
+	}
+	return oldValue.ProfileCompletion, nil
+}
+
+// AddProfileCompletion adds i to the "profile_completion" field.
+func (m *UserMutation) AddProfileCompletion(i int) {
+	if m.addprofile_completion != nil {
+		*m.addprofile_completion += i
+	} else {
+		m.addprofile_completion = &i
+	}
+}
+
+// AddedProfileCompletion returns the value that was added to the "profile_completion" field in this mutation.
+func (m *UserMutation) AddedProfileCompletion() (r int, exists bool) {
+	v := m.addprofile_completion
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearProfileCompletion clears the value of the "profile_completion" field.
+func (m *UserMutation) ClearProfileCompletion() {
+	m.profile_completion = nil
+	m.addprofile_completion = nil
+	m.clearedFields[user.FieldProfileCompletion] = struct{}{}
+}
+
+// ProfileCompletionCleared returns if the "profile_completion" field was cleared in this mutation.
+func (m *UserMutation) ProfileCompletionCleared() bool {
+	_, ok := m.clearedFields[user.FieldProfileCompletion]
+	return ok
+}
+
+// ResetProfileCompletion resets all changes to the "profile_completion" field.
+func (m *UserMutation) ResetProfileCompletion() {
+	m.profile_completion = nil
+	m.addprofile_completion = nil
+	delete(m.clearedFields, user.FieldProfileCompletion)
+}
+
 // SetGender sets the "gender" field.
-func (m *UserMutation) SetGender(s string) {
-	m.gender = &s
+func (m *UserMutation) SetGender(u user.Gender) {
+	m.gender = &u
 }
 
 // Gender returns the value of the "gender" field in the mutation.
-func (m *UserMutation) Gender() (r string, exists bool) {
+func (m *UserMutation) Gender() (r user.Gender, exists bool) {
 	v := m.gender
 	if v == nil {
 		return
@@ -495,7 +677,7 @@ func (m *UserMutation) Gender() (r string, exists bool) {
 // OldGender returns the old "gender" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldGender(ctx context.Context) (v string, err error) {
+func (m *UserMutation) OldGender(ctx context.Context) (v user.Gender, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldGender is only allowed on UpdateOne operations")
 	}
@@ -512,6 +694,91 @@ func (m *UserMutation) OldGender(ctx context.Context) (v string, err error) {
 // ResetGender resets all changes to the "gender" field.
 func (m *UserMutation) ResetGender() {
 	m.gender = nil
+}
+
+// SetPreferredGender sets the "preferred_gender" field.
+func (m *UserMutation) SetPreferredGender(ug user.PreferredGender) {
+	m.preferred_gender = &ug
+}
+
+// PreferredGender returns the value of the "preferred_gender" field in the mutation.
+func (m *UserMutation) PreferredGender() (r user.PreferredGender, exists bool) {
+	v := m.preferred_gender
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPreferredGender returns the old "preferred_gender" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldPreferredGender(ctx context.Context) (v user.PreferredGender, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPreferredGender is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPreferredGender requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPreferredGender: %w", err)
+	}
+	return oldValue.PreferredGender, nil
+}
+
+// ResetPreferredGender resets all changes to the "preferred_gender" field.
+func (m *UserMutation) ResetPreferredGender() {
+	m.preferred_gender = nil
+}
+
+// SetCoordinates sets the "coordinates" field.
+func (m *UserMutation) SetCoordinates(s *schema.Point) {
+	m.coordinates = &s
+}
+
+// Coordinates returns the value of the "coordinates" field in the mutation.
+func (m *UserMutation) Coordinates() (r *schema.Point, exists bool) {
+	v := m.coordinates
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCoordinates returns the old "coordinates" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldCoordinates(ctx context.Context) (v *schema.Point, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCoordinates is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCoordinates requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCoordinates: %w", err)
+	}
+	return oldValue.Coordinates, nil
+}
+
+// ClearCoordinates clears the value of the "coordinates" field.
+func (m *UserMutation) ClearCoordinates() {
+	m.coordinates = nil
+	m.clearedFields[user.FieldCoordinates] = struct{}{}
+}
+
+// CoordinatesCleared returns if the "coordinates" field was cleared in this mutation.
+func (m *UserMutation) CoordinatesCleared() bool {
+	_, ok := m.clearedFields[user.FieldCoordinates]
+	return ok
+}
+
+// ResetCoordinates resets all changes to the "coordinates" field.
+func (m *UserMutation) ResetCoordinates() {
+	m.coordinates = nil
+	delete(m.clearedFields, user.FieldCoordinates)
 }
 
 // SetLookingFor sets the "looking_for" field.
@@ -824,13 +1091,13 @@ func (m *UserMutation) ResetCommunicationStyle() {
 }
 
 // SetPrompts sets the "prompts" field.
-func (m *UserMutation) SetPrompts(value []map[string]string) {
-	m.prompts = &value
+func (m *UserMutation) SetPrompts(s []schema.Prompt) {
+	m.prompts = &s
 	m.appendprompts = nil
 }
 
 // Prompts returns the value of the "prompts" field in the mutation.
-func (m *UserMutation) Prompts() (r []map[string]string, exists bool) {
+func (m *UserMutation) Prompts() (r []schema.Prompt, exists bool) {
 	v := m.prompts
 	if v == nil {
 		return
@@ -841,7 +1108,7 @@ func (m *UserMutation) Prompts() (r []map[string]string, exists bool) {
 // OldPrompts returns the old "prompts" field's value of the User entity.
 // If the User object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserMutation) OldPrompts(ctx context.Context) (v []map[string]string, err error) {
+func (m *UserMutation) OldPrompts(ctx context.Context) (v []schema.Prompt, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldPrompts is only allowed on UpdateOne operations")
 	}
@@ -855,13 +1122,13 @@ func (m *UserMutation) OldPrompts(ctx context.Context) (v []map[string]string, e
 	return oldValue.Prompts, nil
 }
 
-// AppendPrompts adds value to the "prompts" field.
-func (m *UserMutation) AppendPrompts(value []map[string]string) {
-	m.appendprompts = append(m.appendprompts, value...)
+// AppendPrompts adds s to the "prompts" field.
+func (m *UserMutation) AppendPrompts(s []schema.Prompt) {
+	m.appendprompts = append(m.appendprompts, s...)
 }
 
 // AppendedPrompts returns the list of values that were appended to the "prompts" field in this mutation.
-func (m *UserMutation) AppendedPrompts() ([]map[string]string, bool) {
+func (m *UserMutation) AppendedPrompts() ([]schema.Prompt, bool) {
 	if len(m.appendprompts) == 0 {
 		return nil, false
 	}
@@ -976,7 +1243,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 15)
+	fields := make([]string, 0, 19)
 	if m.email != nil {
 		fields = append(fields, user.FieldEmail)
 	}
@@ -986,8 +1253,8 @@ func (m *UserMutation) Fields() []string {
 	if m.first_name != nil {
 		fields = append(fields, user.FieldFirstName)
 	}
-	if m.username != nil {
-		fields = append(fields, user.FieldUsername)
+	if m.last_name != nil {
+		fields = append(fields, user.FieldLastName)
 	}
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
@@ -995,14 +1262,26 @@ func (m *UserMutation) Fields() []string {
 	if m.updated_at != nil {
 		fields = append(fields, user.FieldUpdatedAt)
 	}
-	if m.is_online != nil {
-		fields = append(fields, user.FieldIsOnline)
-	}
 	if m.age != nil {
 		fields = append(fields, user.FieldAge)
 	}
+	if m.preferred_age_min != nil {
+		fields = append(fields, user.FieldPreferredAgeMin)
+	}
+	if m.preferred_age_max != nil {
+		fields = append(fields, user.FieldPreferredAgeMax)
+	}
+	if m.profile_completion != nil {
+		fields = append(fields, user.FieldProfileCompletion)
+	}
 	if m.gender != nil {
 		fields = append(fields, user.FieldGender)
+	}
+	if m.preferred_gender != nil {
+		fields = append(fields, user.FieldPreferredGender)
+	}
+	if m.coordinates != nil {
+		fields = append(fields, user.FieldCoordinates)
 	}
 	if m.looking_for != nil {
 		fields = append(fields, user.FieldLookingFor)
@@ -1036,18 +1315,26 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.PasswordHash()
 	case user.FieldFirstName:
 		return m.FirstName()
-	case user.FieldUsername:
-		return m.Username()
+	case user.FieldLastName:
+		return m.LastName()
 	case user.FieldCreatedAt:
 		return m.CreatedAt()
 	case user.FieldUpdatedAt:
 		return m.UpdatedAt()
-	case user.FieldIsOnline:
-		return m.IsOnline()
 	case user.FieldAge:
 		return m.Age()
+	case user.FieldPreferredAgeMin:
+		return m.PreferredAgeMin()
+	case user.FieldPreferredAgeMax:
+		return m.PreferredAgeMax()
+	case user.FieldProfileCompletion:
+		return m.ProfileCompletion()
 	case user.FieldGender:
 		return m.Gender()
+	case user.FieldPreferredGender:
+		return m.PreferredGender()
+	case user.FieldCoordinates:
+		return m.Coordinates()
 	case user.FieldLookingFor:
 		return m.LookingFor()
 	case user.FieldInterests:
@@ -1075,18 +1362,26 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldPasswordHash(ctx)
 	case user.FieldFirstName:
 		return m.OldFirstName(ctx)
-	case user.FieldUsername:
-		return m.OldUsername(ctx)
+	case user.FieldLastName:
+		return m.OldLastName(ctx)
 	case user.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
 	case user.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
-	case user.FieldIsOnline:
-		return m.OldIsOnline(ctx)
 	case user.FieldAge:
 		return m.OldAge(ctx)
+	case user.FieldPreferredAgeMin:
+		return m.OldPreferredAgeMin(ctx)
+	case user.FieldPreferredAgeMax:
+		return m.OldPreferredAgeMax(ctx)
+	case user.FieldProfileCompletion:
+		return m.OldProfileCompletion(ctx)
 	case user.FieldGender:
 		return m.OldGender(ctx)
+	case user.FieldPreferredGender:
+		return m.OldPreferredGender(ctx)
+	case user.FieldCoordinates:
+		return m.OldCoordinates(ctx)
 	case user.FieldLookingFor:
 		return m.OldLookingFor(ctx)
 	case user.FieldInterests:
@@ -1129,12 +1424,12 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetFirstName(v)
 		return nil
-	case user.FieldUsername:
+	case user.FieldLastName:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetUsername(v)
+		m.SetLastName(v)
 		return nil
 	case user.FieldCreatedAt:
 		v, ok := value.(time.Time)
@@ -1150,13 +1445,6 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
-	case user.FieldIsOnline:
-		v, ok := value.(bool)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetIsOnline(v)
-		return nil
 	case user.FieldAge:
 		v, ok := value.(int)
 		if !ok {
@@ -1164,12 +1452,47 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetAge(v)
 		return nil
+	case user.FieldPreferredAgeMin:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPreferredAgeMin(v)
+		return nil
+	case user.FieldPreferredAgeMax:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPreferredAgeMax(v)
+		return nil
+	case user.FieldProfileCompletion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetProfileCompletion(v)
+		return nil
 	case user.FieldGender:
-		v, ok := value.(string)
+		v, ok := value.(user.Gender)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetGender(v)
+		return nil
+	case user.FieldPreferredGender:
+		v, ok := value.(user.PreferredGender)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPreferredGender(v)
+		return nil
+	case user.FieldCoordinates:
+		v, ok := value.(*schema.Point)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCoordinates(v)
 		return nil
 	case user.FieldLookingFor:
 		v, ok := value.([]string)
@@ -1207,7 +1530,7 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		m.SetCommunicationStyle(v)
 		return nil
 	case user.FieldPrompts:
-		v, ok := value.([]map[string]string)
+		v, ok := value.([]schema.Prompt)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -1224,6 +1547,15 @@ func (m *UserMutation) AddedFields() []string {
 	if m.addage != nil {
 		fields = append(fields, user.FieldAge)
 	}
+	if m.addpreferred_age_min != nil {
+		fields = append(fields, user.FieldPreferredAgeMin)
+	}
+	if m.addpreferred_age_max != nil {
+		fields = append(fields, user.FieldPreferredAgeMax)
+	}
+	if m.addprofile_completion != nil {
+		fields = append(fields, user.FieldProfileCompletion)
+	}
 	return fields
 }
 
@@ -1234,6 +1566,12 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case user.FieldAge:
 		return m.AddedAge()
+	case user.FieldPreferredAgeMin:
+		return m.AddedPreferredAgeMin()
+	case user.FieldPreferredAgeMax:
+		return m.AddedPreferredAgeMax()
+	case user.FieldProfileCompletion:
+		return m.AddedProfileCompletion()
 	}
 	return nil, false
 }
@@ -1250,6 +1588,27 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddAge(v)
 		return nil
+	case user.FieldPreferredAgeMin:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPreferredAgeMin(v)
+		return nil
+	case user.FieldPreferredAgeMax:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPreferredAgeMax(v)
+		return nil
+	case user.FieldProfileCompletion:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddProfileCompletion(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User numeric field %s", name)
 }
@@ -1258,6 +1617,18 @@ func (m *UserMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *UserMutation) ClearedFields() []string {
 	var fields []string
+	if m.FieldCleared(user.FieldPreferredAgeMin) {
+		fields = append(fields, user.FieldPreferredAgeMin)
+	}
+	if m.FieldCleared(user.FieldPreferredAgeMax) {
+		fields = append(fields, user.FieldPreferredAgeMax)
+	}
+	if m.FieldCleared(user.FieldProfileCompletion) {
+		fields = append(fields, user.FieldProfileCompletion)
+	}
+	if m.FieldCleared(user.FieldCoordinates) {
+		fields = append(fields, user.FieldCoordinates)
+	}
 	if m.FieldCleared(user.FieldLookingFor) {
 		fields = append(fields, user.FieldLookingFor)
 	}
@@ -1290,6 +1661,18 @@ func (m *UserMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *UserMutation) ClearField(name string) error {
 	switch name {
+	case user.FieldPreferredAgeMin:
+		m.ClearPreferredAgeMin()
+		return nil
+	case user.FieldPreferredAgeMax:
+		m.ClearPreferredAgeMax()
+		return nil
+	case user.FieldProfileCompletion:
+		m.ClearProfileCompletion()
+		return nil
+	case user.FieldCoordinates:
+		m.ClearCoordinates()
+		return nil
 	case user.FieldLookingFor:
 		m.ClearLookingFor()
 		return nil
@@ -1325,8 +1708,8 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldFirstName:
 		m.ResetFirstName()
 		return nil
-	case user.FieldUsername:
-		m.ResetUsername()
+	case user.FieldLastName:
+		m.ResetLastName()
 		return nil
 	case user.FieldCreatedAt:
 		m.ResetCreatedAt()
@@ -1334,14 +1717,26 @@ func (m *UserMutation) ResetField(name string) error {
 	case user.FieldUpdatedAt:
 		m.ResetUpdatedAt()
 		return nil
-	case user.FieldIsOnline:
-		m.ResetIsOnline()
-		return nil
 	case user.FieldAge:
 		m.ResetAge()
 		return nil
+	case user.FieldPreferredAgeMin:
+		m.ResetPreferredAgeMin()
+		return nil
+	case user.FieldPreferredAgeMax:
+		m.ResetPreferredAgeMax()
+		return nil
+	case user.FieldProfileCompletion:
+		m.ResetProfileCompletion()
+		return nil
 	case user.FieldGender:
 		m.ResetGender()
+		return nil
+	case user.FieldPreferredGender:
+		m.ResetPreferredGender()
+		return nil
+	case user.FieldCoordinates:
+		m.ResetCoordinates()
 		return nil
 	case user.FieldLookingFor:
 		m.ResetLookingFor()

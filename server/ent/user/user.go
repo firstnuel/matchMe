@@ -3,6 +3,7 @@
 package user
 
 import (
+	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -21,18 +22,26 @@ const (
 	FieldPasswordHash = "password_hash"
 	// FieldFirstName holds the string denoting the first_name field in the database.
 	FieldFirstName = "first_name"
-	// FieldUsername holds the string denoting the username field in the database.
-	FieldUsername = "username"
+	// FieldLastName holds the string denoting the last_name field in the database.
+	FieldLastName = "last_name"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
-	// FieldIsOnline holds the string denoting the is_online field in the database.
-	FieldIsOnline = "is_online"
 	// FieldAge holds the string denoting the age field in the database.
 	FieldAge = "age"
+	// FieldPreferredAgeMin holds the string denoting the preferred_age_min field in the database.
+	FieldPreferredAgeMin = "preferred_age_min"
+	// FieldPreferredAgeMax holds the string denoting the preferred_age_max field in the database.
+	FieldPreferredAgeMax = "preferred_age_max"
+	// FieldProfileCompletion holds the string denoting the profile_completion field in the database.
+	FieldProfileCompletion = "profile_completion"
 	// FieldGender holds the string denoting the gender field in the database.
 	FieldGender = "gender"
+	// FieldPreferredGender holds the string denoting the preferred_gender field in the database.
+	FieldPreferredGender = "preferred_gender"
+	// FieldCoordinates holds the string denoting the coordinates field in the database.
+	FieldCoordinates = "coordinates"
 	// FieldLookingFor holds the string denoting the looking_for field in the database.
 	FieldLookingFor = "looking_for"
 	// FieldInterests holds the string denoting the interests field in the database.
@@ -64,12 +73,16 @@ var Columns = []string{
 	FieldEmail,
 	FieldPasswordHash,
 	FieldFirstName,
-	FieldUsername,
+	FieldLastName,
 	FieldCreatedAt,
 	FieldUpdatedAt,
-	FieldIsOnline,
 	FieldAge,
+	FieldPreferredAgeMin,
+	FieldPreferredAgeMax,
+	FieldProfileCompletion,
 	FieldGender,
+	FieldPreferredGender,
+	FieldCoordinates,
 	FieldLookingFor,
 	FieldInterests,
 	FieldMusicPreferences,
@@ -95,23 +108,78 @@ var (
 	PasswordHashValidator func(string) error
 	// FirstNameValidator is a validator for the "first_name" field. It is called by the builders before save.
 	FirstNameValidator func(string) error
-	// UsernameValidator is a validator for the "username" field. It is called by the builders before save.
-	UsernameValidator func(string) error
+	// LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
+	LastNameValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
-	// DefaultIsOnline holds the default value on creation for the "is_online" field.
-	DefaultIsOnline bool
 	// AgeValidator is a validator for the "age" field. It is called by the builders before save.
 	AgeValidator func(int) error
-	// GenderValidator is a validator for the "gender" field. It is called by the builders before save.
-	GenderValidator func(string) error
+	// PreferredAgeMinValidator is a validator for the "preferred_age_min" field. It is called by the builders before save.
+	PreferredAgeMinValidator func(int) error
+	// PreferredAgeMaxValidator is a validator for the "preferred_age_max" field. It is called by the builders before save.
+	PreferredAgeMaxValidator func(int) error
+	// ProfileCompletionValidator is a validator for the "profile_completion" field. It is called by the builders before save.
+	ProfileCompletionValidator func(int) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
+
+// Gender defines the type for the "gender" enum field.
+type Gender string
+
+// Gender values.
+const (
+	GenderMale           Gender = "male"
+	GenderFemale         Gender = "female"
+	GenderNonBinary      Gender = "non_binary"
+	GenderPreferNotToSay Gender = "prefer_not_to_say"
+)
+
+func (ge Gender) String() string {
+	return string(ge)
+}
+
+// GenderValidator is a validator for the "gender" field enum values. It is called by the builders before save.
+func GenderValidator(ge Gender) error {
+	switch ge {
+	case GenderMale, GenderFemale, GenderNonBinary, GenderPreferNotToSay:
+		return nil
+	default:
+		return fmt.Errorf("user: invalid enum value for gender field: %q", ge)
+	}
+}
+
+// PreferredGender defines the type for the "preferred_gender" enum field.
+type PreferredGender string
+
+// PreferredGenderAll is the default value of the PreferredGender enum.
+const DefaultPreferredGender = PreferredGenderAll
+
+// PreferredGender values.
+const (
+	PreferredGenderMale      PreferredGender = "male"
+	PreferredGenderFemale    PreferredGender = "female"
+	PreferredGenderNonBinary PreferredGender = "non_binary"
+	PreferredGenderAll       PreferredGender = "all"
+)
+
+func (pg PreferredGender) String() string {
+	return string(pg)
+}
+
+// PreferredGenderValidator is a validator for the "preferred_gender" field enum values. It is called by the builders before save.
+func PreferredGenderValidator(pg PreferredGender) error {
+	switch pg {
+	case PreferredGenderMale, PreferredGenderFemale, PreferredGenderNonBinary, PreferredGenderAll:
+		return nil
+	default:
+		return fmt.Errorf("user: invalid enum value for preferred_gender field: %q", pg)
+	}
+}
 
 // OrderOption defines the ordering options for the User queries.
 type OrderOption func(*sql.Selector)
@@ -136,9 +204,9 @@ func ByFirstName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldFirstName, opts...).ToFunc()
 }
 
-// ByUsername orders the results by the username field.
-func ByUsername(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUsername, opts...).ToFunc()
+// ByLastName orders the results by the last_name field.
+func ByLastName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastName, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.
@@ -151,19 +219,39 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
-// ByIsOnline orders the results by the is_online field.
-func ByIsOnline(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldIsOnline, opts...).ToFunc()
-}
-
 // ByAge orders the results by the age field.
 func ByAge(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAge, opts...).ToFunc()
 }
 
+// ByPreferredAgeMin orders the results by the preferred_age_min field.
+func ByPreferredAgeMin(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPreferredAgeMin, opts...).ToFunc()
+}
+
+// ByPreferredAgeMax orders the results by the preferred_age_max field.
+func ByPreferredAgeMax(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPreferredAgeMax, opts...).ToFunc()
+}
+
+// ByProfileCompletion orders the results by the profile_completion field.
+func ByProfileCompletion(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldProfileCompletion, opts...).ToFunc()
+}
+
 // ByGender orders the results by the gender field.
 func ByGender(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldGender, opts...).ToFunc()
+}
+
+// ByPreferredGender orders the results by the preferred_gender field.
+func ByPreferredGender(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPreferredGender, opts...).ToFunc()
+}
+
+// ByCoordinates orders the results by the coordinates field.
+func ByCoordinates(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCoordinates, opts...).ToFunc()
 }
 
 // ByCommunicationStyle orders the results by the communication_style field.

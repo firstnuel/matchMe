@@ -5,6 +5,7 @@ package ent
 import (
 	"encoding/json"
 	"fmt"
+	"match-me/ent/schema"
 	"match-me/ent/user"
 	"strings"
 	"time"
@@ -25,18 +26,26 @@ type User struct {
 	PasswordHash string `json:"-"`
 	// FirstName holds the value of the "first_name" field.
 	FirstName string `json:"first_name,omitempty"`
-	// Username holds the value of the "username" field.
-	Username string `json:"username,omitempty"`
+	// LastName holds the value of the "last_name" field.
+	LastName string `json:"last_name,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// IsOnline holds the value of the "is_online" field.
-	IsOnline bool `json:"is_online,omitempty"`
 	// Age holds the value of the "age" field.
 	Age int `json:"age,omitempty"`
-	// Gender holds the value of the "gender" field.
-	Gender string `json:"gender,omitempty"`
+	// PreferredAgeMin holds the value of the "preferred_age_min" field.
+	PreferredAgeMin int `json:"preferred_age_min,omitempty"`
+	// PreferredAgeMax holds the value of the "preferred_age_max" field.
+	PreferredAgeMax int `json:"preferred_age_max,omitempty"`
+	// ProfileCompletion holds the value of the "profile_completion" field.
+	ProfileCompletion int `json:"profile_completion,omitempty"`
+	// Gender options for user profiles, inclusive of non-binary and opt-out preferences
+	Gender user.Gender `json:"gender,omitempty"`
+	// Preferred gender options for user matches
+	PreferredGender user.PreferredGender `json:"preferred_gender,omitempty"`
+	// Coordinates holds the value of the "coordinates" field.
+	Coordinates *schema.Point `json:"coordinates,omitempty"`
 	// LookingFor holds the value of the "looking_for" field.
 	LookingFor []string `json:"looking_for,omitempty"`
 	// Interests holds the value of the "interests" field.
@@ -48,7 +57,7 @@ type User struct {
 	// CommunicationStyle holds the value of the "communication_style" field.
 	CommunicationStyle string `json:"communication_style,omitempty"`
 	// Prompts holds the value of the "prompts" field.
-	Prompts []map[string]string `json:"prompts,omitempty"`
+	Prompts []schema.Prompt `json:"prompts,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges        UserEdges `json:"edges"`
@@ -80,11 +89,11 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldLookingFor, user.FieldInterests, user.FieldMusicPreferences, user.FieldFoodPreferences, user.FieldPrompts:
 			values[i] = new([]byte)
-		case user.FieldIsOnline:
-			values[i] = new(sql.NullBool)
-		case user.FieldAge:
+		case user.FieldCoordinates:
+			values[i] = new(schema.Point)
+		case user.FieldAge, user.FieldPreferredAgeMin, user.FieldPreferredAgeMax, user.FieldProfileCompletion:
 			values[i] = new(sql.NullInt64)
-		case user.FieldEmail, user.FieldPasswordHash, user.FieldFirstName, user.FieldUsername, user.FieldGender, user.FieldCommunicationStyle:
+		case user.FieldEmail, user.FieldPasswordHash, user.FieldFirstName, user.FieldLastName, user.FieldGender, user.FieldPreferredGender, user.FieldCommunicationStyle:
 			values[i] = new(sql.NullString)
 		case user.FieldCreatedAt, user.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -129,11 +138,11 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.FirstName = value.String
 			}
-		case user.FieldUsername:
+		case user.FieldLastName:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field username", values[i])
+				return fmt.Errorf("unexpected type %T for field last_name", values[i])
 			} else if value.Valid {
-				_m.Username = value.String
+				_m.LastName = value.String
 			}
 		case user.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
@@ -147,23 +156,47 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
-		case user.FieldIsOnline:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field is_online", values[i])
-			} else if value.Valid {
-				_m.IsOnline = value.Bool
-			}
 		case user.FieldAge:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field age", values[i])
 			} else if value.Valid {
 				_m.Age = int(value.Int64)
 			}
+		case user.FieldPreferredAgeMin:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field preferred_age_min", values[i])
+			} else if value.Valid {
+				_m.PreferredAgeMin = int(value.Int64)
+			}
+		case user.FieldPreferredAgeMax:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field preferred_age_max", values[i])
+			} else if value.Valid {
+				_m.PreferredAgeMax = int(value.Int64)
+			}
+		case user.FieldProfileCompletion:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field profile_completion", values[i])
+			} else if value.Valid {
+				_m.ProfileCompletion = int(value.Int64)
+			}
 		case user.FieldGender:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field gender", values[i])
 			} else if value.Valid {
-				_m.Gender = value.String
+				_m.Gender = user.Gender(value.String)
+			}
+		case user.FieldPreferredGender:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field preferred_gender", values[i])
+			} else if value.Valid {
+				_m.PreferredGender = user.PreferredGender(value.String)
+			}
+		case user.FieldCoordinates:
+			if value, ok := values[i].(*schema.Point); !ok {
+				return fmt.Errorf("unexpected type %T for field coordinates", values[i])
+			} else if value != nil {
+				_m.Coordinates = value
 			}
 		case user.FieldLookingFor:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -260,8 +293,8 @@ func (_m *User) String() string {
 	builder.WriteString("first_name=")
 	builder.WriteString(_m.FirstName)
 	builder.WriteString(", ")
-	builder.WriteString("username=")
-	builder.WriteString(_m.Username)
+	builder.WriteString("last_name=")
+	builder.WriteString(_m.LastName)
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
@@ -269,14 +302,26 @@ func (_m *User) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("is_online=")
-	builder.WriteString(fmt.Sprintf("%v", _m.IsOnline))
-	builder.WriteString(", ")
 	builder.WriteString("age=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Age))
 	builder.WriteString(", ")
+	builder.WriteString("preferred_age_min=")
+	builder.WriteString(fmt.Sprintf("%v", _m.PreferredAgeMin))
+	builder.WriteString(", ")
+	builder.WriteString("preferred_age_max=")
+	builder.WriteString(fmt.Sprintf("%v", _m.PreferredAgeMax))
+	builder.WriteString(", ")
+	builder.WriteString("profile_completion=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ProfileCompletion))
+	builder.WriteString(", ")
 	builder.WriteString("gender=")
-	builder.WriteString(_m.Gender)
+	builder.WriteString(fmt.Sprintf("%v", _m.Gender))
+	builder.WriteString(", ")
+	builder.WriteString("preferred_gender=")
+	builder.WriteString(fmt.Sprintf("%v", _m.PreferredGender))
+	builder.WriteString(", ")
+	builder.WriteString("coordinates=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Coordinates))
 	builder.WriteString(", ")
 	builder.WriteString("looking_for=")
 	builder.WriteString(fmt.Sprintf("%v", _m.LookingFor))

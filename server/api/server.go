@@ -22,6 +22,9 @@ func NewHTTPServer(client *ent.Client, cfg *config.Config) *http.Server {
 	router.Use(gin.Logger())
 	router.Use(middleware.Ping())
 
+	// Register routes
+	registerRoutes(client,router, cfg)
+
 	// HTTP server setup
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

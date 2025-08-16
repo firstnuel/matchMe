@@ -4,8 +4,15 @@ go 1.24.4
 
 require (
 	entgo.io/ent v0.14.5
+	github.com/cloudinary/cloudinary-go/v2 v2.12.0
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/uuid v1.6.0
+)
+
+require (
+	github.com/creasty/defaults v1.7.0 // indirect
+	github.com/go-test/deep v1.0.7 // indirect
+	github.com/gorilla/schema v1.4.1 // indirect
 )
 
 require (
@@ -23,6 +30,7 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.18.1 // indirect
 	github.com/joho/godotenv v1.5.1
@@ -41,7 +49,7 @@ require (
 	github.com/zclconf/go-cty v1.14.4 // indirect
 	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
 	golang.org/x/arch v0.20.0 // indirect
-	golang.org/x/crypto v0.41.0 // indirect
+	golang.org/x/crypto v0.41.0
 	golang.org/x/mod v0.26.0 // indirect
 	golang.org/x/net v0.43.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect

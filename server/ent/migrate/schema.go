@@ -3,6 +3,7 @@
 package migrate
 
 import (
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/dialect/sql/schema"
 	"entgo.io/ent/schema/field"
 )
@@ -14,12 +15,16 @@ var (
 		{Name: "email", Type: field.TypeString, Unique: true},
 		{Name: "password_hash", Type: field.TypeString},
 		{Name: "first_name", Type: field.TypeString, Size: 50},
-		{Name: "username", Type: field.TypeString, Unique: true, Size: 30},
+		{Name: "last_name", Type: field.TypeString, Size: 30},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "is_online", Type: field.TypeBool, Default: false},
 		{Name: "age", Type: field.TypeInt},
-		{Name: "gender", Type: field.TypeString},
+		{Name: "preferred_age_min", Type: field.TypeInt, Nullable: true},
+		{Name: "preferred_age_max", Type: field.TypeInt, Nullable: true},
+		{Name: "profile_completion", Type: field.TypeInt, Nullable: true},
+		{Name: "gender", Type: field.TypeEnum, Enums: []string{"male", "female", "non_binary", "prefer_not_to_say"}},
+		{Name: "preferred_gender", Type: field.TypeEnum, Enums: []string{"male", "female", "non_binary", "all"}, Default: "all"},
+		{Name: "coordinates", Type: field.TypeOther, Nullable: true, SchemaType: map[string]string{"postgres": "geography(POINT, 4326)"}},
 		{Name: "looking_for", Type: field.TypeJSON, Nullable: true},
 		{Name: "interests", Type: field.TypeJSON, Nullable: true},
 		{Name: "music_preferences", Type: field.TypeJSON, Nullable: true},
@@ -32,6 +37,16 @@ var (
 		Name:       "users",
 		Columns:    UsersColumns,
 		PrimaryKey: []*schema.Column{UsersColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "user_coordinates",
+				Unique:  false,
+				Columns: []*schema.Column{UsersColumns[13]},
+				Annotation: &entsql.IndexAnnotation{
+					Type: "GIST",
+				},
+			},
+		},
 	}
 	// UserPhotosColumns holds the columns for the "user_photos" table.
 	UserPhotosColumns = []*schema.Column{

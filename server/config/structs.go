@@ -7,14 +7,15 @@ import (
 )
 
 type Config struct {
-	AppEnv     string
-	Port       string
-	DbURL      string
-	Host       string
-	DbName     string
-	JWTSecret  string
-	ServerAddr string
-	ClientAddr string
+	AppEnv        string
+	Port          string
+	DbURL         string
+	Host          string
+	DbName        string
+	JWTSecret     string
+	ServerAddr    string
+	ClientAddr    string
+	CloudinaryUrl string
 }
 
 // Helper function to get required environment variable as string

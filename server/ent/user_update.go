@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"match-me/ent/predicate"
+	"match-me/ent/schema"
 	"match-me/ent/user"
 	"match-me/ent/userphoto"
 	"time"
@@ -73,16 +74,16 @@ func (_u *UserUpdate) SetNillableFirstName(v *string) *UserUpdate {
 	return _u
 }
 
-// SetUsername sets the "username" field.
-func (_u *UserUpdate) SetUsername(v string) *UserUpdate {
-	_u.mutation.SetUsername(v)
+// SetLastName sets the "last_name" field.
+func (_u *UserUpdate) SetLastName(v string) *UserUpdate {
+	_u.mutation.SetLastName(v)
 	return _u
 }
 
-// SetNillableUsername sets the "username" field if the given value is not nil.
-func (_u *UserUpdate) SetNillableUsername(v *string) *UserUpdate {
+// SetNillableLastName sets the "last_name" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableLastName(v *string) *UserUpdate {
 	if v != nil {
-		_u.SetUsername(*v)
+		_u.SetLastName(*v)
 	}
 	return _u
 }
@@ -90,20 +91,6 @@ func (_u *UserUpdate) SetNillableUsername(v *string) *UserUpdate {
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *UserUpdate) SetUpdatedAt(v time.Time) *UserUpdate {
 	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
-// SetIsOnline sets the "is_online" field.
-func (_u *UserUpdate) SetIsOnline(v bool) *UserUpdate {
-	_u.mutation.SetIsOnline(v)
-	return _u
-}
-
-// SetNillableIsOnline sets the "is_online" field if the given value is not nil.
-func (_u *UserUpdate) SetNillableIsOnline(v *bool) *UserUpdate {
-	if v != nil {
-		_u.SetIsOnline(*v)
-	}
 	return _u
 }
 
@@ -128,17 +115,124 @@ func (_u *UserUpdate) AddAge(v int) *UserUpdate {
 	return _u
 }
 
+// SetPreferredAgeMin sets the "preferred_age_min" field.
+func (_u *UserUpdate) SetPreferredAgeMin(v int) *UserUpdate {
+	_u.mutation.ResetPreferredAgeMin()
+	_u.mutation.SetPreferredAgeMin(v)
+	return _u
+}
+
+// SetNillablePreferredAgeMin sets the "preferred_age_min" field if the given value is not nil.
+func (_u *UserUpdate) SetNillablePreferredAgeMin(v *int) *UserUpdate {
+	if v != nil {
+		_u.SetPreferredAgeMin(*v)
+	}
+	return _u
+}
+
+// AddPreferredAgeMin adds value to the "preferred_age_min" field.
+func (_u *UserUpdate) AddPreferredAgeMin(v int) *UserUpdate {
+	_u.mutation.AddPreferredAgeMin(v)
+	return _u
+}
+
+// ClearPreferredAgeMin clears the value of the "preferred_age_min" field.
+func (_u *UserUpdate) ClearPreferredAgeMin() *UserUpdate {
+	_u.mutation.ClearPreferredAgeMin()
+	return _u
+}
+
+// SetPreferredAgeMax sets the "preferred_age_max" field.
+func (_u *UserUpdate) SetPreferredAgeMax(v int) *UserUpdate {
+	_u.mutation.ResetPreferredAgeMax()
+	_u.mutation.SetPreferredAgeMax(v)
+	return _u
+}
+
+// SetNillablePreferredAgeMax sets the "preferred_age_max" field if the given value is not nil.
+func (_u *UserUpdate) SetNillablePreferredAgeMax(v *int) *UserUpdate {
+	if v != nil {
+		_u.SetPreferredAgeMax(*v)
+	}
+	return _u
+}
+
+// AddPreferredAgeMax adds value to the "preferred_age_max" field.
+func (_u *UserUpdate) AddPreferredAgeMax(v int) *UserUpdate {
+	_u.mutation.AddPreferredAgeMax(v)
+	return _u
+}
+
+// ClearPreferredAgeMax clears the value of the "preferred_age_max" field.
+func (_u *UserUpdate) ClearPreferredAgeMax() *UserUpdate {
+	_u.mutation.ClearPreferredAgeMax()
+	return _u
+}
+
+// SetProfileCompletion sets the "profile_completion" field.
+func (_u *UserUpdate) SetProfileCompletion(v int) *UserUpdate {
+	_u.mutation.ResetProfileCompletion()
+	_u.mutation.SetProfileCompletion(v)
+	return _u
+}
+
+// SetNillableProfileCompletion sets the "profile_completion" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableProfileCompletion(v *int) *UserUpdate {
+	if v != nil {
+		_u.SetProfileCompletion(*v)
+	}
+	return _u
+}
+
+// AddProfileCompletion adds value to the "profile_completion" field.
+func (_u *UserUpdate) AddProfileCompletion(v int) *UserUpdate {
+	_u.mutation.AddProfileCompletion(v)
+	return _u
+}
+
+// ClearProfileCompletion clears the value of the "profile_completion" field.
+func (_u *UserUpdate) ClearProfileCompletion() *UserUpdate {
+	_u.mutation.ClearProfileCompletion()
+	return _u
+}
+
 // SetGender sets the "gender" field.
-func (_u *UserUpdate) SetGender(v string) *UserUpdate {
+func (_u *UserUpdate) SetGender(v user.Gender) *UserUpdate {
 	_u.mutation.SetGender(v)
 	return _u
 }
 
 // SetNillableGender sets the "gender" field if the given value is not nil.
-func (_u *UserUpdate) SetNillableGender(v *string) *UserUpdate {
+func (_u *UserUpdate) SetNillableGender(v *user.Gender) *UserUpdate {
 	if v != nil {
 		_u.SetGender(*v)
 	}
+	return _u
+}
+
+// SetPreferredGender sets the "preferred_gender" field.
+func (_u *UserUpdate) SetPreferredGender(v user.PreferredGender) *UserUpdate {
+	_u.mutation.SetPreferredGender(v)
+	return _u
+}
+
+// SetNillablePreferredGender sets the "preferred_gender" field if the given value is not nil.
+func (_u *UserUpdate) SetNillablePreferredGender(v *user.PreferredGender) *UserUpdate {
+	if v != nil {
+		_u.SetPreferredGender(*v)
+	}
+	return _u
+}
+
+// SetCoordinates sets the "coordinates" field.
+func (_u *UserUpdate) SetCoordinates(v *schema.Point) *UserUpdate {
+	_u.mutation.SetCoordinates(v)
+	return _u
+}
+
+// ClearCoordinates clears the value of the "coordinates" field.
+func (_u *UserUpdate) ClearCoordinates() *UserUpdate {
+	_u.mutation.ClearCoordinates()
 	return _u
 }
 
@@ -235,13 +329,13 @@ func (_u *UserUpdate) ClearCommunicationStyle() *UserUpdate {
 }
 
 // SetPrompts sets the "prompts" field.
-func (_u *UserUpdate) SetPrompts(v []map[string]string) *UserUpdate {
+func (_u *UserUpdate) SetPrompts(v []schema.Prompt) *UserUpdate {
 	_u.mutation.SetPrompts(v)
 	return _u
 }
 
 // AppendPrompts appends value to the "prompts" field.
-func (_u *UserUpdate) AppendPrompts(v []map[string]string) *UserUpdate {
+func (_u *UserUpdate) AppendPrompts(v []schema.Prompt) *UserUpdate {
 	_u.mutation.AppendPrompts(v)
 	return _u
 }
@@ -346,9 +440,9 @@ func (_u *UserUpdate) check() error {
 			return &ValidationError{Name: "first_name", err: fmt.Errorf(`ent: validator failed for field "User.first_name": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.Username(); ok {
-		if err := user.UsernameValidator(v); err != nil {
-			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "User.username": %w`, err)}
+	if v, ok := _u.mutation.LastName(); ok {
+		if err := user.LastNameValidator(v); err != nil {
+			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "User.last_name": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.Age(); ok {
@@ -356,9 +450,29 @@ func (_u *UserUpdate) check() error {
 			return &ValidationError{Name: "age", err: fmt.Errorf(`ent: validator failed for field "User.age": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.PreferredAgeMin(); ok {
+		if err := user.PreferredAgeMinValidator(v); err != nil {
+			return &ValidationError{Name: "preferred_age_min", err: fmt.Errorf(`ent: validator failed for field "User.preferred_age_min": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.PreferredAgeMax(); ok {
+		if err := user.PreferredAgeMaxValidator(v); err != nil {
+			return &ValidationError{Name: "preferred_age_max", err: fmt.Errorf(`ent: validator failed for field "User.preferred_age_max": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.ProfileCompletion(); ok {
+		if err := user.ProfileCompletionValidator(v); err != nil {
+			return &ValidationError{Name: "profile_completion", err: fmt.Errorf(`ent: validator failed for field "User.profile_completion": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Gender(); ok {
 		if err := user.GenderValidator(v); err != nil {
 			return &ValidationError{Name: "gender", err: fmt.Errorf(`ent: validator failed for field "User.gender": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.PreferredGender(); ok {
+		if err := user.PreferredGenderValidator(v); err != nil {
+			return &ValidationError{Name: "preferred_gender", err: fmt.Errorf(`ent: validator failed for field "User.preferred_gender": %w`, err)}
 		}
 	}
 	return nil
@@ -385,14 +499,11 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.FirstName(); ok {
 		_spec.SetField(user.FieldFirstName, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.Username(); ok {
-		_spec.SetField(user.FieldUsername, field.TypeString, value)
+	if value, ok := _u.mutation.LastName(); ok {
+		_spec.SetField(user.FieldLastName, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.IsOnline(); ok {
-		_spec.SetField(user.FieldIsOnline, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.Age(); ok {
 		_spec.SetField(user.FieldAge, field.TypeInt, value)
@@ -400,8 +511,44 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.AddedAge(); ok {
 		_spec.AddField(user.FieldAge, field.TypeInt, value)
 	}
+	if value, ok := _u.mutation.PreferredAgeMin(); ok {
+		_spec.SetField(user.FieldPreferredAgeMin, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedPreferredAgeMin(); ok {
+		_spec.AddField(user.FieldPreferredAgeMin, field.TypeInt, value)
+	}
+	if _u.mutation.PreferredAgeMinCleared() {
+		_spec.ClearField(user.FieldPreferredAgeMin, field.TypeInt)
+	}
+	if value, ok := _u.mutation.PreferredAgeMax(); ok {
+		_spec.SetField(user.FieldPreferredAgeMax, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedPreferredAgeMax(); ok {
+		_spec.AddField(user.FieldPreferredAgeMax, field.TypeInt, value)
+	}
+	if _u.mutation.PreferredAgeMaxCleared() {
+		_spec.ClearField(user.FieldPreferredAgeMax, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ProfileCompletion(); ok {
+		_spec.SetField(user.FieldProfileCompletion, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedProfileCompletion(); ok {
+		_spec.AddField(user.FieldProfileCompletion, field.TypeInt, value)
+	}
+	if _u.mutation.ProfileCompletionCleared() {
+		_spec.ClearField(user.FieldProfileCompletion, field.TypeInt)
+	}
 	if value, ok := _u.mutation.Gender(); ok {
-		_spec.SetField(user.FieldGender, field.TypeString, value)
+		_spec.SetField(user.FieldGender, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.PreferredGender(); ok {
+		_spec.SetField(user.FieldPreferredGender, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.Coordinates(); ok {
+		_spec.SetField(user.FieldCoordinates, field.TypeOther, value)
+	}
+	if _u.mutation.CoordinatesCleared() {
+		_spec.ClearField(user.FieldCoordinates, field.TypeOther)
 	}
 	if value, ok := _u.mutation.LookingFor(); ok {
 		_spec.SetField(user.FieldLookingFor, field.TypeJSON, value)
@@ -571,16 +718,16 @@ func (_u *UserUpdateOne) SetNillableFirstName(v *string) *UserUpdateOne {
 	return _u
 }
 
-// SetUsername sets the "username" field.
-func (_u *UserUpdateOne) SetUsername(v string) *UserUpdateOne {
-	_u.mutation.SetUsername(v)
+// SetLastName sets the "last_name" field.
+func (_u *UserUpdateOne) SetLastName(v string) *UserUpdateOne {
+	_u.mutation.SetLastName(v)
 	return _u
 }
 
-// SetNillableUsername sets the "username" field if the given value is not nil.
-func (_u *UserUpdateOne) SetNillableUsername(v *string) *UserUpdateOne {
+// SetNillableLastName sets the "last_name" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableLastName(v *string) *UserUpdateOne {
 	if v != nil {
-		_u.SetUsername(*v)
+		_u.SetLastName(*v)
 	}
 	return _u
 }
@@ -588,20 +735,6 @@ func (_u *UserUpdateOne) SetNillableUsername(v *string) *UserUpdateOne {
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *UserUpdateOne) SetUpdatedAt(v time.Time) *UserUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
-// SetIsOnline sets the "is_online" field.
-func (_u *UserUpdateOne) SetIsOnline(v bool) *UserUpdateOne {
-	_u.mutation.SetIsOnline(v)
-	return _u
-}
-
-// SetNillableIsOnline sets the "is_online" field if the given value is not nil.
-func (_u *UserUpdateOne) SetNillableIsOnline(v *bool) *UserUpdateOne {
-	if v != nil {
-		_u.SetIsOnline(*v)
-	}
 	return _u
 }
 
@@ -626,17 +759,124 @@ func (_u *UserUpdateOne) AddAge(v int) *UserUpdateOne {
 	return _u
 }
 
+// SetPreferredAgeMin sets the "preferred_age_min" field.
+func (_u *UserUpdateOne) SetPreferredAgeMin(v int) *UserUpdateOne {
+	_u.mutation.ResetPreferredAgeMin()
+	_u.mutation.SetPreferredAgeMin(v)
+	return _u
+}
+
+// SetNillablePreferredAgeMin sets the "preferred_age_min" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillablePreferredAgeMin(v *int) *UserUpdateOne {
+	if v != nil {
+		_u.SetPreferredAgeMin(*v)
+	}
+	return _u
+}
+
+// AddPreferredAgeMin adds value to the "preferred_age_min" field.
+func (_u *UserUpdateOne) AddPreferredAgeMin(v int) *UserUpdateOne {
+	_u.mutation.AddPreferredAgeMin(v)
+	return _u
+}
+
+// ClearPreferredAgeMin clears the value of the "preferred_age_min" field.
+func (_u *UserUpdateOne) ClearPreferredAgeMin() *UserUpdateOne {
+	_u.mutation.ClearPreferredAgeMin()
+	return _u
+}
+
+// SetPreferredAgeMax sets the "preferred_age_max" field.
+func (_u *UserUpdateOne) SetPreferredAgeMax(v int) *UserUpdateOne {
+	_u.mutation.ResetPreferredAgeMax()
+	_u.mutation.SetPreferredAgeMax(v)
+	return _u
+}
+
+// SetNillablePreferredAgeMax sets the "preferred_age_max" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillablePreferredAgeMax(v *int) *UserUpdateOne {
+	if v != nil {
+		_u.SetPreferredAgeMax(*v)
+	}
+	return _u
+}
+
+// AddPreferredAgeMax adds value to the "preferred_age_max" field.
+func (_u *UserUpdateOne) AddPreferredAgeMax(v int) *UserUpdateOne {
+	_u.mutation.AddPreferredAgeMax(v)
+	return _u
+}
+
+// ClearPreferredAgeMax clears the value of the "preferred_age_max" field.
+func (_u *UserUpdateOne) ClearPreferredAgeMax() *UserUpdateOne {
+	_u.mutation.ClearPreferredAgeMax()
+	return _u
+}
+
+// SetProfileCompletion sets the "profile_completion" field.
+func (_u *UserUpdateOne) SetProfileCompletion(v int) *UserUpdateOne {
+	_u.mutation.ResetProfileCompletion()
+	_u.mutation.SetProfileCompletion(v)
+	return _u
+}
+
+// SetNillableProfileCompletion sets the "profile_completion" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableProfileCompletion(v *int) *UserUpdateOne {
+	if v != nil {
+		_u.SetProfileCompletion(*v)
+	}
+	return _u
+}
+
+// AddProfileCompletion adds value to the "profile_completion" field.
+func (_u *UserUpdateOne) AddProfileCompletion(v int) *UserUpdateOne {
+	_u.mutation.AddProfileCompletion(v)
+	return _u
+}
+
+// ClearProfileCompletion clears the value of the "profile_completion" field.
+func (_u *UserUpdateOne) ClearProfileCompletion() *UserUpdateOne {
+	_u.mutation.ClearProfileCompletion()
+	return _u
+}
+
 // SetGender sets the "gender" field.
-func (_u *UserUpdateOne) SetGender(v string) *UserUpdateOne {
+func (_u *UserUpdateOne) SetGender(v user.Gender) *UserUpdateOne {
 	_u.mutation.SetGender(v)
 	return _u
 }
 
 // SetNillableGender sets the "gender" field if the given value is not nil.
-func (_u *UserUpdateOne) SetNillableGender(v *string) *UserUpdateOne {
+func (_u *UserUpdateOne) SetNillableGender(v *user.Gender) *UserUpdateOne {
 	if v != nil {
 		_u.SetGender(*v)
 	}
+	return _u
+}
+
+// SetPreferredGender sets the "preferred_gender" field.
+func (_u *UserUpdateOne) SetPreferredGender(v user.PreferredGender) *UserUpdateOne {
+	_u.mutation.SetPreferredGender(v)
+	return _u
+}
+
+// SetNillablePreferredGender sets the "preferred_gender" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillablePreferredGender(v *user.PreferredGender) *UserUpdateOne {
+	if v != nil {
+		_u.SetPreferredGender(*v)
+	}
+	return _u
+}
+
+// SetCoordinates sets the "coordinates" field.
+func (_u *UserUpdateOne) SetCoordinates(v *schema.Point) *UserUpdateOne {
+	_u.mutation.SetCoordinates(v)
+	return _u
+}
+
+// ClearCoordinates clears the value of the "coordinates" field.
+func (_u *UserUpdateOne) ClearCoordinates() *UserUpdateOne {
+	_u.mutation.ClearCoordinates()
 	return _u
 }
 
@@ -733,13 +973,13 @@ func (_u *UserUpdateOne) ClearCommunicationStyle() *UserUpdateOne {
 }
 
 // SetPrompts sets the "prompts" field.
-func (_u *UserUpdateOne) SetPrompts(v []map[string]string) *UserUpdateOne {
+func (_u *UserUpdateOne) SetPrompts(v []schema.Prompt) *UserUpdateOne {
 	_u.mutation.SetPrompts(v)
 	return _u
 }
 
 // AppendPrompts appends value to the "prompts" field.
-func (_u *UserUpdateOne) AppendPrompts(v []map[string]string) *UserUpdateOne {
+func (_u *UserUpdateOne) AppendPrompts(v []schema.Prompt) *UserUpdateOne {
 	_u.mutation.AppendPrompts(v)
 	return _u
 }
@@ -857,9 +1097,9 @@ func (_u *UserUpdateOne) check() error {
 			return &ValidationError{Name: "first_name", err: fmt.Errorf(`ent: validator failed for field "User.first_name": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.Username(); ok {
-		if err := user.UsernameValidator(v); err != nil {
-			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "User.username": %w`, err)}
+	if v, ok := _u.mutation.LastName(); ok {
+		if err := user.LastNameValidator(v); err != nil {
+			return &ValidationError{Name: "last_name", err: fmt.Errorf(`ent: validator failed for field "User.last_name": %w`, err)}
 		}
 	}
 	if v, ok := _u.mutation.Age(); ok {
@@ -867,9 +1107,29 @@ func (_u *UserUpdateOne) check() error {
 			return &ValidationError{Name: "age", err: fmt.Errorf(`ent: validator failed for field "User.age": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.PreferredAgeMin(); ok {
+		if err := user.PreferredAgeMinValidator(v); err != nil {
+			return &ValidationError{Name: "preferred_age_min", err: fmt.Errorf(`ent: validator failed for field "User.preferred_age_min": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.PreferredAgeMax(); ok {
+		if err := user.PreferredAgeMaxValidator(v); err != nil {
+			return &ValidationError{Name: "preferred_age_max", err: fmt.Errorf(`ent: validator failed for field "User.preferred_age_max": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.ProfileCompletion(); ok {
+		if err := user.ProfileCompletionValidator(v); err != nil {
+			return &ValidationError{Name: "profile_completion", err: fmt.Errorf(`ent: validator failed for field "User.profile_completion": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.Gender(); ok {
 		if err := user.GenderValidator(v); err != nil {
 			return &ValidationError{Name: "gender", err: fmt.Errorf(`ent: validator failed for field "User.gender": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.PreferredGender(); ok {
+		if err := user.PreferredGenderValidator(v); err != nil {
+			return &ValidationError{Name: "preferred_gender", err: fmt.Errorf(`ent: validator failed for field "User.preferred_gender": %w`, err)}
 		}
 	}
 	return nil
@@ -913,14 +1173,11 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	if value, ok := _u.mutation.FirstName(); ok {
 		_spec.SetField(user.FieldFirstName, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.Username(); ok {
-		_spec.SetField(user.FieldUsername, field.TypeString, value)
+	if value, ok := _u.mutation.LastName(); ok {
+		_spec.SetField(user.FieldLastName, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.IsOnline(); ok {
-		_spec.SetField(user.FieldIsOnline, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.Age(); ok {
 		_spec.SetField(user.FieldAge, field.TypeInt, value)
@@ -928,8 +1185,44 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	if value, ok := _u.mutation.AddedAge(); ok {
 		_spec.AddField(user.FieldAge, field.TypeInt, value)
 	}
+	if value, ok := _u.mutation.PreferredAgeMin(); ok {
+		_spec.SetField(user.FieldPreferredAgeMin, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedPreferredAgeMin(); ok {
+		_spec.AddField(user.FieldPreferredAgeMin, field.TypeInt, value)
+	}
+	if _u.mutation.PreferredAgeMinCleared() {
+		_spec.ClearField(user.FieldPreferredAgeMin, field.TypeInt)
+	}
+	if value, ok := _u.mutation.PreferredAgeMax(); ok {
+		_spec.SetField(user.FieldPreferredAgeMax, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedPreferredAgeMax(); ok {
+		_spec.AddField(user.FieldPreferredAgeMax, field.TypeInt, value)
+	}
+	if _u.mutation.PreferredAgeMaxCleared() {
+		_spec.ClearField(user.FieldPreferredAgeMax, field.TypeInt)
+	}
+	if value, ok := _u.mutation.ProfileCompletion(); ok {
+		_spec.SetField(user.FieldProfileCompletion, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedProfileCompletion(); ok {
+		_spec.AddField(user.FieldProfileCompletion, field.TypeInt, value)
+	}
+	if _u.mutation.ProfileCompletionCleared() {
+		_spec.ClearField(user.FieldProfileCompletion, field.TypeInt)
+	}
 	if value, ok := _u.mutation.Gender(); ok {
-		_spec.SetField(user.FieldGender, field.TypeString, value)
+		_spec.SetField(user.FieldGender, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.PreferredGender(); ok {
+		_spec.SetField(user.FieldPreferredGender, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.Coordinates(); ok {
+		_spec.SetField(user.FieldCoordinates, field.TypeOther, value)
+	}
+	if _u.mutation.CoordinatesCleared() {
+		_spec.ClearField(user.FieldCoordinates, field.TypeOther)
 	}
 	if value, ok := _u.mutation.LookingFor(); ok {
 		_spec.SetField(user.FieldLookingFor, field.TypeJSON, value)

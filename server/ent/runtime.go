@@ -24,7 +24,21 @@ func init() {
 	// userDescPasswordHash is the schema descriptor for password_hash field.
 	userDescPasswordHash := userFields[2].Descriptor()
 	// user.PasswordHashValidator is a validator for the "password_hash" field. It is called by the builders before save.
-	user.PasswordHashValidator = userDescPasswordHash.Validators[0].(func(string) error)
+	user.PasswordHashValidator = func() func(string) error {
+		validators := userDescPasswordHash.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(password_hash string) error {
+			for _, fn := range fns {
+				if err := fn(password_hash); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// userDescFirstName is the schema descriptor for first_name field.
 	userDescFirstName := userFields[3].Descriptor()
 	// user.FirstNameValidator is a validator for the "first_name" field. It is called by the builders before save.
@@ -33,6 +47,7 @@ func init() {
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),
+			validators[2].(func(string) error),
 		}
 		return func(first_name string) error {
 			for _, fn := range fns {
@@ -43,19 +58,19 @@ func init() {
 			return nil
 		}
 	}()
-	// userDescUsername is the schema descriptor for username field.
-	userDescUsername := userFields[4].Descriptor()
-	// user.UsernameValidator is a validator for the "username" field. It is called by the builders before save.
-	user.UsernameValidator = func() func(string) error {
-		validators := userDescUsername.Validators
+	// userDescLastName is the schema descriptor for last_name field.
+	userDescLastName := userFields[4].Descriptor()
+	// user.LastNameValidator is a validator for the "last_name" field. It is called by the builders before save.
+	user.LastNameValidator = func() func(string) error {
+		validators := userDescLastName.Validators
 		fns := [...]func(string) error{
 			validators[0].(func(string) error),
 			validators[1].(func(string) error),
 			validators[2].(func(string) error),
 		}
-		return func(username string) error {
+		return func(last_name string) error {
 			for _, fn := range fns {
-				if err := fn(username); err != nil {
+				if err := fn(last_name); err != nil {
 					return err
 				}
 			}
@@ -72,12 +87,8 @@ func init() {
 	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
 	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// userDescIsOnline is the schema descriptor for is_online field.
-	userDescIsOnline := userFields[7].Descriptor()
-	// user.DefaultIsOnline holds the default value on creation for the is_online field.
-	user.DefaultIsOnline = userDescIsOnline.Default.(bool)
 	// userDescAge is the schema descriptor for age field.
-	userDescAge := userFields[8].Descriptor()
+	userDescAge := userFields[7].Descriptor()
 	// user.AgeValidator is a validator for the "age" field. It is called by the builders before save.
 	user.AgeValidator = func() func(int) error {
 		validators := userDescAge.Validators
@@ -94,10 +105,60 @@ func init() {
 			return nil
 		}
 	}()
-	// userDescGender is the schema descriptor for gender field.
-	userDescGender := userFields[9].Descriptor()
-	// user.GenderValidator is a validator for the "gender" field. It is called by the builders before save.
-	user.GenderValidator = userDescGender.Validators[0].(func(string) error)
+	// userDescPreferredAgeMin is the schema descriptor for preferred_age_min field.
+	userDescPreferredAgeMin := userFields[8].Descriptor()
+	// user.PreferredAgeMinValidator is a validator for the "preferred_age_min" field. It is called by the builders before save.
+	user.PreferredAgeMinValidator = func() func(int) error {
+		validators := userDescPreferredAgeMin.Validators
+		fns := [...]func(int) error{
+			validators[0].(func(int) error),
+			validators[1].(func(int) error),
+		}
+		return func(preferred_age_min int) error {
+			for _, fn := range fns {
+				if err := fn(preferred_age_min); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// userDescPreferredAgeMax is the schema descriptor for preferred_age_max field.
+	userDescPreferredAgeMax := userFields[9].Descriptor()
+	// user.PreferredAgeMaxValidator is a validator for the "preferred_age_max" field. It is called by the builders before save.
+	user.PreferredAgeMaxValidator = func() func(int) error {
+		validators := userDescPreferredAgeMax.Validators
+		fns := [...]func(int) error{
+			validators[0].(func(int) error),
+			validators[1].(func(int) error),
+		}
+		return func(preferred_age_max int) error {
+			for _, fn := range fns {
+				if err := fn(preferred_age_max); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// userDescProfileCompletion is the schema descriptor for profile_completion field.
+	userDescProfileCompletion := userFields[10].Descriptor()
+	// user.ProfileCompletionValidator is a validator for the "profile_completion" field. It is called by the builders before save.
+	user.ProfileCompletionValidator = func() func(int) error {
+		validators := userDescProfileCompletion.Validators
+		fns := [...]func(int) error{
+			validators[0].(func(int) error),
+			validators[1].(func(int) error),
+		}
+		return func(profile_completion int) error {
+			for _, fn := range fns {
+				if err := fn(profile_completion); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// userDescID is the schema descriptor for id field.
 	userDescID := userFields[0].Descriptor()
 	// user.DefaultID holds the default value on creation for the id field.

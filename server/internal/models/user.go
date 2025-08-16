@@ -1,101 +1,104 @@
 package models
 
 import (
-	"fmt"
-	"slices"
-	"strings"
 	"time"
+
+	"match-me/ent"
+	"match-me/ent/schema"
 
 	"github.com/google/uuid"
 )
 
-// User represents the core user entity
 type User struct {
-	ID           uuid.UUID   `json:"id" validate:"required"`
-	Email        string      `json:"email" validate:"required,email"`
-	PasswordHash string      `json:"-" validate:"required,min=6"`
-	FirstName    string      `json:"first_name" validate:"required,min=2,max=50"`
-	Username     string      `json:"username" validate:"required,min=3,max=30,alphanum"`
-	CreatedAt    time.Time   `json:"created_at" validate:"required"`
-	UpdatedAt    time.Time   `json:"updated_at" validate:"required"`
-	IsOnline     bool        `json:"is_online"`
-	Age          int         `json:"age" validate:"required,min=18,max=100"`
-	Gender       string      `json:"gender" validate:"required"`
-	Bio          UserBio     `json:"bio" validate:"required"`
-	Photos       []UserPhoto `json:"photos" validate:"required,min=1,max=6,dive"`
+	ID                 uuid.UUID       `json:"id"`
+	Email              string          `json:"email"`
+	FirstName          string          `json:"first_name"`
+	LastName           string          `json:"last_name"`
+	CreatedAt          time.Time       `json:"created_at"`
+	UpdatedAt          time.Time       `json:"updated_at"`
+	Age                int             `json:"age"`
+	PreferredAgeMin    *int            `json:"preferred_age_min,omitempty"`
+	PreferredAgeMax    *int            `json:"preferred_age_max,omitempty"`
+	ProfileCompletion  int             `json:"profile_completion"`
+	Gender             string          `json:"gender"`
+	PreferredGender    string          `json:"preferred_gender"`
+	Coordinates        *schema.Point   `json:"coordinates,omitempty"`
+	LookingFor         []string        `json:"looking_for,omitempty"`
+	Interests          []string        `json:"interests,omitempty"`
+	MusicPreferences   []string        `json:"music_preferences,omitempty"`
+	FoodPreferences    []string        `json:"food_preferences,omitempty"`
+	CommunicationStyle *string         `json:"communication_style,omitempty"`
+	Prompts            []schema.Prompt `json:"prompts,omitempty"`
+	Photos             []UserPhoto     `json:"photos,omitempty"`
 }
 
 type UserPhoto struct {
-	PhotoUrl string `json:"photo_url" validate:"required,url"`
-	Order    int    `json:"order" validate:"required,min=1"`
+	ID       uuid.UUID `json:"id"`
+	PhotoURL string    `json:"photo_url"`
+	Order    int       `json:"order"`
 }
 
-// UserBio represents biographical data for matching
-type UserBio struct {
-	LookingFor         []string `json:"looking_for" validate:"required,min=1,dive,oneof=friendship relationship casual networking"`
-	Interests          []string `json:"interests" validate:"required,min=1,max=10"`
-	MusicPreferences   []string `json:"music_preferences" validate:"required,min=1,max=5"`
-	FoodPreferences    []string `json:"food_preferences" validate:"required,min=1,max=5"`
-	CommunicationStyle string   `json:"communication_style" validate:"required"`
-	Prompts            []Prompt `json:"prompts" validate:"required,min=3,max=5,dive"`
-}
-
-// Prompt represents profile prompts
-type Prompt struct {
-	Question string `json:"question" validate:"required,min=10,max=200"`
-	Answer   string `json:"answer" validate:"required,min=5,max=500"`
-}
-
-// ValidateUserBio validates UserBio fields against predefined options
-func ValidateUserBio(bio UserBio) error {
-	validInterests := []string{
-		"travel", "music", "movies", "books", "cooking", "fitness", "art", "photography",
-		"gaming", "sports", "hiking", "dancing", "yoga", "meditation", "technology",
-		"fashion", "food", "wine", "coffee", "pets", "nature", "adventure", "reading",
+func ToUser(entUser *ent.User) *User {
+	if entUser == nil {
+		return nil
 	}
 
-	validMusicPreferences := []string{
-		"pop", "rock", "jazz", "classical", "hip-hop", "electronic", "country", "folk",
-		"blues", "reggae", "indie", "alternative", "r&b", "soul", "funk", "punk",
-		"metal", "latin", "world", "ambient",
+	user := &User{
+		ID:                entUser.ID,
+		Email:             entUser.Email,
+		FirstName:         entUser.FirstName,
+		LastName:          entUser.LastName,
+		CreatedAt:         entUser.CreatedAt,
+		UpdatedAt:         entUser.UpdatedAt,
+		Age:               entUser.Age,
+		ProfileCompletion: entUser.ProfileCompletion,
+		Gender:            string(entUser.Gender),
+		PreferredGender:   string(entUser.PreferredGender),
 	}
 
-	validFoodPreferences := []string{
-		"vegetarian", "vegan", "italian", "chinese", "japanese", "mexican", "indian",
-		"thai", "french", "mediterranean", "american", "korean", "vietnamese",
-		"middle-eastern", "african", "fusion", "seafood", "bbq", "desserts", "street-food",
+	user.PreferredAgeMin = &entUser.PreferredAgeMin
+
+	user.PreferredAgeMax = &entUser.PreferredAgeMax
+
+	if entUser.Coordinates != nil {
+		user.Coordinates = entUser.Coordinates
 	}
 
-	validCommunicationStyles := []string{
-		"direct", "thoughtful", "humorous", "analytical", "creative", "empathetic",
-		"casual", "formal", "energetic", "calm",
+	if entUser.LookingFor != nil {
+		user.LookingFor = entUser.LookingFor
 	}
 
-	// Validate interests
-	for _, interest := range bio.Interests {
-		if !slices.Contains(validInterests, strings.ToLower(interest)) {
-			return fmt.Errorf("invalid interest: %s", interest)
+	if entUser.Interests != nil {
+		user.Interests = entUser.Interests
+	}
+
+	if entUser.MusicPreferences != nil {
+		user.MusicPreferences = entUser.MusicPreferences
+	}
+
+	if entUser.FoodPreferences != nil {
+		user.FoodPreferences = entUser.FoodPreferences
+	}
+
+	if entUser.CommunicationStyle != "" {
+		user.CommunicationStyle = &entUser.CommunicationStyle
+	}
+
+	if entUser.Prompts != nil {
+		user.Prompts = entUser.Prompts
+	}
+
+	if entUser.Edges.Photos != nil {
+		photos := make([]UserPhoto, len(entUser.Edges.Photos))
+		for i, photo := range entUser.Edges.Photos {
+			photos[i] = UserPhoto{
+				ID:       photo.ID,
+				PhotoURL: photo.PhotoURL,
+				Order:    photo.Order,
+			}
 		}
+		user.Photos = photos
 	}
 
-	// Validate music preferences
-	for _, music := range bio.MusicPreferences {
-		if !slices.Contains(validMusicPreferences, strings.ToLower(music)) {
-			return fmt.Errorf("invalid music preference: %s", music)
-		}
-	}
-
-	// Validate food preferences
-	for _, food := range bio.FoodPreferences {
-		if !slices.Contains(validFoodPreferences, strings.ToLower(food)) {
-			return fmt.Errorf("invalid food preference: %s", food)
-		}
-	}
-
-	// Validate communication style
-	if !slices.Contains(validCommunicationStyles, strings.ToLower(bio.CommunicationStyle)) {
-		return fmt.Errorf("invalid communication style: %s", bio.CommunicationStyle)
-	}
-
-	return nil
+	return user
 }
