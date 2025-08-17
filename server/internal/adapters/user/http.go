@@ -1,6 +1,7 @@
 package user
 
 import (
+	"log"
 	"match-me/api/middleware"
 	"match-me/config"
 	"match-me/ent"
@@ -55,5 +56,6 @@ func (h *UserHandler) RegisterRoutes(r *gin.Engine) *gin.Engine {
 		userMeGroup.POST("/photos", h.UploadCurrentUserPhotos)
 	}
 
+	log.Println("💫 All user routes registered")
 	return r
 }
