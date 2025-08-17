@@ -43,7 +43,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	}
 
 	// Update user
-	user, err := h.userUsecase.UpdateUser(c.Request.Context(), userID, &req)
+	user, err := h.UserUsecase.UpdateUser(c.Request.Context(), userID, &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Update failed",
@@ -92,7 +92,7 @@ func (h *UserHandler) UpdatePassword(c *gin.Context) {
 	}
 
 	// Update password
-	err = h.userUsecase.UpdatePassword(c.Request.Context(), userID, req.NewPassword)
+	err = h.UserUsecase.UpdatePassword(c.Request.Context(), userID, req.NewPassword)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Password update failed",

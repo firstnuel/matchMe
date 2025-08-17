@@ -21,7 +21,7 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	}
 
 	// Delete user from usecase
-	err = h.userUsecase.DeleteUser(c.Request.Context(), userID)
+	err = h.UserUsecase.DeleteUser(c.Request.Context(), userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to delete user",

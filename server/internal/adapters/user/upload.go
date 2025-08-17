@@ -83,7 +83,7 @@ func (h *UserHandler) UploadUserPhotos(c *gin.Context) {
 	}()
 
 	// Upload photos via usecase
-	photos, err := h.userUsecase.UploadUserPhotos(c.Request.Context(), userID, fileInterfaces)
+	photos, err := h.UserUsecase.UploadUserPhotos(c.Request.Context(), userID, fileInterfaces)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to upload photos",

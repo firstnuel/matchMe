@@ -29,7 +29,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 	}
 
 	// Login user
-	user, token, err := h.userUsecase.Login(c.Request.Context(), req.Email, req.Password)
+	user, token, err := h.UserUsecase.Login(c.Request.Context(), req.Email, req.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error":   "Login failed",

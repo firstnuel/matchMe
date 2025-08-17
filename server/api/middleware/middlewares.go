@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"log"
-	"match-me/config"
 	"match-me/internal/models"
 	"match-me/internal/pkg/jwt"
 	"match-me/internal/usecases/user"
@@ -45,7 +44,7 @@ func GetUserFromGinContext(c *gin.Context) (*models.User, bool) {
 }
 
 // VerifyUser is middleware that extracts a user from a valid access token
-func VerifyUser(userUC user.UserUsecase, cfg *config.Config) gin.HandlerFunc {
+func VerifyUser(userUC user.UserUsecase, jwtSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get Authorization header
 		authHeader := c.GetHeader("Authorization")
@@ -68,7 +67,7 @@ func VerifyUser(userUC user.UserUsecase, cfg *config.Config) gin.HandlerFunc {
 		}
 
 		// Verify access token
-		userID, err := jwt.VerifyJwtToken(c.Request.Context(), tokenStr, jwt.PurposeLogin, cfg.JWTSecret)
+		userID, err := jwt.VerifyJwtToken(c.Request.Context(), tokenStr, jwt.PurposeLogin, jwtSecret)
 		if err != nil {
 			log.Printf("[middleware]: VerifyUser Invalid token: %v", err)
 			c.JSON(http.StatusUnauthorized, gin.H{

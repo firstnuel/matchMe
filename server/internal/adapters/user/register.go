@@ -30,7 +30,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 	}
 
 	// Register user
-	user, token, err := h.userUsecase.Register(c.Request.Context(), req)
+	user, token, err := h.UserUsecase.Register(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Registration failed",
