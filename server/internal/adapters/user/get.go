@@ -71,3 +71,25 @@ func (h *UserHandler) GetUserProfile(c *gin.Context) {
 
 	h.GetUserByID(c)
 }
+
+func (h *UserHandler) GetRecommendations(c *gin.Context) {
+	user, exists := middleware.GetUserFromGinContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found in context"})
+		return
+	}
+
+	recommendations, err := h.UserUsecase.GetRecommendations(c.Request.Context(), user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get recommendations",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":         "Recommendations retrieved successfully",
+		"recommendations": recommendations,
+	})
+}

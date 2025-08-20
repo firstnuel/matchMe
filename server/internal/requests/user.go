@@ -31,7 +31,7 @@ type UpdateUser struct {
 	Age               *int      `json:"age" validate:"omitempty,min=18,max=100"`
 	Gender            *string   `json:"gender" validate:"omitempty,oneof=male female non_binary prefer_not_to_say"`
 	Location          *Location `json:"location" validate:"omitempty"`
-	AboutMe           *string   `json:"about_me" validate:"required,min=10,max=500"`
+	AboutMe           *string   `json:"about_me" validate:"omitempty,min=10,max=500"`
 	Bio               *UserBio  `json:"bio" validate:"omitempty"`
 	PreferredAgeMin   *int      `json:"preferred_age_min" validate:"omitempty,min=18,max=100"`
 	PreferredAgeMax   *int      `json:"preferred_age_max" validate:"omitempty,min=18,max=100"`
@@ -42,6 +42,7 @@ type UpdateUser struct {
 type UserPhoto struct {
 	PhotoUrl string `json:"photo_url" validate:"required,url"`
 	Order    int    `json:"order" validate:"required,min=1"`
+	PID      string `json:"public_id" validate:"required,url"`
 }
 
 type Location struct {

@@ -4,13 +4,14 @@ import (
 	"match-me/api/middleware"
 	"match-me/config"
 	"match-me/ent"
+	"match-me/internal/pkg/cloudinary"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-func NewHTTPServer(client *ent.Client, cfg *config.Config) *http.Server {
+func NewHTTPServer(client *ent.Client, cfg *config.Config, cld cloudinary.Cloudinary) *http.Server {
 
 	if cfg.AppEnv != "development" {
 		gin.SetMode(gin.ReleaseMode)
@@ -23,7 +24,7 @@ func NewHTTPServer(client *ent.Client, cfg *config.Config) *http.Server {
 	router.Use(middleware.Ping())
 
 	// Register routes
-	registerRoutes(client,router, cfg)
+	registerRoutes(client, router, cfg, cld)
 
 	// HTTP server setup
 	srv := &http.Server{

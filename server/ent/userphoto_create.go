@@ -27,6 +27,12 @@ func (_c *UserPhotoCreate) SetPhotoURL(v string) *UserPhotoCreate {
 	return _c
 }
 
+// SetPublicID sets the "public_id" field.
+func (_c *UserPhotoCreate) SetPublicID(v string) *UserPhotoCreate {
+	_c.mutation.SetPublicID(v)
+	return _c
+}
+
 // SetOrder sets the "order" field.
 func (_c *UserPhotoCreate) SetOrder(v int) *UserPhotoCreate {
 	_c.mutation.SetOrder(v)
@@ -109,6 +115,9 @@ func (_c *UserPhotoCreate) check() error {
 			return &ValidationError{Name: "photo_url", err: fmt.Errorf(`ent: validator failed for field "UserPhoto.photo_url": %w`, err)}
 		}
 	}
+	if _, ok := _c.mutation.PublicID(); !ok {
+		return &ValidationError{Name: "public_id", err: errors.New(`ent: missing required field "UserPhoto.public_id"`)}
+	}
 	if _, ok := _c.mutation.Order(); !ok {
 		return &ValidationError{Name: "order", err: errors.New(`ent: missing required field "UserPhoto.order"`)}
 	}
@@ -161,6 +170,10 @@ func (_c *UserPhotoCreate) createSpec() (*UserPhoto, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.PhotoURL(); ok {
 		_spec.SetField(userphoto.FieldPhotoURL, field.TypeString, value)
 		_node.PhotoURL = value
+	}
+	if value, ok := _c.mutation.PublicID(); ok {
+		_spec.SetField(userphoto.FieldPublicID, field.TypeString, value)
+		_node.PublicID = value
 	}
 	if value, ok := _c.mutation.Order(); ok {
 		_spec.SetField(userphoto.FieldOrder, field.TypeInt, value)

@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"match-me/ent"
-	"match-me/ent/schema"
 	"match-me/internal/requests"
 
 	"github.com/google/uuid"
@@ -31,7 +30,6 @@ type UserRepository interface {
 	Delete(ctx context.Context, photoID, userID uuid.UUID) error
 
 	// Location specific
-	GetUsersWithinRange(ctx context.Context, referencePoint schema.Point, distRange int) ([]*ent.User, error)
-	UserInRange(ctx context.Context, userID uuid.UUID, distRange int) (*ent.User, error)
+	GetUsersByPreference(ctx context.Context, reqUserID uuid.UUID) ([]*ent.User, *ent.User, error)
 	GetDistanceBetweenUsers(ctx context.Context, userAID, userBID uuid.UUID) (float64, error)
 }

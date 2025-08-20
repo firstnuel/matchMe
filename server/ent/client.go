@@ -11,6 +11,9 @@ import (
 
 	"match-me/ent/migrate"
 
+	"match-me/ent/connection"
+	"match-me/ent/connectionrequest"
+	"match-me/ent/message"
 	"match-me/ent/user"
 	"match-me/ent/userphoto"
 
@@ -26,6 +29,12 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Connection is the client for interacting with the Connection builders.
+	Connection *ConnectionClient
+	// ConnectionRequest is the client for interacting with the ConnectionRequest builders.
+	ConnectionRequest *ConnectionRequestClient
+	// Message is the client for interacting with the Message builders.
+	Message *MessageClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// UserPhoto is the client for interacting with the UserPhoto builders.
@@ -41,6 +50,9 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Connection = NewConnectionClient(c.config)
+	c.ConnectionRequest = NewConnectionRequestClient(c.config)
+	c.Message = NewMessageClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.UserPhoto = NewUserPhotoClient(c.config)
 }
@@ -133,10 +145,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:       ctx,
-		config:    cfg,
-		User:      NewUserClient(cfg),
-		UserPhoto: NewUserPhotoClient(cfg),
+		ctx:               ctx,
+		config:            cfg,
+		Connection:        NewConnectionClient(cfg),
+		ConnectionRequest: NewConnectionRequestClient(cfg),
+		Message:           NewMessageClient(cfg),
+		User:              NewUserClient(cfg),
+		UserPhoto:         NewUserPhotoClient(cfg),
 	}, nil
 }
 
@@ -154,17 +169,20 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:       ctx,
-		config:    cfg,
-		User:      NewUserClient(cfg),
-		UserPhoto: NewUserPhotoClient(cfg),
+		ctx:               ctx,
+		config:            cfg,
+		Connection:        NewConnectionClient(cfg),
+		ConnectionRequest: NewConnectionRequestClient(cfg),
+		Message:           NewMessageClient(cfg),
+		User:              NewUserClient(cfg),
+		UserPhoto:         NewUserPhotoClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		User.
+//		Connection.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -186,6 +204,9 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Connection.Use(hooks...)
+	c.ConnectionRequest.Use(hooks...)
+	c.Message.Use(hooks...)
 	c.User.Use(hooks...)
 	c.UserPhoto.Use(hooks...)
 }
@@ -193,6 +214,9 @@ func (c *Client) Use(hooks ...Hook) {
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.Connection.Intercept(interceptors...)
+	c.ConnectionRequest.Intercept(interceptors...)
+	c.Message.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 	c.UserPhoto.Intercept(interceptors...)
 }
@@ -200,12 +224,529 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *ConnectionMutation:
+		return c.Connection.mutate(ctx, m)
+	case *ConnectionRequestMutation:
+		return c.ConnectionRequest.mutate(ctx, m)
+	case *MessageMutation:
+		return c.Message.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	case *UserPhotoMutation:
 		return c.UserPhoto.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// ConnectionClient is a client for the Connection schema.
+type ConnectionClient struct {
+	config
+}
+
+// NewConnectionClient returns a client for the Connection from the given config.
+func NewConnectionClient(c config) *ConnectionClient {
+	return &ConnectionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `connection.Hooks(f(g(h())))`.
+func (c *ConnectionClient) Use(hooks ...Hook) {
+	c.hooks.Connection = append(c.hooks.Connection, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `connection.Intercept(f(g(h())))`.
+func (c *ConnectionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Connection = append(c.inters.Connection, interceptors...)
+}
+
+// Create returns a builder for creating a Connection entity.
+func (c *ConnectionClient) Create() *ConnectionCreate {
+	mutation := newConnectionMutation(c.config, OpCreate)
+	return &ConnectionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Connection entities.
+func (c *ConnectionClient) CreateBulk(builders ...*ConnectionCreate) *ConnectionCreateBulk {
+	return &ConnectionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ConnectionClient) MapCreateBulk(slice any, setFunc func(*ConnectionCreate, int)) *ConnectionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ConnectionCreateBulk{err: fmt.Errorf("calling to ConnectionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ConnectionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ConnectionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Connection.
+func (c *ConnectionClient) Update() *ConnectionUpdate {
+	mutation := newConnectionMutation(c.config, OpUpdate)
+	return &ConnectionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ConnectionClient) UpdateOne(_m *Connection) *ConnectionUpdateOne {
+	mutation := newConnectionMutation(c.config, OpUpdateOne, withConnection(_m))
+	return &ConnectionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ConnectionClient) UpdateOneID(id uuid.UUID) *ConnectionUpdateOne {
+	mutation := newConnectionMutation(c.config, OpUpdateOne, withConnectionID(id))
+	return &ConnectionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Connection.
+func (c *ConnectionClient) Delete() *ConnectionDelete {
+	mutation := newConnectionMutation(c.config, OpDelete)
+	return &ConnectionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ConnectionClient) DeleteOne(_m *Connection) *ConnectionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ConnectionClient) DeleteOneID(id uuid.UUID) *ConnectionDeleteOne {
+	builder := c.Delete().Where(connection.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ConnectionDeleteOne{builder}
+}
+
+// Query returns a query builder for Connection.
+func (c *ConnectionClient) Query() *ConnectionQuery {
+	return &ConnectionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeConnection},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Connection entity by its id.
+func (c *ConnectionClient) Get(ctx context.Context, id uuid.UUID) (*Connection, error) {
+	return c.Query().Where(connection.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ConnectionClient) GetX(ctx context.Context, id uuid.UUID) *Connection {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUserA queries the user_a edge of a Connection.
+func (c *ConnectionClient) QueryUserA(_m *Connection) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(connection.Table, connection.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, connection.UserATable, connection.UserAColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryUserB queries the user_b edge of a Connection.
+func (c *ConnectionClient) QueryUserB(_m *Connection) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(connection.Table, connection.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, connection.UserBTable, connection.UserBColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ConnectionClient) Hooks() []Hook {
+	return c.hooks.Connection
+}
+
+// Interceptors returns the client interceptors.
+func (c *ConnectionClient) Interceptors() []Interceptor {
+	return c.inters.Connection
+}
+
+func (c *ConnectionClient) mutate(ctx context.Context, m *ConnectionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ConnectionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ConnectionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ConnectionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ConnectionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Connection mutation op: %q", m.Op())
+	}
+}
+
+// ConnectionRequestClient is a client for the ConnectionRequest schema.
+type ConnectionRequestClient struct {
+	config
+}
+
+// NewConnectionRequestClient returns a client for the ConnectionRequest from the given config.
+func NewConnectionRequestClient(c config) *ConnectionRequestClient {
+	return &ConnectionRequestClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `connectionrequest.Hooks(f(g(h())))`.
+func (c *ConnectionRequestClient) Use(hooks ...Hook) {
+	c.hooks.ConnectionRequest = append(c.hooks.ConnectionRequest, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `connectionrequest.Intercept(f(g(h())))`.
+func (c *ConnectionRequestClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ConnectionRequest = append(c.inters.ConnectionRequest, interceptors...)
+}
+
+// Create returns a builder for creating a ConnectionRequest entity.
+func (c *ConnectionRequestClient) Create() *ConnectionRequestCreate {
+	mutation := newConnectionRequestMutation(c.config, OpCreate)
+	return &ConnectionRequestCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ConnectionRequest entities.
+func (c *ConnectionRequestClient) CreateBulk(builders ...*ConnectionRequestCreate) *ConnectionRequestCreateBulk {
+	return &ConnectionRequestCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ConnectionRequestClient) MapCreateBulk(slice any, setFunc func(*ConnectionRequestCreate, int)) *ConnectionRequestCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ConnectionRequestCreateBulk{err: fmt.Errorf("calling to ConnectionRequestClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ConnectionRequestCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ConnectionRequestCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ConnectionRequest.
+func (c *ConnectionRequestClient) Update() *ConnectionRequestUpdate {
+	mutation := newConnectionRequestMutation(c.config, OpUpdate)
+	return &ConnectionRequestUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ConnectionRequestClient) UpdateOne(_m *ConnectionRequest) *ConnectionRequestUpdateOne {
+	mutation := newConnectionRequestMutation(c.config, OpUpdateOne, withConnectionRequest(_m))
+	return &ConnectionRequestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ConnectionRequestClient) UpdateOneID(id uuid.UUID) *ConnectionRequestUpdateOne {
+	mutation := newConnectionRequestMutation(c.config, OpUpdateOne, withConnectionRequestID(id))
+	return &ConnectionRequestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ConnectionRequest.
+func (c *ConnectionRequestClient) Delete() *ConnectionRequestDelete {
+	mutation := newConnectionRequestMutation(c.config, OpDelete)
+	return &ConnectionRequestDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ConnectionRequestClient) DeleteOne(_m *ConnectionRequest) *ConnectionRequestDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ConnectionRequestClient) DeleteOneID(id uuid.UUID) *ConnectionRequestDeleteOne {
+	builder := c.Delete().Where(connectionrequest.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ConnectionRequestDeleteOne{builder}
+}
+
+// Query returns a query builder for ConnectionRequest.
+func (c *ConnectionRequestClient) Query() *ConnectionRequestQuery {
+	return &ConnectionRequestQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeConnectionRequest},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ConnectionRequest entity by its id.
+func (c *ConnectionRequestClient) Get(ctx context.Context, id uuid.UUID) (*ConnectionRequest, error) {
+	return c.Query().Where(connectionrequest.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ConnectionRequestClient) GetX(ctx context.Context, id uuid.UUID) *ConnectionRequest {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QuerySender queries the sender edge of a ConnectionRequest.
+func (c *ConnectionRequestClient) QuerySender(_m *ConnectionRequest) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(connectionrequest.Table, connectionrequest.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, connectionrequest.SenderTable, connectionrequest.SenderColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReceiver queries the receiver edge of a ConnectionRequest.
+func (c *ConnectionRequestClient) QueryReceiver(_m *ConnectionRequest) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(connectionrequest.Table, connectionrequest.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, connectionrequest.ReceiverTable, connectionrequest.ReceiverColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ConnectionRequestClient) Hooks() []Hook {
+	return c.hooks.ConnectionRequest
+}
+
+// Interceptors returns the client interceptors.
+func (c *ConnectionRequestClient) Interceptors() []Interceptor {
+	return c.inters.ConnectionRequest
+}
+
+func (c *ConnectionRequestClient) mutate(ctx context.Context, m *ConnectionRequestMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ConnectionRequestCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ConnectionRequestUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ConnectionRequestUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ConnectionRequestDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ConnectionRequest mutation op: %q", m.Op())
+	}
+}
+
+// MessageClient is a client for the Message schema.
+type MessageClient struct {
+	config
+}
+
+// NewMessageClient returns a client for the Message from the given config.
+func NewMessageClient(c config) *MessageClient {
+	return &MessageClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `message.Hooks(f(g(h())))`.
+func (c *MessageClient) Use(hooks ...Hook) {
+	c.hooks.Message = append(c.hooks.Message, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `message.Intercept(f(g(h())))`.
+func (c *MessageClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Message = append(c.inters.Message, interceptors...)
+}
+
+// Create returns a builder for creating a Message entity.
+func (c *MessageClient) Create() *MessageCreate {
+	mutation := newMessageMutation(c.config, OpCreate)
+	return &MessageCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Message entities.
+func (c *MessageClient) CreateBulk(builders ...*MessageCreate) *MessageCreateBulk {
+	return &MessageCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MessageClient) MapCreateBulk(slice any, setFunc func(*MessageCreate, int)) *MessageCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MessageCreateBulk{err: fmt.Errorf("calling to MessageClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MessageCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MessageCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Message.
+func (c *MessageClient) Update() *MessageUpdate {
+	mutation := newMessageMutation(c.config, OpUpdate)
+	return &MessageUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MessageClient) UpdateOne(_m *Message) *MessageUpdateOne {
+	mutation := newMessageMutation(c.config, OpUpdateOne, withMessage(_m))
+	return &MessageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MessageClient) UpdateOneID(id uuid.UUID) *MessageUpdateOne {
+	mutation := newMessageMutation(c.config, OpUpdateOne, withMessageID(id))
+	return &MessageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Message.
+func (c *MessageClient) Delete() *MessageDelete {
+	mutation := newMessageMutation(c.config, OpDelete)
+	return &MessageDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MessageClient) DeleteOne(_m *Message) *MessageDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MessageClient) DeleteOneID(id uuid.UUID) *MessageDeleteOne {
+	builder := c.Delete().Where(message.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MessageDeleteOne{builder}
+}
+
+// Query returns a query builder for Message.
+func (c *MessageClient) Query() *MessageQuery {
+	return &MessageQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMessage},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Message entity by its id.
+func (c *MessageClient) Get(ctx context.Context, id uuid.UUID) (*Message, error) {
+	return c.Query().Where(message.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MessageClient) GetX(ctx context.Context, id uuid.UUID) *Message {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryConnection queries the connection edge of a Message.
+func (c *MessageClient) QueryConnection(_m *Message) *ConnectionQuery {
+	query := (&ConnectionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(message.Table, message.FieldID, id),
+			sqlgraph.To(connection.Table, connection.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, message.ConnectionTable, message.ConnectionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySender queries the sender edge of a Message.
+func (c *MessageClient) QuerySender(_m *Message) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(message.Table, message.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, message.SenderTable, message.SenderColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReceiver queries the receiver edge of a Message.
+func (c *MessageClient) QueryReceiver(_m *Message) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(message.Table, message.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, message.ReceiverTable, message.ReceiverColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *MessageClient) Hooks() []Hook {
+	return c.hooks.Message
+}
+
+// Interceptors returns the client interceptors.
+func (c *MessageClient) Interceptors() []Interceptor {
+	return c.inters.Message
+}
+
+func (c *MessageClient) mutate(ctx context.Context, m *MessageMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MessageCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MessageUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MessageUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MessageDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Message mutation op: %q", m.Op())
 	}
 }
 
@@ -510,9 +1051,9 @@ func (c *UserPhotoClient) mutate(ctx context.Context, m *UserPhotoMutation) (Val
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		User, UserPhoto []ent.Hook
+		Connection, ConnectionRequest, Message, User, UserPhoto []ent.Hook
 	}
 	inters struct {
-		User, UserPhoto []ent.Interceptor
+		Connection, ConnectionRequest, Message, User, UserPhoto []ent.Interceptor
 	}
 )

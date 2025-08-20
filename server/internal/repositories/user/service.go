@@ -3,11 +3,13 @@ package user
 import (
 	"context"
 	"fmt"
+	"log"
 	"match-me/ent"
 	"match-me/ent/schema"
 	"match-me/ent/user"
 	"match-me/ent/userphoto"
 	"match-me/internal/requests"
+	"math"
 
 	"entgo.io/ent/dialect/sql"
 	"github.com/google/uuid"
@@ -213,6 +215,7 @@ func (r *userRepository) AddPhoto(ctx context.Context, photoID, userID uuid.UUID
 	userPhoto, err := r.client.UserPhoto.Create().
 		SetID(photoID).
 		SetPhotoURL(photo.PhotoUrl).
+		SetPublicID(photo.PID).
 		SetOrder(photo.Order).
 		SetUserID(userID).
 		Save(ctx)
@@ -253,63 +256,6 @@ func (r *userRepository) UpdateUserLocation(ctx context.Context, userID uuid.UUI
 	return nil
 }
 
-func (r *userRepository) GetUsersWithinRange(ctx context.Context, referencePoint schema.Point, distRange int) ([]*ent.User, error) {
-	// Use a custom predicate to filter users within range
-	// This is a simplified version
-	users, err := r.client.User.Query().
-		Where(func(s *sql.Selector) {
-			s.Where(sql.ExprP(
-				"ST_DWithin(coordinates::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)",
-				referencePoint.Longitude, referencePoint.Latitude, float64(distRange),
-			))
-			s.OrderExpr(sql.Expr(
-				"ST_Distance(coordinates::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography)",
-				referencePoint.Longitude, referencePoint.Latitude,
-			))
-		}).
-		WithPhotos().
-		All(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get users within range: %w", err)
-	}
-
-	return users, nil
-}
-
-func (r *userRepository) UserInRange(ctx context.Context, userID uuid.UUID, distRange int) (*ent.User, error) {
-	// Get the reference user
-	currentUser, err := r.client.User.Get(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get current user: %w", err)
-	}
-
-	if currentUser.Coordinates == nil {
-		return nil, fmt.Errorf("current user has no coordinates")
-	}
-
-	// Find first user within range excluding current user
-	foundUser, err := r.client.User.Query().
-		Where(
-			user.IDNEQ(userID),
-			func(s *sql.Selector) {
-				s.Where(sql.ExprP(
-					"ST_DWithin(coordinates::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)",
-					currentUser.Coordinates.Longitude, currentUser.Coordinates.Latitude, float64(distRange),
-				))
-			},
-		).
-		WithPhotos().
-		First(ctx)
-	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, nil // No users found in range
-		}
-		return nil, fmt.Errorf("failed to find user in range: %w", err)
-	}
-
-	return foundUser, nil
-}
-
 func (r *userRepository) GetDistanceBetweenUsers(ctx context.Context, userAID, userBID uuid.UUID) (float64, error) {
 	// Get both users
 	userA, err := r.client.User.Get(ctx, userAID)
@@ -346,4 +292,56 @@ func (r *userRepository) GetDistanceBetweenUsers(ctx context.Context, userAID, u
 	}
 
 	return result.Distance, nil
+}
+
+func (r *userRepository) GetUsersByPreference(
+	ctx context.Context,
+	reqUserID uuid.UUID) ([]*ent.User, *ent.User, error) {
+
+	currentUser, err := r.client.User.Get(ctx, reqUserID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get current user: %w", err)
+	}
+
+	if currentUser.ProfileCompletion < 100 {
+		return nil, nil, fmt.Errorf("current user profile must be complete")
+	}
+
+	if currentUser.Coordinates == nil {
+		return nil, nil, fmt.Errorf("current user has no coordinates")
+	}
+	if math.IsNaN(currentUser.Coordinates.Longitude) || math.IsNaN(currentUser.Coordinates.Latitude) {
+		return nil, nil, fmt.Errorf("invalid coordinates: longitude=%v, latitude=%v",
+			currentUser.Coordinates.Longitude, currentUser.Coordinates.Latitude)
+	}
+	if currentUser.PreferredDistance <= 0 {
+		return nil, nil, fmt.Errorf("invalid preferred distance: %v", currentUser.PreferredDistance)
+	}
+	distanceInMeters := float64(currentUser.PreferredDistance) * 1000
+
+	query := r.client.User.Query().Where(
+		user.IDNEQ(reqUserID),
+		user.AgeGTE(currentUser.PreferredAgeMin),
+		user.AgeLTE(currentUser.PreferredAgeMax),
+		user.ProfileCompletionEQ(100),
+		func(s *sql.Selector) {
+			// Use numbered placeholders to align with Ent's query builder
+			s.Where(sql.ExprP(
+				"ST_DWithin(coordinates, ST_SetSRID(ST_MakePoint($5, $6), 4326)::geography, $7)",
+				currentUser.Coordinates.Longitude, currentUser.Coordinates.Latitude, distanceInMeters,
+			))
+		},
+	)
+
+	if currentUser.PreferredGender != user.PreferredGenderAll {
+		query = query.Where(user.PreferredGenderEQ(currentUser.PreferredGender))
+	}
+
+	users, err := query.All(ctx)
+	if err != nil {
+		log.Printf("Query failed: %v", err)
+		return nil, nil, fmt.Errorf("failed to get users within range: %w", err)
+	}
+
+	return users, currentUser, nil
 }

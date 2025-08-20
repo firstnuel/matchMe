@@ -40,7 +40,7 @@ type User struct {
 	CommunicationStyle *string         `json:"communication_style,omitempty"`
 	Prompts            []schema.Prompt `json:"prompts,omitempty"`
 	Photos             []UserPhoto     `json:"photos,omitempty"`
-	ProfilePhoto       *string         `json:"profile_photo,omitempty"` // For basic access level
+	ProfilePhoto       *string         `json:"profile_photo,omitempty"`
 }
 
 type UserPhoto struct {

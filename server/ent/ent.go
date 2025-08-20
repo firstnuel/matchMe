@@ -6,6 +6,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"match-me/ent/connection"
+	"match-me/ent/connectionrequest"
+	"match-me/ent/message"
 	"match-me/ent/user"
 	"match-me/ent/userphoto"
 	"reflect"
@@ -74,8 +77,11 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			user.Table:      user.ValidColumn,
-			userphoto.Table: userphoto.ValidColumn,
+			connection.Table:        connection.ValidColumn,
+			connectionrequest.Table: connectionrequest.ValidColumn,
+			message.Table:           message.ValidColumn,
+			user.Table:              user.ValidColumn,
+			userphoto.Table:         userphoto.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

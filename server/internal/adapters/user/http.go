@@ -19,10 +19,12 @@ type UserHandler struct {
 	cfg               *config.Config
 }
 
-func NewUserHandler(client *ent.Client, cfg *config.Config, validationService *requests.ValidationService) *UserHandler {
+func NewUserHandler(client *ent.Client, cfg *config.Config,
+	validationService *requests.ValidationService,
+	cld cloudinary.Cloudinary) *UserHandler {
 
 	userRepo := userRepo.NewUserRepository(client)
-	userUsecase := userUsecase.NewUserUsecase(userRepo, cfg.JWTSecret, cloudinary.NewCloudinary())
+	userUsecase := userUsecase.NewUserUsecase(userRepo, cfg.JWTSecret, cld)
 	return &UserHandler{
 		UserUsecase:       userUsecase,
 		validationService: validationService,
@@ -54,6 +56,7 @@ func (h *UserHandler) RegisterRoutes(r *gin.Engine) *gin.Engine {
 		userMeGroup.DELETE("/", h.DeleteCurrentUser)
 		userMeGroup.PUT("/password", h.UpdateCurrentUserPassword)
 		userMeGroup.POST("/photos", h.UploadCurrentUserPhotos)
+		userMeGroup.GET("/recommendations", h.GetRecommendations)
 	}
 
 	log.Println("💫 All user routes registered")

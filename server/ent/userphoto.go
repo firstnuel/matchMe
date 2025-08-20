@@ -20,6 +20,8 @@ type UserPhoto struct {
 	ID uuid.UUID `json:"id,omitempty"`
 	// PhotoURL holds the value of the "photo_url" field.
 	PhotoURL string `json:"photo_url,omitempty"`
+	// PublicID holds the value of the "public_id" field.
+	PublicID string `json:"public_id,omitempty"`
 	// Order holds the value of the "order" field.
 	Order int `json:"order,omitempty"`
 	// UserID holds the value of the "user_id" field.
@@ -57,7 +59,7 @@ func (*UserPhoto) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case userphoto.FieldOrder:
 			values[i] = new(sql.NullInt64)
-		case userphoto.FieldPhotoURL:
+		case userphoto.FieldPhotoURL, userphoto.FieldPublicID:
 			values[i] = new(sql.NullString)
 		case userphoto.FieldID, userphoto.FieldUserID:
 			values[i] = new(uuid.UUID)
@@ -87,6 +89,12 @@ func (_m *UserPhoto) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field photo_url", values[i])
 			} else if value.Valid {
 				_m.PhotoURL = value.String
+			}
+		case userphoto.FieldPublicID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field public_id", values[i])
+			} else if value.Valid {
+				_m.PublicID = value.String
 			}
 		case userphoto.FieldOrder:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -143,6 +151,9 @@ func (_m *UserPhoto) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("photo_url=")
 	builder.WriteString(_m.PhotoURL)
+	builder.WriteString(", ")
+	builder.WriteString("public_id=")
+	builder.WriteString(_m.PublicID)
 	builder.WriteString(", ")
 	builder.WriteString("order=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Order))

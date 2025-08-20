@@ -21,6 +21,7 @@ func (UserPhoto) Fields() []ent.Field {
 			Immutable(),
 		field.String("photo_url").
 			NotEmpty(),
+		field.String("public_id"),
 		field.Int("order").
 			Min(1),
 		field.UUID("user_id", uuid.UUID{}),

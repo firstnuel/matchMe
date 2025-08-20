@@ -15,6 +15,8 @@ const (
 	FieldID = "id"
 	// FieldPhotoURL holds the string denoting the photo_url field in the database.
 	FieldPhotoURL = "photo_url"
+	// FieldPublicID holds the string denoting the public_id field in the database.
+	FieldPublicID = "public_id"
 	// FieldOrder holds the string denoting the order field in the database.
 	FieldOrder = "order"
 	// FieldUserID holds the string denoting the user_id field in the database.
@@ -36,6 +38,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldPhotoURL,
+	FieldPublicID,
 	FieldOrder,
 	FieldUserID,
 }
@@ -70,6 +73,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByPhotoURL orders the results by the photo_url field.
 func ByPhotoURL(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPhotoURL, opts...).ToFunc()
+}
+
+// ByPublicID orders the results by the public_id field.
+func ByPublicID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPublicID, opts...).ToFunc()
 }
 
 // ByOrder orders the results by the order field.

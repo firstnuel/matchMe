@@ -3,6 +3,9 @@
 package ent
 
 import (
+	"match-me/ent/connection"
+	"match-me/ent/connectionrequest"
+	"match-me/ent/message"
 	"match-me/ent/schema"
 	"match-me/ent/user"
 	"match-me/ent/userphoto"
@@ -15,6 +18,66 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	connectionFields := schema.Connection{}.Fields()
+	_ = connectionFields
+	// connectionDescConnectedAt is the schema descriptor for connected_at field.
+	connectionDescConnectedAt := connectionFields[4].Descriptor()
+	// connection.DefaultConnectedAt holds the default value on creation for the connected_at field.
+	connection.DefaultConnectedAt = connectionDescConnectedAt.Default.(func() time.Time)
+	// connectionDescUpdatedAt is the schema descriptor for updated_at field.
+	connectionDescUpdatedAt := connectionFields[5].Descriptor()
+	// connection.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	connection.DefaultUpdatedAt = connectionDescUpdatedAt.Default.(func() time.Time)
+	// connection.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	connection.UpdateDefaultUpdatedAt = connectionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// connectionDescID is the schema descriptor for id field.
+	connectionDescID := connectionFields[0].Descriptor()
+	// connection.DefaultID holds the default value on creation for the id field.
+	connection.DefaultID = connectionDescID.Default.(func() uuid.UUID)
+	connectionrequestFields := schema.ConnectionRequest{}.Fields()
+	_ = connectionrequestFields
+	// connectionrequestDescMessage is the schema descriptor for message field.
+	connectionrequestDescMessage := connectionrequestFields[4].Descriptor()
+	// connectionrequest.MessageValidator is a validator for the "message" field. It is called by the builders before save.
+	connectionrequest.MessageValidator = connectionrequestDescMessage.Validators[0].(func(string) error)
+	// connectionrequestDescCreatedAt is the schema descriptor for created_at field.
+	connectionrequestDescCreatedAt := connectionrequestFields[5].Descriptor()
+	// connectionrequest.DefaultCreatedAt holds the default value on creation for the created_at field.
+	connectionrequest.DefaultCreatedAt = connectionrequestDescCreatedAt.Default.(func() time.Time)
+	// connectionrequestDescUpdatedAt is the schema descriptor for updated_at field.
+	connectionrequestDescUpdatedAt := connectionrequestFields[6].Descriptor()
+	// connectionrequest.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	connectionrequest.DefaultUpdatedAt = connectionrequestDescUpdatedAt.Default.(func() time.Time)
+	// connectionrequest.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	connectionrequest.UpdateDefaultUpdatedAt = connectionrequestDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// connectionrequestDescID is the schema descriptor for id field.
+	connectionrequestDescID := connectionrequestFields[0].Descriptor()
+	// connectionrequest.DefaultID holds the default value on creation for the id field.
+	connectionrequest.DefaultID = connectionrequestDescID.Default.(func() uuid.UUID)
+	messageFields := schema.Message{}.Fields()
+	_ = messageFields
+	// messageDescIsRead is the schema descriptor for is_read field.
+	messageDescIsRead := messageFields[9].Descriptor()
+	// message.DefaultIsRead holds the default value on creation for the is_read field.
+	message.DefaultIsRead = messageDescIsRead.Default.(bool)
+	// messageDescCreatedAt is the schema descriptor for created_at field.
+	messageDescCreatedAt := messageFields[10].Descriptor()
+	// message.DefaultCreatedAt holds the default value on creation for the created_at field.
+	message.DefaultCreatedAt = messageDescCreatedAt.Default.(func() time.Time)
+	// messageDescUpdatedAt is the schema descriptor for updated_at field.
+	messageDescUpdatedAt := messageFields[11].Descriptor()
+	// message.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	message.DefaultUpdatedAt = messageDescUpdatedAt.Default.(func() time.Time)
+	// message.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	message.UpdateDefaultUpdatedAt = messageDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// messageDescIsDeleted is the schema descriptor for is_deleted field.
+	messageDescIsDeleted := messageFields[13].Descriptor()
+	// message.DefaultIsDeleted holds the default value on creation for the is_deleted field.
+	message.DefaultIsDeleted = messageDescIsDeleted.Default.(bool)
+	// messageDescID is the schema descriptor for id field.
+	messageDescID := messageFields[0].Descriptor()
+	// message.DefaultID holds the default value on creation for the id field.
+	message.DefaultID = messageDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescEmail is the schema descriptor for email field.
@@ -188,7 +251,7 @@ func init() {
 	// userphoto.PhotoURLValidator is a validator for the "photo_url" field. It is called by the builders before save.
 	userphoto.PhotoURLValidator = userphotoDescPhotoURL.Validators[0].(func(string) error)
 	// userphotoDescOrder is the schema descriptor for order field.
-	userphotoDescOrder := userphotoFields[2].Descriptor()
+	userphotoDescOrder := userphotoFields[3].Descriptor()
 	// userphoto.OrderValidator is a validator for the "order" field. It is called by the builders before save.
 	userphoto.OrderValidator = userphotoDescOrder.Validators[0].(func(int) error)
 	// userphotoDescID is the schema descriptor for id field.

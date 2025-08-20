@@ -6,6 +6,15 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Connection is the predicate function for connection builders.
+type Connection func(*sql.Selector)
+
+// ConnectionRequest is the predicate function for connectionrequest builders.
+type ConnectionRequest func(*sql.Selector)
+
+// Message is the predicate function for message builders.
+type Message func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
 

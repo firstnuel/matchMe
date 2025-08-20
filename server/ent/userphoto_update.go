@@ -43,6 +43,20 @@ func (_u *UserPhotoUpdate) SetNillablePhotoURL(v *string) *UserPhotoUpdate {
 	return _u
 }
 
+// SetPublicID sets the "public_id" field.
+func (_u *UserPhotoUpdate) SetPublicID(v string) *UserPhotoUpdate {
+	_u.mutation.SetPublicID(v)
+	return _u
+}
+
+// SetNillablePublicID sets the "public_id" field if the given value is not nil.
+func (_u *UserPhotoUpdate) SetNillablePublicID(v *string) *UserPhotoUpdate {
+	if v != nil {
+		_u.SetPublicID(*v)
+	}
+	return _u
+}
+
 // SetOrder sets the "order" field.
 func (_u *UserPhotoUpdate) SetOrder(v int) *UserPhotoUpdate {
 	_u.mutation.ResetOrder()
@@ -154,6 +168,9 @@ func (_u *UserPhotoUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.PhotoURL(); ok {
 		_spec.SetField(userphoto.FieldPhotoURL, field.TypeString, value)
 	}
+	if value, ok := _u.mutation.PublicID(); ok {
+		_spec.SetField(userphoto.FieldPublicID, field.TypeString, value)
+	}
 	if value, ok := _u.mutation.Order(); ok {
 		_spec.SetField(userphoto.FieldOrder, field.TypeInt, value)
 	}
@@ -219,6 +236,20 @@ func (_u *UserPhotoUpdateOne) SetPhotoURL(v string) *UserPhotoUpdateOne {
 func (_u *UserPhotoUpdateOne) SetNillablePhotoURL(v *string) *UserPhotoUpdateOne {
 	if v != nil {
 		_u.SetPhotoURL(*v)
+	}
+	return _u
+}
+
+// SetPublicID sets the "public_id" field.
+func (_u *UserPhotoUpdateOne) SetPublicID(v string) *UserPhotoUpdateOne {
+	_u.mutation.SetPublicID(v)
+	return _u
+}
+
+// SetNillablePublicID sets the "public_id" field if the given value is not nil.
+func (_u *UserPhotoUpdateOne) SetNillablePublicID(v *string) *UserPhotoUpdateOne {
+	if v != nil {
+		_u.SetPublicID(*v)
 	}
 	return _u
 }
@@ -363,6 +394,9 @@ func (_u *UserPhotoUpdateOne) sqlSave(ctx context.Context) (_node *UserPhoto, er
 	}
 	if value, ok := _u.mutation.PhotoURL(); ok {
 		_spec.SetField(userphoto.FieldPhotoURL, field.TypeString, value)
+	}
+	if value, ok := _u.mutation.PublicID(); ok {
+		_spec.SetField(userphoto.FieldPublicID, field.TypeString, value)
 	}
 	if value, ok := _u.mutation.Order(); ok {
 		_spec.SetField(userphoto.FieldOrder, field.TypeInt, value)

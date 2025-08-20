@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"match-me/internal/models"
@@ -156,6 +157,7 @@ func (u *userUsecase) UploadUserPhotos(ctx context.Context, userID uuid.UUID, fi
 		// Create photo request
 		photoRequest := requests.UserPhoto{
 			PhotoUrl: photoURL,
+			PID:      publicID,
 			Order:    order,
 		}
 
@@ -183,4 +185,56 @@ func (u *userUsecase) UploadUserPhotos(ctx context.Context, userID uuid.UUID, fi
 	}
 
 	return uploadedPhotos, nil
+}
+
+func (u *userUsecase) GetRecommendations(ctx context.Context, userID uuid.UUID) ([]string, error) {
+	// fetch users by user preference
+	preferredUsers, currentUser, err := u.userRepo.GetUsersByPreference(ctx, userID)
+	if err != nil {
+		return []string{}, err
+	}
+
+	if len(preferredUsers) < 1 {
+		return []string{}, nil
+	}
+
+	type userRanking struct {
+		userID    string
+		userScore int
+	}
+
+	recommendedIDS := make([]userRanking, len(preferredUsers))
+
+	for i, v := range preferredUsers {
+		score := 0
+		// check matches in bio max if 5 per field
+		score += countSimilar(currentUser.LookingFor, v.LookingFor)
+		score += countSimilar(currentUser.Interests, v.Interests)
+		score += countSimilar(currentUser.MusicPreferences, v.MusicPreferences)
+		score += countSimilar(currentUser.FoodPreferences, v.FoodPreferences)
+		if currentUser.CommunicationStyle == v.CommunicationStyle {
+			score += 5
+		}
+		recommendedIDS[i] = userRanking{
+			userID:    v.ID.String(),
+			userScore: score,
+		}
+	}
+
+	// Sort by userScore descending
+	sort.Slice(recommendedIDS, func(i, j int) bool {
+		return recommendedIDS[i].userScore > recommendedIDS[j].userScore
+	})
+
+	// Return top 10 userIDs
+	n := 10
+	if len(recommendedIDS) < n {
+		n = len(recommendedIDS)
+	}
+	result := make([]string, n)
+	for i := 0; i < n; i++ {
+		result[i] = recommendedIDS[i].userID
+	}
+
+	return result, nil
 }

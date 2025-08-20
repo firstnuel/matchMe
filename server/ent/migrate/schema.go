@@ -9,6 +9,268 @@ import (
 )
 
 var (
+	// ConnectionsColumns holds the columns for the "connections" table.
+	ConnectionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"connected", "dropped"}},
+		{Name: "connected_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "dropped_at", Type: field.TypeTime, Nullable: true},
+		{Name: "user_a_id", Type: field.TypeUUID},
+		{Name: "user_b_id", Type: field.TypeUUID},
+	}
+	// ConnectionsTable holds the schema information for the "connections" table.
+	ConnectionsTable = &schema.Table{
+		Name:       "connections",
+		Columns:    ConnectionsColumns,
+		PrimaryKey: []*schema.Column{ConnectionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "connections_users_user_a",
+				Columns:    []*schema.Column{ConnectionsColumns[5]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "connections_users_user_b",
+				Columns:    []*schema.Column{ConnectionsColumns[6]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "connection_user_a_id",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionsColumns[5]},
+			},
+			{
+				Name:    "connection_user_b_id",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionsColumns[6]},
+			},
+			{
+				Name:    "connection_status",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionsColumns[1]},
+			},
+			{
+				Name:    "connection_user_a_id_user_b_id",
+				Unique:  true,
+				Columns: []*schema.Column{ConnectionsColumns[5], ConnectionsColumns[6]},
+			},
+			{
+				Name:    "connection_user_a_id_status",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionsColumns[5], ConnectionsColumns[1]},
+			},
+			{
+				Name:    "connection_user_b_id_status",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionsColumns[6], ConnectionsColumns[1]},
+			},
+			{
+				Name:    "connection_connected_at",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionsColumns[2]},
+			},
+			{
+				Name:    "connection_updated_at",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionsColumns[3]},
+			},
+		},
+	}
+	// ConnectionRequestsColumns holds the columns for the "connection_requests" table.
+	ConnectionRequestsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "accepted", "declined", "expired"}, Default: "pending"},
+		{Name: "message", Type: field.TypeString, Nullable: true, Size: 500},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "responded_at", Type: field.TypeTime, Nullable: true},
+		{Name: "expires_at", Type: field.TypeTime, Nullable: true},
+		{Name: "sender_id", Type: field.TypeUUID},
+		{Name: "receiver_id", Type: field.TypeUUID},
+	}
+	// ConnectionRequestsTable holds the schema information for the "connection_requests" table.
+	ConnectionRequestsTable = &schema.Table{
+		Name:       "connection_requests",
+		Columns:    ConnectionRequestsColumns,
+		PrimaryKey: []*schema.Column{ConnectionRequestsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "connection_requests_users_sender",
+				Columns:    []*schema.Column{ConnectionRequestsColumns[7]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "connection_requests_users_receiver",
+				Columns:    []*schema.Column{ConnectionRequestsColumns[8]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "connectionrequest_sender_id",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionRequestsColumns[7]},
+			},
+			{
+				Name:    "connectionrequest_receiver_id",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionRequestsColumns[8]},
+			},
+			{
+				Name:    "connectionrequest_status",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionRequestsColumns[1]},
+			},
+			{
+				Name:    "connectionrequest_sender_id_receiver_id",
+				Unique:  true,
+				Columns: []*schema.Column{ConnectionRequestsColumns[7], ConnectionRequestsColumns[8]},
+			},
+			{
+				Name:    "connectionrequest_receiver_id_status",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionRequestsColumns[8], ConnectionRequestsColumns[1]},
+			},
+			{
+				Name:    "connectionrequest_sender_id_status",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionRequestsColumns[7], ConnectionRequestsColumns[1]},
+			},
+			{
+				Name:    "connectionrequest_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionRequestsColumns[3]},
+			},
+			{
+				Name:    "connectionrequest_updated_at",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionRequestsColumns[4]},
+			},
+			{
+				Name:    "connectionrequest_expires_at",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionRequestsColumns[6]},
+			},
+			{
+				Name:    "connectionrequest_status_expires_at",
+				Unique:  false,
+				Columns: []*schema.Column{ConnectionRequestsColumns[1], ConnectionRequestsColumns[6]},
+			},
+		},
+	}
+	// MessagesColumns holds the columns for the "messages" table.
+	MessagesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"text", "media"}, Default: "text"},
+		{Name: "content", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "media_url", Type: field.TypeString, Nullable: true},
+		{Name: "media_type", Type: field.TypeString, Nullable: true},
+		{Name: "media_public_id", Type: field.TypeString, Nullable: true},
+		{Name: "is_read", Type: field.TypeBool, Default: false},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "read_at", Type: field.TypeTime, Nullable: true},
+		{Name: "is_deleted", Type: field.TypeBool, Default: false},
+		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "connection_id", Type: field.TypeUUID},
+		{Name: "sender_id", Type: field.TypeUUID},
+		{Name: "receiver_id", Type: field.TypeUUID},
+	}
+	// MessagesTable holds the schema information for the "messages" table.
+	MessagesTable = &schema.Table{
+		Name:       "messages",
+		Columns:    MessagesColumns,
+		PrimaryKey: []*schema.Column{MessagesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "messages_connections_connection",
+				Columns:    []*schema.Column{MessagesColumns[12]},
+				RefColumns: []*schema.Column{ConnectionsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "messages_users_sender",
+				Columns:    []*schema.Column{MessagesColumns[13]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "messages_users_receiver",
+				Columns:    []*schema.Column{MessagesColumns[14]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "message_connection_id",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[12]},
+			},
+			{
+				Name:    "message_sender_id",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[13]},
+			},
+			{
+				Name:    "message_receiver_id",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[14]},
+			},
+			{
+				Name:    "message_receiver_id_is_read",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[14], MessagesColumns[6]},
+			},
+			{
+				Name:    "message_connection_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[12], MessagesColumns[7]},
+			},
+			{
+				Name:    "message_type",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[1]},
+			},
+			{
+				Name:    "message_is_deleted",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[10]},
+			},
+			{
+				Name:    "message_connection_id_is_read",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[12], MessagesColumns[6]},
+			},
+			{
+				Name:    "message_is_deleted_deleted_at",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[10], MessagesColumns[11]},
+			},
+			{
+				Name:    "message_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[7]},
+			},
+			{
+				Name:    "message_updated_at",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[8]},
+			},
+			{
+				Name:    "message_type_media_type",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[1], MessagesColumns[4]},
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -54,6 +316,7 @@ var (
 	UserPhotosColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "photo_url", Type: field.TypeString},
+		{Name: "public_id", Type: field.TypeString},
 		{Name: "order", Type: field.TypeInt},
 		{Name: "user_id", Type: field.TypeUUID},
 	}
@@ -65,7 +328,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "user_photos_users_photos",
-				Columns:    []*schema.Column{UserPhotosColumns[3]},
+				Columns:    []*schema.Column{UserPhotosColumns[4]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -73,11 +336,21 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		ConnectionsTable,
+		ConnectionRequestsTable,
+		MessagesTable,
 		UsersTable,
 		UserPhotosTable,
 	}
 )
 
 func init() {
+	ConnectionsTable.ForeignKeys[0].RefTable = UsersTable
+	ConnectionsTable.ForeignKeys[1].RefTable = UsersTable
+	ConnectionRequestsTable.ForeignKeys[0].RefTable = UsersTable
+	ConnectionRequestsTable.ForeignKeys[1].RefTable = UsersTable
+	MessagesTable.ForeignKeys[0].RefTable = ConnectionsTable
+	MessagesTable.ForeignKeys[1].RefTable = UsersTable
+	MessagesTable.ForeignKeys[2].RefTable = UsersTable
 	UserPhotosTable.ForeignKeys[0].RefTable = UsersTable
 }
