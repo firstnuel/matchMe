@@ -1,0 +1,72 @@
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Configuration files with environment-specific settings
+*config*.go
+*cloudinary*.go
+
+# Go build artifacts
+bin/
+build/
+dist/
+
+# Go test files
+*.test
+*.out
+
+# Go coverage
+coverage/
+*.lcov
+
+# Go build cache
+go-build/
+go-mod-cache/
+
+# Go dependency files (auto-generated)
+go.sum
+go.mod.lock
+
+# Generated Go files
+*.gen.go
+*.pb.go
+
+# Air live reload
+tmp/
+
+# Logs
+*.log
+logs/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Cloudinary cache
+cloudinary_cache/
+
+# User uploads
+uploads/
+user_photos/
+
+# JWT tokens
+*.jwt
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
