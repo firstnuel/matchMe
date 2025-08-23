@@ -1,39 +1,49 @@
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { type Point } from "../../../shared/types/user";
-import { useMutation } from "@tanstack/react-query";
-import { getLocationCity } from "../api/userProfile";
+import { useGetLocationCity } from "../hooks/useCurrentUser";
 
 interface LocationProps {
   location: Point;
   setLocation: React.Dispatch<React.SetStateAction<Point>>;
+  maxRetries?: number; // optional, defaults to 1 retry
 }
 
-const Location = ({ location, setLocation }: LocationProps) => {
+const Location = ({ location, setLocation, maxRetries = 1 }: LocationProps) => {
   const [error, setError] = useState("");
-  const mutation = useMutation({
-    mutationFn: getLocationCity,
-    onSuccess: (data) => {
-      setLocation({
-        latitude: data.lat,
-        longitude: data.lon,
-        city: data.city,
-      });
-    },
-    onError: () => {
-      setError("Could not fetch city name.");
-    },
-  });
+  const [retryCount, setRetryCount] = useState(0);
+  const mutation = useGetLocationCity();
 
   useEffect(() => {
     if (
       location.latitude !== 0 &&
       location.longitude !== 0 &&
-      location.city === ""
+      (!location.city || location.city === "")
     ) {
-      mutation.mutate({ latitude: location.latitude, longitude: location.longitude });
+      mutation.mutate(
+        { latitude: location.latitude, longitude: location.longitude },
+        {
+          onSuccess: (data) => {
+            setLocation({
+              latitude: data.lat,
+              longitude: data.lon,
+              city: data.city,
+            });
+            setError("");
+            setRetryCount(0); // reset retries on success
+          },
+          onError: () => {
+            if (retryCount < maxRetries) {
+              setRetryCount((prev) => prev + 1); // retry
+            } else {
+              setError("Could not fetch city name.");
+            }
+          },
+        }
+      );
     }
-  }, [location.latitude, location.longitude, location.city, mutation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location, retryCount]);
 
   const getLocation = () => {
     if (navigator.geolocation) {
@@ -41,8 +51,27 @@ const Location = ({ location, setLocation }: LocationProps) => {
         async (position) => {
           try {
             const { latitude, longitude } = position.coords;
-            mutation.mutate({ latitude, longitude });
-            setError("");
+            mutation.mutate(
+              { latitude, longitude },
+              {
+                onSuccess: (data) => {
+                  setLocation({
+                    latitude: data.lat,
+                    longitude: data.lon,
+                    city: data.city,
+                  });
+                  setError("");
+                  setRetryCount(0); // reset on success
+                },
+                onError: () => {
+                  if (retryCount < maxRetries) {
+                    setRetryCount((prev) => prev + 1);
+                  } else {
+                    setError("Could not fetch city name.");
+                  }
+                },
+              }
+            );
           } catch (err) {
             console.error(err);
             setError("Could not fetch city name.");

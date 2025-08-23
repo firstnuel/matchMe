@@ -1,0 +1,401 @@
+.match-content {
+    padding: 2rem;
+    padding-bottom: 6rem;
+    max-width: 90%;
+    margin: 0 auto;
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+    scroll-behavior: smooth;
+    scroll-snap-type: y mandatory;
+}
+
+.match-content::-webkit-scrollbar {
+    display: none; /* Webkit browsers */
+}
+
+.card-stack {
+    max-width: 450px;
+    width: 100%;
+    margin: 0 auto;
+    position: relative;
+    height: 65vh;
+    min-height: 400px;
+    max-height: 700px;
+}
+
+.profile-card {
+    background: white;
+    border-radius: 1.5rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.15);
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    cursor: grab;
+    transition: transform 0.3s ease;
+}
+
+/* Swipe animations */
+.profile-card.swipe-left {
+    animation: swipeLeft 0.6s ease-in-out forwards;
+}
+
+.profile-card.swipe-right {
+    animation: swipeRight 0.6s ease-in-out forwards;
+}
+
+.profile-card.animating {
+    pointer-events: none;
+}
+
+@keyframes swipeLeft {
+    0% {
+        transform: translateX(0) rotate(0deg);
+        opacity: 1;
+    }
+    50% {
+        transform: translateX(-30%) rotate(-15deg);
+        opacity: 0.7;
+    }
+    100% {
+        transform: translateX(-100%) rotate(-30deg);
+        opacity: 0;
+    }
+}
+
+@keyframes swipeRight {
+    0% {
+        transform: translateX(0) rotate(0deg);
+        opacity: 1;
+    }
+    50% {
+        transform: translateX(30%) rotate(15deg);
+        opacity: 0.7;
+    }
+    100% {
+        transform: translateX(100%) rotate(30deg);
+        opacity: 0;
+    }
+}
+
+
+
+.card-image {
+    width: 100%;
+    height: 75%;
+    background: linear-gradient(45deg, #f3e8ff, #e0e7ff);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(2rem, 8vw, 3rem);
+    color: var(--primary-color);
+    overflow: hidden;
+}
+
+/* Carousel styles */
+.image-carousel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.carousel-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.profile-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.placeholder-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+/* Navigation arrows */
+.carousel-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+.carousel-nav:hover {
+    background: rgba(0, 0, 0, 0.7);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.carousel-prev {
+    left: 10px;
+}
+
+.carousel-next {
+    right: 10px;
+}
+
+/* Dot indicators */
+.carousel-dots {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 2;
+}
+
+.carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.carousel-dot.active {
+    background: white;
+    transform: scale(1.2);
+}
+
+.carousel-dot:hover {
+    background: rgba(255, 255, 255, 0.8);
+}
+
+.card-info {
+    padding: 1.5rem;
+    height: 35%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.card-name {
+    font-size: clamp(1.2rem, 5vw, 1.5rem);
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.card-age {
+    color: var(--primary-color-light);
+    font-size: clamp(0.8rem, 3.5vw, 0.95rem);
+    margin-bottom: 0.25rem;
+}
+
+.card-bio {
+    color: #888;
+    font-size: clamp(0.9rem, 4vw, 1.1rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    padding-bottom: 1rem;
+}
+
+.action-btn {
+    width: clamp(2.5rem, 12vw, 3.5rem);
+    height: clamp(2.5rem, 12vw, 3.5rem);
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1.2rem, 5vw, 1.5rem);
+    transition: all 0.3s ease;
+    box-shadow: 0 0.25rem 0.75rem rgba(0,0,0,0.2);
+}
+
+.action-btn:hover {
+    transform: scale(1.1);
+}
+
+.action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.action-btn:disabled:hover {
+    transform: none;
+}
+
+.reject-btn {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.like-btn {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: white;
+}
+
+/* Small screens (mobile) */
+@media screen and (max-width: 576px) {
+    .match-content {
+        padding: 1rem;
+        padding-bottom: 4rem;
+        max-width: 100%;
+    }
+
+    .card-stack {
+        height: 60vh;
+        min-height: 350px;
+        max-height: 550px;
+    }
+
+    .profile-card {
+        border: 1px solid #dddada;
+        box-shadow: none;
+        border-radius: 1rem;
+        height: 70dvh;
+    }
+
+    .card-image {
+        height: 100%;
+        font-size: clamp(1.5rem, 7vw, 2.25rem);
+    }
+
+    .card-info {
+        padding: 1rem;
+    }
+
+    .card-name {
+        font-size: clamp(1rem, 4.5vw, 1.25rem);
+        margin-bottom: 0.25rem;
+    }
+
+
+    .action-btn {
+        width: clamp(3.5rem, 12dvw, 6rem);
+        height: clamp(3.5rem, 12dvw, 6rem);
+        font-size: clamp(1.1rem, 5dvw, 1.5rem);
+    }
+
+}
+
+/* Medium screens (tablets) */
+@media screen and (min-width: 577px) and (max-width: 768px) {
+    .match-content {
+        padding: 1.5rem;
+        max-width: 95%;
+    }
+
+    .card-stack {
+        max-width: 400px;
+        height: 60vh;
+        min-height: 400px;
+        max-height: 650px;
+    }
+
+    .card-image {
+        font-size: clamp(1.75rem, 7vw, 2.5rem);
+    }
+
+    .card-info {
+        padding: 1.25rem;
+    }
+
+    .card-name {
+        font-size: clamp(1.1rem, 4.5vw, 1.4rem);
+    }
+}
+
+/* Loading and message states */
+.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+}
+
+.message-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 400px;
+    text-align: center;
+    padding: 2rem;
+}
+
+.message-title {
+    margin-bottom: 1rem;
+    color: #666;
+}
+
+.message-text {
+    color: #888;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.complete-profile-btn {
+    padding: 0.75rem 1.5rem;
+    background-color: #7c3aed;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.complete-profile-btn:hover {
+    background-color: #6d28d9;
+}
+
+.no-profiles-text {
+    color: #888;
+    line-height: 1.5;
+}
+
+/* Large screens (desktops) */
+@media screen and (min-width: 769px) {
+    .match-content {
+        max-width: 80%;
+    }
+
+    .card-stack {
+        max-width: 500px;
+        height: 70vh;
+        max-height: 800px;
+    }
+}

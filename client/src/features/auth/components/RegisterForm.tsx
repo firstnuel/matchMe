@@ -9,7 +9,9 @@ import { useField } from '../../../shared/hooks/useField';
 import { registerUser } from '../api/authApi'
 import { useMutation } from "@tanstack/react-query";
 import { useAuthStore } from '../hooks/authStore'
+import { useUIStore } from '../../../shared/hooks/uiStore'
 import { calculateAge } from '../../../shared/utils/ageHelper'
+import { useNavigate } from 'react-router-dom'
 import { useState, useEffect, type FormEvent } from 'react'
 import '../styles.css'
 import type { RegisterData } from '../types/auth'
@@ -22,12 +24,17 @@ const RegisterForm = () => {
   const { reset: lastNameReset, ...lastName } = useField('text', 'text', '')
   const { reset: genderReset, ...gender } = useField('text', 'text', '')
   const { reset: ageReset, ...age } = useField('date', 'date', '')
+  const navigate = useNavigate()
+  const { setView } = useUIStore()
   const [errorMsg, setErrorMsg] = useState<string>("")
+  const [infoMsg, setInfoMsg] = useState<string>("")
+
     const { setAuthToken } = useAuthStore()
   const mutation = useMutation({
     mutationFn: registerUser,
     onSuccess: (data) => {
         if (data && 'token' in data) {
+            setInfoMsg("User Registration Successful")
             setAuthToken(data?.token)
             emailReset()
             passwordReset()
@@ -35,6 +42,8 @@ const RegisterForm = () => {
             lastNameReset()
             genderReset()
             ageReset()
+            navigate("/")
+            setView("home")
         }
 
         if (data && ('error' in data || 'details' in data)) {
@@ -75,7 +84,7 @@ const RegisterForm = () => {
         <AppNameTag />
         <Form onSubmit={registerFn} className="d-grid gap-2">
           <div className={errorMsg? 'error': 'info'}>
-            {errorMsg? errorMsg : 'Create your account'}
+            {errorMsg || infoMsg || 'Create your account'}
           </div>
           
           <InputGroup className="mb-3">

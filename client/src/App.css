@@ -95,11 +95,6 @@
   min-width: 150px;
 }
 
-.profile-name {
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
 .btns {
     display: flex;
     gap: 0.5rem;
@@ -128,6 +123,72 @@
 
 .profile-btn.cancel:hover {
   background-color: #e2e8f0;
+}
+
+@keyframes fadeInSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.notify-error-div,
+.notify-success-div {
+    background-color: var(--secondary-red);
+    color: var(--secondary-color);
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid var(--secondary-red);
+    border-radius: 5px;
+    width: max-content;
+    height: fit-content;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1em;
+    animation: fadeInSlideDown 0.5s ease-out;
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 2000;
+}
+
+.notify-error-div .error-msg,
+.notify-success-div .success-msg {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.notify-error-div .clear-err-btn,
+.notify-success-div .clear-success-btn {
+    background-color: var(--secondary-red);
+    color: var(--secondary-color);
+    border: 1px solid var(--secondary-red);
+    border-radius: 50%;
+    height: 1em;
+    width: 1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+}
+
+.notify-success-div {
+    background-color: var(--light-green);
+    border: 1px solid var(--light-green);
+    color: var(--tertiary-color);
+}
+
+.notify-success-div .clear-success-btn {
+    background-color: var(--light-green);
+    border: 1px solid var(--light-green);
+    color: var(--tertiary-color);
 }
 
 @media (max-width: 600px) {

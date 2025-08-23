@@ -1,14 +1,17 @@
 import PhotoUploadSection from "./PhotoUploadCard";
 import FormField from "./FormField";
 import Location from "./Location";
-import { type Point, type Prompt, type User } from "../../../shared/types/user";
+import { Icon } from "@iconify/react/dist/iconify.js";
+import { type Point, type Prompt } from "../../../shared/types/user";
 import { useState } from "react";
 import TagSelector from "./TagSelector";
+import { useNavigate } from "react-router";
 import Section from "./Section";
-import { useUserProfile } from "../hooks/useUserProfile";
 import { useField } from "../../../shared/hooks/useField";
-import { useCurrentUser } from "../hooks/useCurrentUser";
+import { useCurrentUser, useUpdateUser } from "../hooks/useCurrentUser";
 import { useSelect } from "../../../shared/hooks/useSelect";
+import { type UpdateUserRequest, type UserBio } from "../types/user";
+
 import {
   Interests,
   MusicPreferences,
@@ -21,7 +24,8 @@ import ProfilePrompts from "./ProfilePrompts";
 const EditProfile = () => {
   const { data: currentUser } = useCurrentUser();
   const user = currentUser && 'user' in currentUser ? currentUser.user : undefined;
-  const { setPendingUpdate } = useUserProfile()
+  const updateUserMutation = useUpdateUser();
+  const navigate = useNavigate();
   const [ageRange, setAgeRange] = useState<[number, number]>(
     user?.preferred_age_min === 0 || user?.preferred_age_max === 0
       ? [22, 35]
@@ -30,107 +34,134 @@ const EditProfile = () => {
   const [maxDistance, setMaxDistance] = useState<number>(
     user?.preferred_distance === 0 ? 25 : user?.preferred_distance ?? 25
   );
+ 
   const firstName = useField("firstName", "text", user?.first_name)
   const lastName = useField("lastName", "text", user?.last_name)
   const age = useField("age", "number", user?.age)
   const aboutMe = useField('bio', 'textarea', user?.about_me?? "")
   const genderField = useSelect(user?.gender?? "male")
   const preferredGenderField = useSelect(user?.preferred_gender?? "all")
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([])
-  const [selectedLookingFor, setSelectedLookingFor] = useState<string[]>([])
-  const [selectedMusicPreferences, setSelectedMusicPreferences] = useState<string[]>([])
-  const [selectedFoodPreferences, setSelectedFoodPreferences] = useState<string[]>([])
-  const [selectedCommunicationStyle, setSelectedCommunicationStyle] = useState<string[]>([])
-  const [location, setLocation] = useState<Point>(user?.coordinates ?? { longitude: 0, latitude: 0, city: "" })
+  const [selectedInterests, setSelectedInterests] = useState<string[]>(user?.interests?? [])
+  const [selectedLookingFor, setSelectedLookingFor] = useState<string[]>(user?.looking_for ?? [])
+  const [selectedMusicPreferences, setSelectedMusicPreferences] = useState<string[]>(user?.music_preferences ?? [])
+  const [selectedFoodPreferences, setSelectedFoodPreferences] = useState<string[]>(user?.food_preferences ??[])
+  const [selectedCommunicationStyle, setSelectedCommunicationStyle] = useState<string[]>(user?.communication_style ? [user.communication_style] : [])
+  const [location, setLocation] = useState<Point>({
+    longitude: user?.coordinates?.longitude ?? 0,
+    latitude: user?.coordinates?.latitude ?? 0,
+    city: ""
+  });
   const [prompts, setPrompts] = useState<Prompt[]>(user?.prompts ?? []);
 
-  // Build userUpdate data with non-empty field validation
-  const buildUserUpdateData = () => {
-    const updateData: Partial<User> = {};
+  const handleSaveChanges = () => {
+    const buildUserUpdateData = () => {
+      const updateData: Partial<UpdateUserRequest> = {};
 
-    // Basic information
-    if (firstName.value && (firstName.value as string).trim()) {
-      updateData.first_name = (firstName.value as string).trim();
-    }
-    
-    if (lastName.value && (lastName.value as string).trim()) {
-      updateData.last_name = (lastName.value as string).trim();
-    }
-    
-    if (age.value && Number(age.value) > 0) {
-      updateData.age = Number(age.value);
-    }
-    
-    if (genderField.value) {
-      updateData.gender = genderField.value;
-    }
+      // Basic information
+      if (firstName.value && (firstName.value as string).trim()) {
+        updateData.first_name = (firstName.value as string).trim();
+      }
+      
+      if (lastName.value && (lastName.value as string).trim()) {
+        updateData.last_name = (lastName.value as string).trim();
+      }
+      
+      if (age.value && Number(age.value) > 0) {
+        updateData.age = Number(age.value);
+      }
+      
+      if (genderField.value) {
+        updateData.gender = genderField.value as "male" | "female" | "non_binary" | "prefer_not_to_say";
+      }
 
-    // About me
-    if (aboutMe.value && (aboutMe.value as string).trim()) {
-      updateData.about_me = (aboutMe.value as string).trim();
-    }
+      // About me
+      if (aboutMe.value && (aboutMe.value as string).trim()) {
+        updateData.about_me = (aboutMe.value as string).trim();
+      }
 
-    // Location - check if coordinates are valid (not 0,0)
-    if (location && (location.longitude !== 0 || location.latitude !== 0)) {
-      updateData.coordinates = location;
-    }
+      // Location - check if coordinates are valid (not 0,0)
+      if (location && (location.longitude !== 0 || location.latitude !== 0)) {
+        updateData.location = {
+          latitude: location.latitude,
+          longitude: location.longitude
+        };
+      }
 
-    // Preferences arrays - only add if not empty
-    if (selectedLookingFor.length > 0) {
-      updateData.looking_for = selectedLookingFor;
-    }
-    
-    if (selectedInterests.length > 0) {
-      updateData.interests = selectedInterests;
-    }
-    
-    if (selectedMusicPreferences.length > 0) {
-      updateData.music_preferences = selectedMusicPreferences;
-    }
-    
-    if (selectedFoodPreferences.length > 0) {
-      updateData.food_preferences = selectedFoodPreferences;
-    }
-    
-    if (selectedCommunicationStyle.length > 0) {
-      updateData.communication_style = selectedCommunicationStyle[0]; // Only one allowed
-    }
+      // Bio object with preferences arrays and prompts
+      const bioData: UserBio = {};
+      
+      if (selectedLookingFor.length > 0) {
+        bioData.looking_for = selectedLookingFor;
+      }
+      
+      if (selectedInterests.length > 0) {
+        bioData.interests = selectedInterests;
+      }
+      
+      if (selectedMusicPreferences.length > 0) {
+        bioData.music_preferences = selectedMusicPreferences;
+      }
+      
+      if (selectedFoodPreferences.length > 0) {
+        bioData.food_preferences = selectedFoodPreferences;
+      }
+      
+      if (selectedCommunicationStyle.length > 0) {
+        bioData.communication_style = selectedCommunicationStyle[0];
+      }
 
-    // Dating preferences
-    if (ageRange[0] !== 0 && ageRange[1] !== 0) {
-      updateData.preferred_age_min = ageRange[0];
-      updateData.preferred_age_max = ageRange[1];
-    }
-    
-    if (maxDistance > 0) {
-      updateData.preferred_distance = maxDistance;
-    }
-    
-    if (preferredGenderField.value) {
-      updateData.preferred_gender = preferredGenderField.value;
-    }
+      // Prompts - filter out empty prompts
+      const validPrompts = prompts.filter(prompt => 
+        prompt.question && prompt.question.trim() && 
+        prompt.answer && prompt.answer.trim()
+      );
+      if (validPrompts.length > 0) {
+        bioData.prompts = validPrompts;
+      }
 
-    // Prompts - filter out empty prompts
-    const validPrompts = prompts.filter(prompt => 
-      prompt.question && prompt.question.trim() && 
-      prompt.answer && prompt.answer.trim()
-    );
-    if (validPrompts.length > 0) {
-      updateData.prompts = validPrompts;
-    }
+      // Only add bio if it has content
+      if (Object.keys(bioData).length > 0) {
+        updateData.bio = bioData;
+      }
 
-    return updateData;
-  };
+      // Dating preferences
+      if (ageRange[0] !== 0 && ageRange[1] !== 0) {
+        updateData.preferred_age_min = ageRange[0];
+        updateData.preferred_age_max = ageRange[1];
+      }
+      
+      if (maxDistance > 0) {
+        updateData.preferred_distance = maxDistance;
+      }
+      
+      if (preferredGenderField.value) {
+        updateData.preferred_gender = preferredGenderField.value as "male" | "female" | "non_binary" | "all";
+      }
 
-    const savePendingUpdate = () => {
-    const userData = buildUserUpdateData();
-    setPendingUpdate(userData);
-    console.log('Saved to pending update:', userData);
+      return updateData;
     };
 
+    const userData = buildUserUpdateData();
+    updateUserMutation.mutate(userData);
 
+  };
+  
   return (
     <div className="edit-content">
+      <div className="back-submit-div">
+        <button  className="back-btn"
+          onClick={() => navigate("/profile")}>
+            <Icon icon="mdi:arrow-back" className="back-icon" />
+            Back
+        </button>
+        
+        <button className="save-btn"
+          onClick={handleSaveChanges}
+          disabled={updateUserMutation.isPending}
+        >
+          {updateUserMutation.isPending? "Saving" : "Save Changes"}
+        </button>
+      </div>
 
       <Section title="Basic Information" subtitle="Your core profile details">
         <FormField label="First Name" type="text" value={firstName.value} onChange={firstName.onChange} maxLength={50} />
@@ -150,7 +181,7 @@ const EditProfile = () => {
         />
       </Section>
       <Section title="Photos" subtitle="Upload up to 5 photos. The first photo will be your main photo — drag to reorder.">
-        <PhotoUploadSection />
+        <PhotoUploadSection existingPhotos={user?.photos} />
       </Section>
 
       <Section title="About Me" subtitle="Tell others about yourself">
@@ -159,7 +190,7 @@ const EditProfile = () => {
           type="textarea"
           value={aboutMe.value}
           onChange={aboutMe.onChange}
-          maxLength={500}
+          maxLength={100}
         />
       </Section>
 

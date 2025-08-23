@@ -11,19 +11,21 @@ import { loginUser } from '../api/authApi'
 import { type LoginData } from '../types/auth'
 import '../styles.css'
 import { useAuthStore } from '../hooks/authStore'
-import { useState, useEffect, type FormEvent } from 'react'
+import { useUIStore } from '../../../shared/hooks/uiStore'
+import type { FormEvent } from 'react'
 
 
 const LoginForm = () => {
   const { reset: emailReset, ...email } = useField('email', 'email', '')
   const { reset: passwordReset, ...password } = useField('password', 'password')
-  const [errorMsg, setErrorMsg] = useState<string>("")
+  const { errorMsg, infoMsg, setInfo, setError, clearMsgs } = useUIStore()
   const { setAuthToken } = useAuthStore()
   const navigate = useNavigate()
   const mutation = useMutation({
     mutationFn: loginUser,
     onSuccess: (data) => {
         if (data && 'token' in data) {
+            setInfo("User Login Successful")
             setAuthToken(data?.token)
             emailReset()
             passwordReset()
@@ -31,25 +33,14 @@ const LoginForm = () => {
         }
 
         if (data && ('error' in data || 'details' in data)) {
-            setErrorMsg(String(data?.details ?? 'An error occurred'))
+            setError(String(data?.details ?? 'An error occurred'))
         }
     }
   })
 
-  useEffect(() => {
-    if (errorMsg) {
-        const timer = setTimeout(() => {
-            setErrorMsg("")
-        }, 5000)
-
-        return () => clearTimeout(timer)
-    }
-  }, [errorMsg])
-
-
  const loginFn = (e: FormEvent): void => {
     e.preventDefault()
-    setErrorMsg("")
+    clearMsgs()
 
     const formData: LoginData = {
         email: email.value as string,
@@ -65,7 +56,7 @@ const LoginForm = () => {
             <AppNameTag />
             <Form onSubmit={loginFn} className="d-grid gap-2">
             <div className={errorMsg? 'error': 'info'}>
-                {errorMsg? errorMsg : 'Log in to your account'}
+                {errorMsg || infoMsg || 'Log in to your account'}
             </div>
                 <InputGroup className="mb-3">
                     <InputGroup.Text> 

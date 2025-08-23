@@ -4,8 +4,12 @@
 
 :root {
   --primary-color: #7c3aed;
-  --secondary-color: #7237d8;
+  --primary-color-light: #7445c6;
   --primary-color-dark: #5318b8;
+  --tertiary-color: #1C8370;
+  --secondary-color: #FC4A4A;
+  --secondary-red: #FEF6F3;
+  --light-green: #d7f1df;
   --font-family: 'Urbanist', sans-serif;
 }
 

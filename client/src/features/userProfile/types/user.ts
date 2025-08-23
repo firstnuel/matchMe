@@ -45,3 +45,48 @@ export  interface UserResponse {
   message: string;
   user:  User | Partial<User> | null
 }
+
+export interface UpdateUserRequest {
+  first_name?: string; 
+  last_name?: string;
+  age?: number;
+  gender?: "male" | "female" | "non_binary" | "prefer_not_to_say";
+  location?: Location;
+  about_me?: string;
+  bio?: UserBio;
+  preferred_age_min?: number;
+  preferred_age_max?: number;
+  preferred_gender?: "male" | "female" | "non_binary" | "all";
+  preferred_distance?: number;
+}
+
+interface Location {
+  latitude: number; 
+  longitude: number;
+}
+
+export interface UserBio {
+  looking_for?: string[]; 
+  interests?: string[]; 
+  music_preferences?: string[]; 
+  food_preferences?: string[]; 
+  communication_style?:string; 
+  prompts?: Prompt[];
+}
+
+interface Prompt {
+  question: string;
+  answer: string; 
+}
+
+export interface PhotoUploadResponse {
+  message: string;
+  photos: UserPhoto[];
+  count: number;
+}
+
+export interface UserPhoto {
+  id: string;
+  photo_url: string;
+  order: number;
+}
