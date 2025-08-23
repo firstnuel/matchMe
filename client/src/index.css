@@ -1,0 +1,25 @@
+@import url('bootstrap/dist/css/bootstrap.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap');
+
+
+:root {
+  --primary-color: #7c3aed;
+  --secondary-color: #7237d8;
+  --primary-color-dark: #5318b8;
+  --font-family: 'Urbanist', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: var(--font-family);
+  font-weight: 400;
+}
+
+@supports (-webkit-touch-callout: none) {
+  body {
+    /* The hack for Safari */
+    height: -webkit-fill-available;
+  }
+}

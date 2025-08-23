@@ -6,6 +6,7 @@ import (
 	"match-me/ent"
 	"match-me/internal/models"
 	"match-me/internal/repositories/connections"
+	"match-me/internal/websocket"
 
 	"github.com/google/uuid"
 )
@@ -13,15 +14,18 @@ import (
 type connectionRequestUsecase struct {
 	requestRepo    connections.ConnectionRequestRepository
 	connectionRepo connections.ConnectionRepository
+	wsService      *websocket.WebSocketService
 }
 
 func NewConnectionRequestUsecase(
 	requestRepo connections.ConnectionRequestRepository,
 	connectionRepo connections.ConnectionRepository,
+	wsService *websocket.WebSocketService,
 ) ConnectionRequestUsecase {
 	return &connectionRequestUsecase{
 		requestRepo:    requestRepo,
 		connectionRepo: connectionRepo,
+		wsService:      wsService,
 	}
 }
 
@@ -55,7 +59,14 @@ func (u *connectionRequestUsecase) SendRequest(ctx context.Context, senderID, re
 		return nil, fmt.Errorf("failed to create connection request: %w", err)
 	}
 
-	return models.ToConnectionRequest(entRequest), nil
+	request := models.ToConnectionRequest(entRequest)
+
+	// Broadcast the connection request via WebSocket
+	if u.wsService != nil {
+		u.wsService.BroadcastConnectionRequest(request)
+	}
+
+	return request, nil
 }
 
 func (u *connectionRequestUsecase) GetPendingRequests(ctx context.Context, userID uuid.UUID) ([]*models.ConnectionRequest, error) {
@@ -88,12 +99,20 @@ func (u *connectionRequestUsecase) AcceptRequest(ctx context.Context, userID, re
 	}
 
 	// Accept the request (this creates the connection)
-	_, entConnection, err := u.requestRepo.AcceptRequest(ctx, requestID)
+	updatedRequest, entConnection, err := u.requestRepo.AcceptRequest(ctx, requestID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to accept request: %w", err)
 	}
 
-	return models.ToConnection(entConnection), nil
+	connection := models.ToConnection(entConnection)
+	requestModel := models.ToConnectionRequest(updatedRequest)
+
+	// Broadcast the connection acceptance via WebSocket
+	if u.wsService != nil {
+		u.wsService.BroadcastConnectionAccepted(requestModel, connection)
+	}
+
+	return connection, nil
 }
 
 func (u *connectionRequestUsecase) DeclineRequest(ctx context.Context, userID, requestID uuid.UUID) error {
@@ -117,9 +136,15 @@ func (u *connectionRequestUsecase) DeclineRequest(ctx context.Context, userID, r
 	}
 
 	// Decline the request
-	_, err = u.requestRepo.DeclineRequest(ctx, requestID)
+	updatedRequest, err := u.requestRepo.DeclineRequest(ctx, requestID)
 	if err != nil {
 		return fmt.Errorf("failed to decline request: %w", err)
+	}
+
+	// Broadcast the connection decline via WebSocket
+	if u.wsService != nil {
+		requestModel := models.ToConnectionRequest(updatedRequest)
+		u.wsService.BroadcastConnectionDeclined(requestModel)
 	}
 
 	return nil

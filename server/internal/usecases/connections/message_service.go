@@ -7,6 +7,7 @@ import (
 	"match-me/internal/models"
 	"match-me/internal/pkg/cloudinary"
 	"match-me/internal/repositories/connections"
+	"match-me/internal/websocket"
 
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/google/uuid"
@@ -16,17 +17,20 @@ type messageUsecase struct {
 	messageRepo    connections.MessageRepository
 	connectionRepo connections.ConnectionRepository
 	cld            cloudinary.Cloudinary
+	wsService      *websocket.WebSocketService
 }
 
 func NewMessageUsecase(
 	messageRepo connections.MessageRepository,
 	connectionRepo connections.ConnectionRepository,
 	cld cloudinary.Cloudinary,
+	wsService *websocket.WebSocketService,
 ) MessageUsecase {
 	return &messageUsecase{
 		messageRepo:    messageRepo,
 		connectionRepo: connectionRepo,
 		cld:            cld,
+		wsService:      wsService,
 	}
 }
 
@@ -48,7 +52,14 @@ func (u *messageUsecase) SendTextMessage(ctx context.Context, senderID uuid.UUID
 		return nil, fmt.Errorf("failed to create text message: %w", err)
 	}
 
-	return models.ToMessage(entMessage), nil
+	message := models.ToMessage(entMessage)
+
+	// Broadcast the new message via WebSocket
+	if u.wsService != nil {
+		u.wsService.BroadcastNewMessage(message)
+	}
+
+	return message, nil
 }
 
 func (u *messageUsecase) SendMediaMessage(ctx context.Context, senderID uuid.UUID, connectionID uuid.UUID, mediaFile interface{}) (*models.Message, error) {
@@ -77,7 +88,15 @@ func (u *messageUsecase) SendMediaMessage(ctx context.Context, senderID uuid.UUI
 	if err != nil {
 		return nil, fmt.Errorf("failed to create media message: %w", err)
 	}
-	return models.ToMessage(entMessage), nil
+
+	message := models.ToMessage(entMessage)
+
+	// Broadcast the new message via WebSocket
+	if u.wsService != nil {
+		u.wsService.BroadcastNewMessage(message)
+	}
+
+	return message, nil
 }
 
 func (u *messageUsecase) GetConnectionMessages(ctx context.Context, userID, connectionID uuid.UUID, limit, offset int) ([]*models.Message, error) {
@@ -109,9 +128,14 @@ func (u *messageUsecase) MarkMessagesAsRead(ctx context.Context, userID, connect
 	}
 
 	// Mark all unread messages in this connection as read for this user
-	_, err = u.messageRepo.MarkConnectionMessagesAsRead(ctx, connectionID, userID)
+	count, err := u.messageRepo.MarkConnectionMessagesAsRead(ctx, connectionID, userID)
 	if err != nil {
 		return fmt.Errorf("failed to mark messages as read: %w", err)
+	}
+
+	// Broadcast read status via WebSocket
+	if u.wsService != nil && count > 0 {
+		u.wsService.BroadcastConnectionMessagesRead(connectionID, userID, count)
 	}
 
 	return nil

@@ -49,11 +49,11 @@ func (h *UserHandler) RegisterRoutes(r *gin.Engine) *gin.Engine {
 	}
 
 	// Convenience route for getting current user
-	userMeGroup := r.Group("/me", middleware.VerifyUser(h.UserUsecase, h.cfg.JWTSecret))
+	userMeGroup := r.Group("api", middleware.VerifyUser(h.UserUsecase, h.cfg.JWTSecret))
 	{
-		userMeGroup.GET("/", h.GetCurrentUser)
-		userMeGroup.PUT("/", h.UpdateCurrentUser)
-		userMeGroup.DELETE("/", h.DeleteCurrentUser)
+		userMeGroup.GET("/me", h.GetCurrentUser)
+		userMeGroup.PUT("/me", h.UpdateCurrentUser)
+		userMeGroup.DELETE("/me", h.DeleteCurrentUser)
 		userMeGroup.PUT("/password", h.UpdateCurrentUserPassword)
 		userMeGroup.POST("/photos", h.UploadCurrentUserPhotos)
 		userMeGroup.GET("/recommendations", h.GetRecommendations)

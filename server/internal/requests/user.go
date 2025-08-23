@@ -110,7 +110,7 @@ func ValidateUserBio(bio UserBio) error {
 	validMusicPreferences := []string{
 		"pop", "rock", "jazz", "classical", "hip-hop", "electronic", "country", "folk",
 		"blues", "reggae", "indie", "alternative", "r&b", "soul", "funk", "punk",
-		"metal", "latin", "world", "ambient",
+		"metal", "latin", "world", "ambient", "afrobeats", "amapiano",
 	}
 
 	validFoodPreferences := []string{
@@ -127,27 +127,27 @@ func ValidateUserBio(bio UserBio) error {
 	// Validate interests
 	for _, interest := range bio.Interests {
 		if !slices.Contains(validInterests, interest) {
-			errors = append(errors, fmt.Sprintf("invalid interest: %s", interest))
+			errors = append(errors, fmt.Sprintf("'%s' is not a valid interest. Choose from: %s", interest, strings.Join(validInterests, ", ")))
 		}
 	}
 
 	// Validate music preferences
 	for _, music := range bio.MusicPreferences {
 		if !slices.Contains(validMusicPreferences, music) {
-			errors = append(errors, fmt.Sprintf("invalid music preference: %s", music))
+			errors = append(errors, fmt.Sprintf("'%s' is not a valid music preference. Choose from: %s", music, strings.Join(validMusicPreferences, ", ")))
 		}
 	}
 
 	// Validate food preferences
 	for _, food := range bio.FoodPreferences {
 		if !slices.Contains(validFoodPreferences, food) {
-			errors = append(errors, fmt.Sprintf("invalid food preference: %s", food))
+			errors = append(errors, fmt.Sprintf("'%s' is not a valid food preference. Choose from: %s", food, strings.Join(validFoodPreferences, ", ")))
 		}
 	}
 
 	// Validate communication style
 	if !slices.Contains(validCommunicationStyles, bio.CommunicationStyle) {
-		errors = append(errors, fmt.Sprintf("invalid communication style: %s", bio.CommunicationStyle))
+		errors = append(errors, fmt.Sprintf("'%s' is not a valid communication style. Choose from: %s", bio.CommunicationStyle, strings.Join(validCommunicationStyles, ", ")))
 	}
 
 	// Validate unique prompt questions
@@ -155,9 +155,17 @@ func ValidateUserBio(bio UserBio) error {
 	for i, prompt := range bio.Prompts {
 		question := strings.ToLower(strings.TrimSpace(prompt.Question))
 		if seenQuestions[question] {
-			errors = append(errors, fmt.Sprintf("duplicate prompt question at index %d: %s", i, prompt.Question))
+			errors = append(errors, fmt.Sprintf("prompt question #%d is a duplicate: '%s'", i+1, prompt.Question))
 		}
 		seenQuestions[question] = true
+	}
+
+	// Return errors if any
+	if len(errors) > 0 {
+		if len(errors) == 1 {
+			return fmt.Errorf("%s", errors[0])
+		}
+		return fmt.Errorf("bio validation failed:\n• %s", strings.Join(errors, "\n• "))
 	}
 
 	return nil

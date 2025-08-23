@@ -58,7 +58,7 @@ func (u *userUsecase) Login(ctx context.Context, email, password string) (*model
 	// Authenticate user
 	entUser, err := u.userRepo.Authenticate(ctx, email, password)
 	if err != nil {
-		return nil, "", fmt.Errorf("authentication failed: %w", err)
+		return nil, "", fmt.Errorf("authentication failed: incorrect email or password")
 	}
 
 	// Generate JWT token

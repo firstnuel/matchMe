@@ -16,9 +16,11 @@ func NewHTTPServer(client *ent.Client, cfg *config.Config, cld cloudinary.Cloudi
 	if cfg.AppEnv != "development" {
 		gin.SetMode(gin.ReleaseMode)
 	}
+
 	router := gin.Default()
 
 	// Middlewares
+	router.Use(middleware.CORSMiddleware())
 	router.Use(gin.Recovery())
 	router.Use(gin.Logger())
 	router.Use(middleware.Ping())

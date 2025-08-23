@@ -8,7 +8,9 @@ import (
 	"match-me/internal/usecases/user"
 	"net/http"
 	"strings"
+	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -22,6 +24,18 @@ func Ping() gin.HandlerFunc {
 		}
 		c.Next()
 	}
+}
+
+func CORSMiddleware() gin.HandlerFunc {
+	return cors.New(cors.Config{
+		AllowOrigins:        []string{"http://localhost:5173"}, // frontend origin
+		AllowMethods:        []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:        []string{"Origin", "Content-Type", "Authorization"},
+		ExposeHeaders:       []string{"Content-Length"},
+		AllowCredentials:    true,
+		MaxAge:              12 * time.Hour,
+		AllowPrivateNetwork: true,
+	})
 }
 
 // UserContextKey is the key used to store user in context
@@ -55,6 +69,8 @@ func VerifyUser(userUC user.UserUsecase, jwtSecret string) gin.HandlerFunc {
 			if token, ok := strings.CutPrefix(authHeader, "Bearer "); ok {
 				tokenStr = token
 			}
+		} else if token := c.Request.URL.Query().Get("token"); token != "" {
+			tokenStr = token
 		}
 
 		if tokenStr == "" {

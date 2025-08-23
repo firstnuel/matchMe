@@ -35,3 +35,14 @@ type UserInteraction struct {
 	InteractionType string    `json:"interaction_type"`
 	CreatedAt       time.Time `json:"created_at"`
 }
+
+// SendTextMessageBody represents the request body for sending a text message
+type SendTextMessageBody struct {
+	ConnectionID uuid.UUID `json:"connection_id" binding:"required"`
+	Content      string    `json:"content" binding:"required"`
+}
+
+// SendMediaMessageBody represents the request body for sending a media message
+type SendMediaMessageBody struct {
+	ConnectionID uuid.UUID `json:"connection_id" binding:"required"`
+}

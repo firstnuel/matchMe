@@ -11,8 +11,10 @@ require (
 
 require (
 	github.com/creasty/defaults v1.7.0 // indirect
+	github.com/gin-contrib/cors v1.7.6 // indirect
 	github.com/go-test/deep v1.0.7 // indirect
 	github.com/gorilla/schema v1.4.1 // indirect
+	github.com/jub0bs/fcors v0.10.0 // indirect
 )
 
 require (
@@ -32,6 +34,7 @@ require (
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/go-cmp v0.7.0 // indirect
+	github.com/gorilla/websocket v1.5.3
 	github.com/hashicorp/hcl/v2 v2.18.1 // indirect
 	github.com/joho/godotenv v1.5.1
 	github.com/json-iterator/go v1.1.12 // indirect
