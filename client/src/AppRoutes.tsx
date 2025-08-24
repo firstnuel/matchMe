@@ -10,7 +10,7 @@ import EditProfile from './features/userProfile/components/EditProfile'
 import { useCurrentUser } from './features/userProfile/hooks/useCurrentUser'
 import Home from './features/matches/components/Home'
 import { useUserRecommendations } from './features/matches/hooks/useMatch'
-
+import Connection from './features/connections/components/Connections'
 
 const ProtectedRoute = memo(({ children }: { children: ReactNode }) => {
   const { authToken } = useAuthStore();
@@ -79,10 +79,19 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
-
+      <Route
+        path="/connections"
+        element={
+          <ProtectedRoute>
+            <Connection />
+          </ProtectedRoute>
+        }
+      />
 
     </Routes>
   )
 }
 
 export default AppRoutes
+
+

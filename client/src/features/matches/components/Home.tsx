@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import ProfileCard from './ProfileCard';
 import { useUserRecommendations, useUserProfile, useUserDistance } from '../hooks/useMatch';
 import { useCurrentUser } from '../../userProfile/hooks/useCurrentUser';
+import { useSendConnectionRequest } from '../../connections/hooks/useConnections';
 import { useNavigate } from 'react-router';
 import '../styles.css';
 
@@ -10,6 +11,7 @@ const Home = () => {
     const { data: recommendationsData, isLoading: isLoadingRecommendations } = useUserRecommendations();
     const [actionedProfiles, setActionedProfiles] = useState<Set<string>>(new Set());
     const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
+    const sendRequest = useSendConnectionRequest()
     const navigate = useNavigate()
     
     // Get current user and profile completion
@@ -55,6 +57,7 @@ const Home = () => {
 
     const handleLike = () => {
         if (currentProfileId) {
+            sendRequest.mutate({ receiver_id: currentProfileId })
             handleAction(currentProfileId, 'like');
         }
     };

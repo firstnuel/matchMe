@@ -28,7 +28,19 @@ func (u *connectionUsecase) GetUserConnections(ctx context.Context, userID uuid.
 	}
 
 	// Convert to models
-	return models.ToConnections(entConnections), nil
+	connections := models.ToConnections(entConnections)
+
+	// Filter out the requesting user from the connections
+	for _, c := range connections {
+		if c.UserA != nil && c.UserA.ID == userID {
+			c.UserA = nil
+		}
+		if c.UserB != nil && c.UserB.ID == userID {
+			c.UserB = nil
+		}
+	}
+
+	return connections, nil
 }
 
 func (u *connectionUsecase) DeleteConnection(ctx context.Context, userID, connectionID uuid.UUID) error {
