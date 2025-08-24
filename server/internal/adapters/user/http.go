@@ -46,17 +46,19 @@ func (h *UserHandler) RegisterRoutes(r *gin.Engine) *gin.Engine {
 		usersGroup.GET("/:id", h.GetUserByID)
 		usersGroup.GET("/:id/bio", h.GetUserBio)
 		usersGroup.GET("/:id/profile", h.GetUserProfile)
+		usersGroup.GET("/:id/distance", h.GetDistanceBetweenUsers)
 	}
 
 	// Convenience route for getting current user
 	userMeGroup := r.Group("api", middleware.VerifyUser(h.UserUsecase, h.cfg.JWTSecret))
 	{
 		userMeGroup.GET("/me", h.GetCurrentUser)
-		userMeGroup.PUT("/me", h.UpdateCurrentUser)
+		userMeGroup.PUT("/me", h.UpdateUser)
 		userMeGroup.DELETE("/me", h.DeleteCurrentUser)
-		userMeGroup.PUT("/password", h.UpdateCurrentUserPassword)
-		userMeGroup.POST("/photos", h.UploadCurrentUserPhotos)
-		userMeGroup.GET("/recommendations", h.GetRecommendations)
+		userMeGroup.PUT("/password", h.UpdatePassword)
+		userMeGroup.POST("/me/photos", h.UploadUserPhotos)
+		userMeGroup.DELETE("/me/photos/:photoId", h.DeleteUserPhoto)
+		userMeGroup.GET("/me/recommendations", h.GetRecommendations)
 	}
 
 	log.Println("💫 All user routes registered")

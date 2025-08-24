@@ -14,8 +14,8 @@ import (
 
 // Point represents a PostGIS geography point (lon, lat).
 type Point struct {
-	Longitude float64
-	Latitude  float64
+	Longitude float64 `json:"longitude"`
+	Latitude  float64 `json:"latitude"`
 }
 
 // Scan implements the Scanner interface for Point.

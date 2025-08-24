@@ -40,29 +40,29 @@ type UpdateUser struct {
 }
 
 type UserPhoto struct {
-	PhotoUrl string `json:"photo_url" validate:"required,url"`
-	Order    int    `json:"order" validate:"required,min=1"`
-	PID      string `json:"public_id" validate:"required,url"`
+	PhotoUrl string `json:"photo_url" validate:"omitempty,url"`
+	Order    int    `json:"order" validate:"omitempty,min=1"`
+	PID      string `json:"public_id" validate:"omitempty,url"`
 }
 
 type Location struct {
-	Latitude  float64 `json:"latitude" validate:"required"`
-	Longitude float64 `json:"longitude" validate:"required"`
+	Latitude  float64 `json:"latitude" validate:"omitempty"`
+	Longitude float64 `json:"longitude" validate:"omitempty"`
 }
 
 type UserBio struct {
-	LookingFor         []string `json:"looking_for" validate:"required,min=1,dive,oneof=friendship relationship casual networking"`
-	Interests          []string `json:"interests" validate:"required,min=1,max=10"`
-	MusicPreferences   []string `json:"music_preferences" validate:"required,min=1,max=5"`
-	FoodPreferences    []string `json:"food_preferences" validate:"required,min=1,max=5"`
-	CommunicationStyle string   `json:"communication_style" validate:"required"`
-	Prompts            []Prompt `json:"prompts" validate:"required,min=3,max=5,dive"`
+	LookingFor         []string `json:"looking_for" validate:"omitempty,min=1,dive,oneof=friendship relationship casual networking"`
+	Interests          []string `json:"interests" validate:"omitempty,min=1,max=10"`
+	MusicPreferences   []string `json:"music_preferences" validate:"omitempty,min=1,max=5"`
+	FoodPreferences    []string `json:"food_preferences" validate:"omitempty,min=1,max=5"`
+	CommunicationStyle string   `json:"communication_style" validate:"omitempty"`
+	Prompts            []Prompt `json:"prompts" validate:"omitempty,min=3,max=5,dive"`
 }
 
 // Prompt represents profile prompts
 type Prompt struct {
-	Question string `json:"question" validate:"required,min=10,max=200"`
-	Answer   string `json:"answer" validate:"required,min=5,max=500"`
+	Question string `json:"question" validate:"omitempty,min=10,max=200"`
+	Answer   string `json:"answer" validate:"omitempty,min=5,max=500"`
 }
 
 // normalizeSlice normalizes a slice of strings by trimming and converting to lowercase

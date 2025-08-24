@@ -27,7 +27,7 @@ type UserRepository interface {
 
 	// Media management
 	AddPhoto(ctx context.Context, photoID, userID uuid.UUID, photo requests.UserPhoto) (*ent.UserPhoto, error)
-	Delete(ctx context.Context, photoID, userID uuid.UUID) error
+	DeletePhoto(ctx context.Context, photoID, userID uuid.UUID) error
 
 	// Location specific
 	GetUsersByPreference(ctx context.Context, reqUserID uuid.UUID) ([]*ent.User, *ent.User, error)

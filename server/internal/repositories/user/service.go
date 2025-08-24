@@ -226,7 +226,7 @@ func (r *userRepository) AddPhoto(ctx context.Context, photoID, userID uuid.UUID
 	return userPhoto, nil
 }
 
-func (r *userRepository) Delete(ctx context.Context, photoID, userID uuid.UUID) error {
+func (r *userRepository) DeletePhoto(ctx context.Context, photoID, userID uuid.UUID) error {
 	_, err := r.client.UserPhoto.Delete().
 		Where(
 			userphoto.ID(photoID),
@@ -257,41 +257,56 @@ func (r *userRepository) UpdateUserLocation(ctx context.Context, userID uuid.UUI
 }
 
 func (r *userRepository) GetDistanceBetweenUsers(ctx context.Context, userAID, userBID uuid.UUID) (float64, error) {
-	// Get both users
-	userA, err := r.client.User.Get(ctx, userAID)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get user A: %w", err)
-	}
-
+	// Get user B's coordinates
 	userB, err := r.client.User.Get(ctx, userBID)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get user B: %w", err)
 	}
 
-	if userA.Coordinates == nil || userB.Coordinates == nil {
-		return 0, fmt.Errorf("one or both users have no coordinates")
+	if userB.Coordinates == nil {
+		return 0, fmt.Errorf("user B has no coordinates")
 	}
 
-	// Use a query with custom selector to get the distance
-	type DistanceResult struct {
-		Distance float64 `json:"distance"`
-	}
-
-	var result DistanceResult
-	err = r.client.User.Query().
-		Where(user.ID(userAID)).
-		Select(
-			fmt.Sprintf(
-				"ST_Distance(coordinates::geography, ST_SetSRID(ST_MakePoint(%f, %f), 4326)::geography) AS distance",
-				userB.Coordinates.Longitude, userB.Coordinates.Latitude,
-			),
-		).
-		Scan(ctx, &result)
+	// Get user A's coordinates to validate
+	userA, err := r.client.User.Get(ctx, userAID)
 	if err != nil {
-		return 0, fmt.Errorf("failed to calculate distance: %w", err)
+		return 0, fmt.Errorf("failed to get user A: %w", err)
 	}
 
-	return result.Distance, nil
+	if userA.Coordinates == nil {
+		return 0, fmt.Errorf("user A has no coordinates")
+	}
+
+	if math.IsNaN(userA.Coordinates.Longitude) || math.IsNaN(userA.Coordinates.Latitude) ||
+		math.IsNaN(userB.Coordinates.Longitude) || math.IsNaN(userB.Coordinates.Latitude) {
+		return 0, fmt.Errorf("invalid coordinates: userA(long=%v, lat=%v), userB(long=%v, lat=%v)",
+			userA.Coordinates.Longitude, userA.Coordinates.Latitude,
+			userB.Coordinates.Longitude, userB.Coordinates.Latitude)
+	}
+
+	// Calculate distance using the Haversine formula (simple fallback approach)
+	lat1 := userA.Coordinates.Latitude
+	lon1 := userA.Coordinates.Longitude
+	lat2 := userB.Coordinates.Latitude
+	lon2 := userB.Coordinates.Longitude
+
+	const R = 6371 // Earth's radius in kilometers
+
+	dLat := (lat2 - lat1) * math.Pi / 180
+	dLon := (lon2 - lon1) * math.Pi / 180
+
+	lat1Rad := lat1 * math.Pi / 180
+	lat2Rad := lat2 * math.Pi / 180
+
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+		math.Cos(lat1Rad)*math.Cos(lat2Rad)*
+			math.Sin(dLon/2)*math.Sin(dLon/2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	distance := R * c
+
+	// Distance is returned in kilometers  
+	return distance, nil
 }
 
 func (r *userRepository) GetUsersByPreference(
@@ -321,9 +336,9 @@ func (r *userRepository) GetUsersByPreference(
 
 	query := r.client.User.Query().Where(
 		user.IDNEQ(reqUserID),
-		user.AgeGTE(currentUser.PreferredAgeMin),
-		user.AgeLTE(currentUser.PreferredAgeMax),
-		user.ProfileCompletionEQ(100),
+		user.PreferredAgeMinGTE(currentUser.PreferredAgeMin),
+		user.PreferredAgeMaxLTE(currentUser.PreferredAgeMax),
+		user.ProfileCompletionGTE(95),
 		func(s *sql.Selector) {
 			// Use numbered placeholders to align with Ent's query builder
 			s.Where(sql.ExprP(
@@ -334,7 +349,7 @@ func (r *userRepository) GetUsersByPreference(
 	)
 
 	if currentUser.PreferredGender != user.PreferredGenderAll {
-		query = query.Where(user.PreferredGenderEQ(currentUser.PreferredGender))
+		query = query.Where(user.GenderEQ(user.Gender(currentUser.PreferredGender)))
 	}
 
 	users, err := query.All(ctx)

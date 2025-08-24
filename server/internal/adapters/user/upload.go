@@ -8,18 +8,13 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 func (h *UserHandler) UploadUserPhotos(c *gin.Context) {
-	// Get user ID from URL parameter
-	userIDStr := c.Param("id")
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error":   "Invalid user ID",
-			"details": "User ID must be a valid UUID",
-		})
+
+	user, exists := middleware.GetUserFromGinContext(c)
+	if !exists {
+		c.JSON(401, gin.H{"error": "User not found in context"})
 		return
 	}
 
@@ -83,7 +78,7 @@ func (h *UserHandler) UploadUserPhotos(c *gin.Context) {
 	}()
 
 	// Upload photos via usecase
-	photos, err := h.UserUsecase.UploadUserPhotos(c.Request.Context(), userID, fileInterfaces)
+	photos, err := h.UserUsecase.UploadUserPhotos(c.Request.Context(), user.ID, fileInterfaces)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to upload photos",
@@ -98,18 +93,6 @@ func (h *UserHandler) UploadUserPhotos(c *gin.Context) {
 		"photos":  photos,
 		"count":   len(photos),
 	})
-}
-
-func (h *UserHandler) UploadCurrentUserPhotos(c *gin.Context) {
-	user, exists := middleware.GetUserFromGinContext(c)
-	if !exists {
-		c.JSON(401, gin.H{"error": "User not found in context"})
-		return
-	}
-
-	// Set the user ID parameter for the existing UploadUserPhotos handler
-	c.Params = append(c.Params, gin.Param{Key: "id", Value: user.ID.String()})
-	h.UploadUserPhotos(c)
 }
 
 // isValidImageFile checks if the file has a valid image extension

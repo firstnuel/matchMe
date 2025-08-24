@@ -81,14 +81,6 @@ func ToUser(entUser *ent.User, accessLevel AccessLevel) *User {
 			user.AboutMe = &entUser.AboutMe
 		}
 
-		if entUser.CommunicationStyle != "" {
-			user.CommunicationStyle = &entUser.CommunicationStyle
-		}
-
-		if entUser.Prompts != nil {
-			user.Prompts = entUser.Prompts
-		}
-
 		if entUser.Edges.Photos != nil {
 			photos := make([]UserPhoto, len(entUser.Edges.Photos))
 			for i, photo := range entUser.Edges.Photos {

@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	"match-me/ent"
 	"match-me/internal/models"
 	"match-me/internal/pkg/cloudinary"
 	"match-me/internal/pkg/jwt"
@@ -187,6 +188,45 @@ func (u *userUsecase) UploadUserPhotos(ctx context.Context, userID uuid.UUID, fi
 	return uploadedPhotos, nil
 }
 
+func (u *userUsecase) DeleteUserPhoto(ctx context.Context, userID, photoID uuid.UUID) error {
+	// Check if user exists
+	user, err := u.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("user not found: %w", err)
+	}
+
+	// Find the photo to get its public ID for Cloudinary deletion
+	var photoToDelete *ent.UserPhoto
+	for _, photo := range user.Edges.Photos {
+		if photo.ID == photoID {
+			photoToDelete = photo
+			break
+		}
+	}
+
+	if photoToDelete == nil {
+		return fmt.Errorf("photo not found for user")
+	}
+
+	// Delete photo from repository first
+	err = u.userRepo.DeletePhoto(ctx, photoID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete photo from database: %w", err)
+	}
+
+	go func() {
+		// Delete image from Cloudinary if it has a public ID
+		// Generate expected public ID based on upload pattern
+		err = u.cld.DeleteImage(photoToDelete.PublicID)
+		if err != nil {
+			// Log the error but don't fail the operation since DB deletion succeeded
+			fmt.Printf("Warning: Failed to delete image from Cloudinary (public_id: %s): %v\n", photoToDelete.PublicID, err)
+		}
+	}()
+
+	return nil
+}
+
 func (u *userUsecase) GetRecommendations(ctx context.Context, userID uuid.UUID) ([]string, error) {
 	// fetch users by user preference
 	preferredUsers, currentUser, err := u.userRepo.GetUsersByPreference(ctx, userID)
@@ -237,4 +277,25 @@ func (u *userUsecase) GetRecommendations(ctx context.Context, userID uuid.UUID) 
 	}
 
 	return result, nil
+}
+
+func (u *userUsecase) GetDistanceBetweenUsers(ctx context.Context, userAID, userBID uuid.UUID) (float64, error) {
+	// Validate that both users exist
+	_, err := u.userRepo.GetByID(ctx, userAID)
+	if err != nil {
+		return 0, fmt.Errorf("user A not found: %w", err)
+	}
+
+	_, err = u.userRepo.GetByID(ctx, userBID)
+	if err != nil {
+		return 0, fmt.Errorf("user B not found: %w", err)
+	}
+
+	// Get distance between users from repository
+	distance, err := u.userRepo.GetDistanceBetweenUsers(ctx, userAID, userBID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get distance between users: %w", err)
+	}
+
+	return distance, nil
 }
