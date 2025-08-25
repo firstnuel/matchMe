@@ -1,3 +1,20 @@
+/* Emoji Picker Styles */
+.emoji-picker-container {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    z-index: 1000;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Ensure the message input container has relative positioning */
+.message-input-container {
+    position: relative;
+}
+
 /* File Preview Styles */
 .file-preview {
     display: flex;

@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
+import EmojiPicker, { type EmojiClickData } from 'emoji-picker-react';
 
 interface MessageInputProps {
   messageInput: string;
@@ -24,8 +25,11 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const isCurrentlyTypingRef = useRef(false);
   const skipNextTypingEventRef = useRef(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [cursorPosition, setCursorPosition] = useState(0);
 
   const handleTypingEvent = (isTyping: boolean) => {
     if (!onTyping) return;
@@ -141,6 +145,83 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   };
 
+  // Handle emoji selection
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    const emoji = emojiData.emoji;
+    const currentText = messageInput;
+    const newText = currentText.slice(0, cursorPosition) + emoji + currentText.slice(cursorPosition);
+    
+    setMessageInput(newText);
+    
+    // Update cursor position to after the inserted emoji
+    const newCursorPosition = cursorPosition + emoji.length;
+    setCursorPosition(newCursorPosition);
+    
+    // Focus back to textarea and set cursor position
+    if (messageInputRef.current) {
+      messageInputRef.current.focus();
+      setTimeout(() => {
+        if (messageInputRef.current) {
+          messageInputRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
+        }
+      }, 0);
+    }
+    
+    // Trigger typing event
+    handleTypingEvent(true);
+    
+    // Optional: Keep picker open for multiple selections
+    // Comment out the line below if you want picker to stay open
+    // setShowEmojiPicker(false);
+  };
+
+  // Handle emoji button click
+  const handleEmojiButtonClick = () => {
+    setShowEmojiPicker(!showEmojiPicker);
+  };
+
+  // Update cursor position when user clicks or types in textarea
+  const handleTextareaClick = () => {
+    if (messageInputRef.current) {
+      setCursorPosition(messageInputRef.current.selectionStart || 0);
+    }
+  };
+
+  const handleKeyUp = () => {
+    if (messageInputRef.current) {
+      setCursorPosition(messageInputRef.current.selectionStart || 0);
+    }
+  };
+
+  // Close emoji picker when clicking outside or pressing ESC
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        emojiPickerRef.current && 
+        !emojiPickerRef.current.contains(event.target as Node) &&
+        !(event.target as Element)?.closest('.emoji-button')
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [showEmojiPicker]);
+
   // Check if we can send (either text or media)
   const canSend = messageInput.trim() || selectedFile;
 
@@ -161,6 +242,23 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
   return (
     <div className="message-input-container">
+      {/* Emoji Picker */}
+      {showEmojiPicker && (
+        <div className="emoji-picker-container" ref={emojiPickerRef}>
+          <EmojiPicker
+            onEmojiClick={handleEmojiClick}
+            width={320}
+            height={400}
+            searchDisabled={false}
+            skinTonesDisabled={false}
+            previewConfig={{
+              defaultCaption: "Pick an emoji!",
+              defaultEmoji: "1f60a"
+            }}
+          />
+        </div>
+      )}
+
       {/* Image Preview */}
       {selectedFile && filePreview && (
         <div className="file-preview">
@@ -190,7 +288,11 @@ const MessageInput: React.FC<MessageInputProps> = ({
           >
             <Icon icon="mdi:camera" />
           </button>
-          <button className="input-action-btn" title="Add emoji">
+          <button 
+            className="input-action-btn emoji-button" 
+            title="Add emoji"
+            onClick={handleEmojiButtonClick}
+          >
             <Icon icon="mdi:emoticon-happy-outline" />
           </button>
         </div>
@@ -205,6 +307,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
           onKeyDown={handleInputKeyDown}
+          onClick={handleTextareaClick}
+          onKeyUp={handleKeyUp}
         />
         <button
           className="send-btn"
