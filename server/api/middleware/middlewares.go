@@ -26,7 +26,7 @@ func Ping() gin.HandlerFunc {
 	}
 }
 
-func CORSMiddleware() gin.HandlerFunc {
+func CORSMiddleware(allowOrigins []string) gin.HandlerFunc {
 	return cors.New(cors.Config{
 		AllowOrigins:        []string{"http://localhost:5173", "http://192.168.100.44:5173"}, // frontend origin
 		AllowMethods:        []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},

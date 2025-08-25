@@ -20,7 +20,7 @@ func NewHTTPServer(client *ent.Client, cfg *config.Config, cld cloudinary.Cloudi
 	router := gin.Default()
 
 	// Middlewares
-	router.Use(middleware.CORSMiddleware())
+	router.Use(middleware.CORSMiddleware(cfg.ClientAddr))
 	router.Use(gin.Recovery())
 	router.Use(gin.Logger())
 	router.Use(middleware.Ping())
