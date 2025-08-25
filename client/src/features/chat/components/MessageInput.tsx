@@ -1,10 +1,11 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
 
 interface MessageInputProps {
   messageInput: string;
   setMessageInput: (input: string, skipTypingEvent?: boolean) => void;
   handleSendMessage: () => void;
+  handleSendMediaMessage?: (file: File) => void;
   handleInputKeyDown: (e: React.KeyboardEvent) => void;
   messageInputRef: React.RefObject<HTMLTextAreaElement | null>;
   onTyping?: (isTyping: boolean) => void;
@@ -14,6 +15,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   messageInput,
   setMessageInput,
   handleSendMessage,
+  handleSendMediaMessage,
   handleInputKeyDown,
   messageInputRef,
   onTyping
@@ -21,6 +23,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isCurrentlyTypingRef = useRef(false);
   const skipNextTypingEventRef = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState<string | null>(null);
 
   const handleTypingEvent = (isTyping: boolean) => {
     if (!onTyping) return;
@@ -90,6 +95,55 @@ const MessageInput: React.FC<MessageInputProps> = ({
     }
   }, [messageInput]);
 
+  // Handle file selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      
+      // Create preview for image (all files are images now)
+      const reader = new FileReader();
+      reader.onload = () => {
+        setFilePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle media attachment click
+  const handleAttachClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle sending media
+  const handleSendMedia = () => {
+    if (selectedFile && handleSendMediaMessage) {
+      handleSendMediaMessage(selectedFile);
+      clearSelectedFile();
+    }
+  };
+
+  // Clear selected file
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Handle send button click (text or media)
+  const handleSendClick = () => {
+    if (selectedFile) {
+      handleSendMedia();
+    } else {
+      handleSendMessage();
+    }
+  };
+
+  // Check if we can send (either text or media)
+  const canSend = messageInput.trim() || selectedFile;
+
   const handleInputFocus = () => {
     // Don't emit typing on focus unless there's text (including spaces)
     if (messageInput.length > 0) {
@@ -107,9 +161,33 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
   return (
     <div className="message-input-container">
+      {/* Image Preview */}
+      {selectedFile && filePreview && (
+        <div className="file-preview">
+          <div className="file-preview-content">
+            <img src={filePreview} alt="Preview" className="file-preview-image" />
+            <span className="file-name">{selectedFile.name}</span>
+          </div>
+          <button className="file-preview-remove" onClick={clearSelectedFile} title="Remove image">
+            <Icon icon="mdi:close" />
+          </button>
+        </div>
+      )}
+
       <div className="message-input-wrapper">
         <div className="input-actions">
-          <button className="input-action-btn" title="Attach photo">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            style={{ display: 'none' }}
+          />
+          <button 
+            className="input-action-btn" 
+            title="Attach image" 
+            onClick={handleAttachClick}
+          >
             <Icon icon="mdi:camera" />
           </button>
           <button className="input-action-btn" title="Add emoji">
@@ -119,7 +197,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         <textarea
           ref={messageInputRef}
           className="message-input"
-          placeholder="Type a message..."
+          placeholder={selectedFile ? "Add a caption..." : "Type a message..."}
           rows={1}
           value={messageInput}
           onInput={handleInputChange}
@@ -130,10 +208,10 @@ const MessageInput: React.FC<MessageInputProps> = ({
         />
         <button
           className="send-btn"
-          disabled={!messageInput.trim()}
-          onClick={handleSendMessage}
+          disabled={!canSend}
+          onClick={handleSendClick}
         >
-          <Icon icon="mdi:send" />
+          <Icon icon={selectedFile ? "mdi:send" : "mdi:send"} />
         </button>
       </div>
     </div>

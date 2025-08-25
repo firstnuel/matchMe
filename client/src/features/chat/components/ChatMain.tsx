@@ -18,6 +18,7 @@ interface ChatMainProps {
   messageInput: string;
   setMessageInput: (input: string) => void;
   handleSendMessage: () => void;
+  handleSendMediaMessage?: (file: File) => void;
   handleInputKeyDown: (e: React.KeyboardEvent) => void;
   messageInputRef: React.RefObject<HTMLTextAreaElement | null>;
   isMobile?: boolean;
@@ -31,6 +32,7 @@ const ChatMain: React.FC<ChatMainProps> = ({
   messageInput,
   setMessageInput,
   handleSendMessage,
+  handleSendMediaMessage,
   handleInputKeyDown,
   messageInputRef,
   isMobile = false,
@@ -150,6 +152,7 @@ const ChatMain: React.FC<ChatMainProps> = ({
         messageInput={messageInput}
         setMessageInput={setMessageInput}
         handleSendMessage={handleSendMessage}
+        handleSendMediaMessage={handleSendMediaMessage}
         handleInputKeyDown={handleInputKeyDown}
         messageInputRef={messageInputRef}
         onTyping={handleTyping}

@@ -4,7 +4,7 @@ import ChatSidebar from './ChatSidebar';
 import ChatMain from './ChatMain';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useUIStore } from '../../../shared/hooks/uiStore';
-import { useChatList, useSendTextMessage } from '../hooks/useChatMessage';
+import { useChatList, useSendTextMessage, useSendMediaMessage } from '../hooks/useChatMessage';
 import { useCurrentUser } from '../../userProfile/hooks/useCurrentUser';
 import '../styles.css';
 import type { User } from '../../../shared/types/user';
@@ -24,6 +24,7 @@ const ChatInterface = () => {
   const { data: currentUser } = useCurrentUser();
   const { data: chatListData, isLoading: isLoadingChats, error: chatListError } = useChatList();
   const sendTextMutation = useSendTextMessage();
+  const sendMediaMutation = useSendMediaMessage();
 
   useEffect(() => {
     if (!isMobile && chatListData && 'chats' in chatListData && chatListData.chats.length > 0 && !selectedChat) {
@@ -51,6 +52,14 @@ const ChatInterface = () => {
       receiver_id: selectedChat.other_user?.id || ''
     });
     setMessageInput('');
+  };
+
+  const handleSendMediaMessage = (file: File) => {
+    if (!selectedChat || !currentUser) return;
+    sendMediaMutation.mutate({
+      connection_id: selectedChat.connection_id,
+      media: file
+    });
   };
 
   const handleInputKeyDown = (e: React.KeyboardEvent) => {
@@ -124,6 +133,7 @@ const ChatInterface = () => {
           messageInput={messageInput}
           setMessageInput={setMessageInput}
           handleSendMessage={handleSendMessage}
+          handleSendMediaMessage={handleSendMediaMessage}
           handleInputKeyDown={handleInputKeyDown}
           messageInputRef={messageInputRef}
           isMobile={isMobile}
