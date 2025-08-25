@@ -18,16 +18,23 @@ import (
 
 func registerRoutes(client *ent.Client, r *gin.Engine, cfg *config.Config, cld cloudinary.Cloudinary) {
 
-	wshub := wscore.NewHub()
-	webSocketService := wscore.NewWebSocketService(wshub)
-
-	log.Println("🚀 Registering API routes...")
-	userHandler := user.NewUserHandler(client, cfg, requests.NewValidationService(), cld)
-	userHandler.RegisterRoutes(r)
-
 	connectionRepo := connections.NewConnectionRepository(client)
 
-	webSocketHandler := websocket.NewWebSocketHandler(wshub, connectionRepo, userHandler.UserUsecase, cfg)
+	chatHub := wscore.NewChatHub()
+	typingHub := wscore.NewTypingHub()
+	statusHub := wscore.NewStatusHub()
+
+	go chatHub.Run()
+	go typingHub.Run()
+	go statusHub.Run()
+
+	webSocketService := wscore.NewWebSocketService(chatHub, typingHub, statusHub)
+
+	log.Println("🚀 Registering API routes...")
+	userHandler := user.NewUserHandler(client, cfg, connectionRepo, requests.NewValidationService(), cld)
+	userHandler.RegisterRoutes(r)
+
+	webSocketHandler := websocket.NewWebSocketHandler(chatHub, typingHub, statusHub, connectionRepo, userHandler.UserUsecase, cfg)
 	webSocketHandler.RegisterRoutes(r)
 
 	connectionHandler := connection.NewConnectionHandler(

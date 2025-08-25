@@ -114,7 +114,7 @@ func (r *messageRepository) GetConnectionMessagesWithUsers(ctx context.Context, 
 		).
 		WithSender().
 		WithReceiver().
-		Order(message.ByCreatedAt())
+		Order(ent.Desc(message.FieldCreatedAt))
 
 	if limit > 0 {
 		query = query.Limit(limit)
@@ -245,7 +245,7 @@ func (r *messageRepository) GetMediaMessages(ctx context.Context, connectionID u
 
 func (r *messageRepository) SearchMessages(ctx context.Context, connectionID uuid.UUID, query string) ([]*ent.Message, error) {
 	searchTerm := strings.ToLower(query)
-	
+
 	messages, err := r.client.Message.Query().
 		Where(
 			message.And(

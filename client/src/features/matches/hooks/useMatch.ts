@@ -3,39 +3,41 @@ import { useAuthStore } from '../../auth/hooks/authStore';
 import { useQuery } from '@tanstack/react-query';
 import { useCurrentUser } from '../../userProfile/hooks/useCurrentUser';
 
-
+// Fetch user recommendations (only if profile completion > 90)
 export const useUserRecommendations = () => {
-    const { data } = useCurrentUser()
-    const q = useQuery({
-        queryKey: ['userRecommendations'],
-        queryFn: getRecommendations,
-        enabled: !!(data && 'user' in data && data.user?.profile_completion && data.user.profile_completion > 90),
-        retry: false,
-    });
+  const { data } = useCurrentUser();
+  const isProfileComplete =
+    data &&
+    'user' in data &&
+    data.user?.profile_completion &&
+    data.user.profile_completion > 90;
 
-    return q;
-}
+  return useQuery({
+    queryKey: ['userRecommendations'],
+    queryFn: getRecommendations,
+    enabled: !!isProfileComplete,
+    retry: false,
+  });
+};
 
+// Fetch another user's profile by id
 export const useUserProfile = (id: string) => {
-    const { authToken } = useAuthStore();
-    const q = useQuery({
-        queryKey: ['userProfile', id],
-        queryFn: ({ queryKey }) => getUserProfile(queryKey[1] as string),
-        enabled: !!(authToken && id),
-        retry: false,
-    });
+  const { authToken } = useAuthStore();
+  return useQuery({
+    queryKey: ['userProfile', id],
+    queryFn: () => getUserProfile(id),
+    enabled: !!(authToken && id),
+    retry: false,
+  });
+};
 
-    return q;
-}
-
+// Fetch distance between current user and another user
 export const useUserDistance = (id: string) => {
-    const { authToken } = useAuthStore();
-    const q = useQuery({
-        queryKey: ['userDist', id],
-        queryFn: ({ queryKey }) => getDistanceFromUser(queryKey[1] as string),
-        enabled: !!(authToken && id),
-        retry: false,
-    });
-
-    return q;
-}
+  const { authToken } = useAuthStore();
+  return useQuery({
+    queryKey: ['userDist', id],
+    queryFn: () => getDistanceFromUser(id),
+    enabled: !!(authToken && id),
+    retry: false,
+  });
+};

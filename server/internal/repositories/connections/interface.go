@@ -20,6 +20,7 @@ type ConnectionRepository interface {
 	GetUserConnections(ctx context.Context, userID uuid.UUID) ([]*ent.Connection, error)
 	GetActiveConnections(ctx context.Context, userID uuid.UUID) ([]*ent.Connection, error)
 	GetConnectionsWithUsers(ctx context.Context, userID uuid.UUID) ([]*ent.Connection, error)
+	GetConnectedUserIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
 }
 
 // ConnectionRequestRepository defines methods for managing connection requests.

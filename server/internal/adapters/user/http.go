@@ -6,6 +6,7 @@ import (
 	"match-me/config"
 	"match-me/ent"
 	"match-me/internal/pkg/cloudinary"
+	"match-me/internal/repositories/connections"
 	userRepo "match-me/internal/repositories/user"
 	"match-me/internal/requests"
 	userUsecase "match-me/internal/usecases/user"
@@ -15,16 +16,18 @@ import (
 
 type UserHandler struct {
 	UserUsecase       userUsecase.UserUsecase
+	connRepo          connections.ConnectionRepository
 	validationService *requests.ValidationService
 	cfg               *config.Config
 }
 
 func NewUserHandler(client *ent.Client, cfg *config.Config,
+	connRepo connections.ConnectionRepository,
 	validationService *requests.ValidationService,
 	cld cloudinary.Cloudinary) *UserHandler {
 
 	userRepo := userRepo.NewUserRepository(client)
-	userUsecase := userUsecase.NewUserUsecase(userRepo, cfg.JWTSecret, cld)
+	userUsecase := userUsecase.NewUserUsecase(userRepo, connRepo, cfg.JWTSecret, cld)
 	return &UserHandler{
 		UserUsecase:       userUsecase,
 		validationService: validationService,

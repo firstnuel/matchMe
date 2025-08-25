@@ -56,7 +56,17 @@ func (u *messageUsecase) SendTextMessage(ctx context.Context, senderID uuid.UUID
 
 	// Broadcast the new message via WebSocket
 	if u.wsService != nil {
-		u.wsService.BroadcastNewMessage(message)
+		go func(msg *models.Message) {
+			defer func() {
+				if r := recover(); r != nil {
+					fmt.Printf("🚨 PANIC in BroadcastNewMessage goroutine: %v\n", r)
+				}
+			}()
+			
+			fmt.Printf("🔄 Starting BroadcastNewMessage goroutine for message ID: %s\n", msg.ID)
+			u.wsService.BroadcastNewMessage(msg)
+			fmt.Printf("✅ Completed BroadcastNewMessage goroutine for message ID: %s\n", msg.ID)
+		}(message)
 	}
 
 	return message, nil
@@ -93,7 +103,17 @@ func (u *messageUsecase) SendMediaMessage(ctx context.Context, senderID uuid.UUI
 
 	// Broadcast the new message via WebSocket
 	if u.wsService != nil {
-		u.wsService.BroadcastNewMessage(message)
+		go func(msg *models.Message) {
+			defer func() {
+				if r := recover(); r != nil {
+					fmt.Printf("🚨 PANIC in BroadcastNewMessage goroutine: %v\n", r)
+				}
+			}()
+			
+			fmt.Printf("🔄 Starting BroadcastNewMessage goroutine for message ID: %s\n", msg.ID)
+			u.wsService.BroadcastNewMessage(msg)
+			fmt.Printf("✅ Completed BroadcastNewMessage goroutine for message ID: %s\n", msg.ID)
+		}(message)
 	}
 
 	return message, nil
@@ -135,7 +155,9 @@ func (u *messageUsecase) MarkMessagesAsRead(ctx context.Context, userID, connect
 
 	// Broadcast read status via WebSocket
 	if u.wsService != nil && count > 0 {
-		u.wsService.BroadcastConnectionMessagesRead(connectionID, userID, count)
+		go func(connID, usrID uuid.UUID, cnt int) {
+			u.wsService.BroadcastConnectionMessagesRead(connID, usrID, cnt)
+		}(connectionID, userID, count)
 	}
 
 	return nil
@@ -148,6 +170,91 @@ func (u *messageUsecase) GetUnreadCount(ctx context.Context, userID uuid.UUID) (
 	}
 
 	return count, nil
+}
+
+func (u *messageUsecase) GetChatList(ctx context.Context, userID uuid.UUID) (*models.ChatList, error) {
+	// Get user's connections with user details
+	entConnections, err := u.connectionRepo.GetConnectionsWithUsers(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user connections: %w", err)
+	}
+
+	if len(entConnections) == 0 {
+		return &models.ChatList{
+			Chats:       []*models.ChatListItem{},
+			TotalChats:  0,
+			UnreadTotal: 0,
+		}, nil
+	}
+
+	// Build chat list items
+	chatItems := make([]*models.ChatListItem, 0, len(entConnections))
+	totalUnread := 0
+
+	for _, entConnection := range entConnections {
+		// Determine the other user in the connection
+		var otherUser *models.User
+		if entConnection.UserAID == userID {
+			otherUser = models.ToUser(entConnection.Edges.UserB, models.AccessLevelBasic)
+		} else {
+			otherUser = models.ToUser(entConnection.Edges.UserA, models.AccessLevelBasic)
+		}
+
+		if otherUser == nil {
+			// Skip this connection if we can't determine the other user
+			continue
+		}
+
+		// Get the latest message for this connection
+		latestMessages, err := u.messageRepo.GetConnectionMessages(ctx, entConnection.ID, 1, 0)
+		var lastMessage *models.Message
+		var lastActivity string
+		
+		if err == nil && len(latestMessages) > 0 {
+			lastMessage = models.ToMessage(latestMessages[0])
+			lastActivity = lastMessage.CreatedAt
+		} else {
+			// If no messages, use connection created time
+			lastActivity = entConnection.ConnectedAt.Format("2006-01-02T15:04:05Z07:00")
+		}
+
+		// Get unread count for this connection
+		unreadMessages, err := u.messageRepo.GetUnreadMessagesForConnection(ctx, entConnection.ID, userID)
+		unreadCount := 0
+		if err == nil {
+			unreadCount = len(unreadMessages)
+		}
+
+		totalUnread += unreadCount
+
+		// Create chat list item
+		chatItem := &models.ChatListItem{
+			ConnectionID:     entConnection.ID,
+			OtherUser:        otherUser,
+			LastMessage:      lastMessage,
+			UnreadCount:      unreadCount,
+			LastActivity:     lastActivity,
+			ConnectionStatus: string(entConnection.Status),
+		}
+
+		chatItems = append(chatItems, chatItem)
+	}
+
+	// Sort chat items by last activity (most recent first)
+	// Simple bubble sort for now - could be optimized
+	for i := 0; i < len(chatItems); i++ {
+		for j := i + 1; j < len(chatItems); j++ {
+			if chatItems[j].LastActivity > chatItems[i].LastActivity {
+				chatItems[i], chatItems[j] = chatItems[j], chatItems[i]
+			}
+		}
+	}
+
+	return &models.ChatList{
+		Chats:       chatItems,
+		TotalChats:  len(chatItems),
+		UnreadTotal: totalUnread,
+	}, nil
 }
 
 // validateConnectionAccess verifies that the connection exists, is active, and the user is part of it

@@ -1,6 +1,7 @@
 package connection
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -13,12 +14,17 @@ import (
 
 // SendTextMessage handles POST /messages/text
 func (h *ConnectionHandler) SendTextMessage(c *gin.Context) {
+	log.Printf("📨 Received SendTextMessage request from user")
+	
 	// Get authenticated user
 	user, exists := middleware.GetUserFromGinContext(c)
 	if !exists {
+		log.Printf("❌ User not authenticated in SendTextMessage")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
 		return
 	}
+	
+	log.Printf("✅ Authenticated user: %s", user.ID)
 
 	// Parse request body
 	var req requests.SendTextMessageBody
@@ -308,4 +314,26 @@ func (h *ConnectionHandler) GetUnreadCount(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"unread_count": count,
 	})
+}
+
+// GetChatList handles GET /messages/chat-list
+func (h *ConnectionHandler) GetChatList(c *gin.Context) {
+	// Get authenticated user
+	user, exists := middleware.GetUserFromGinContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Get chat list
+	chatList, err := h.MessageUsecase.GetChatList(c.Request.Context(), user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get chat list",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, chatList)
 }

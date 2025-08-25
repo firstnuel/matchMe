@@ -130,3 +130,32 @@ func (r *connectionRepository) GetConnectionsWithUsers(ctx context.Context, user
 	}
 	return connections, nil
 }
+
+func (r *connectionRepository) GetConnectedUserIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
+	connections, err := r.client.Connection.Query().
+		Where(
+			connection.And(
+				connection.StatusEQ(connection.StatusConnected),
+				connection.Or(
+					connection.UserAIDEQ(userID),
+					connection.UserBIDEQ(userID),
+				),
+			),
+		).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get connected user IDs: %w", err)
+	}
+
+	// Extract the other user IDs from each connection
+	var connectedUserIDs []uuid.UUID
+	for _, conn := range connections {
+		if conn.UserAID == userID {
+			connectedUserIDs = append(connectedUserIDs, conn.UserBID)
+		} else {
+			connectedUserIDs = append(connectedUserIDs, conn.UserAID)
+		}
+	}
+
+	return connectedUserIDs, nil
+}

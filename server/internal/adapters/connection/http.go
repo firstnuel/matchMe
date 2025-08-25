@@ -79,6 +79,7 @@ func (h *ConnectionHandler) RegisterRoutes(r *gin.Engine) *gin.Engine {
 		messageGroup.GET("/connection/:connectionId", h.GetConnectionMessages)
 		messageGroup.PUT("/connection/:connectionId/read", h.MarkMessagesAsRead)
 		messageGroup.GET("/unread-count", h.GetUnreadCount)
+		messageGroup.GET("/chat-list", h.GetChatList)
 	}
 
 	log.Println("💫 All connection routes registered")

@@ -5,16 +5,15 @@ go 1.24.4
 require (
 	entgo.io/ent v0.14.5
 	github.com/cloudinary/cloudinary-go/v2 v2.12.0
+	github.com/gin-contrib/cors v1.7.6
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/uuid v1.6.0
 )
 
 require (
 	github.com/creasty/defaults v1.7.0 // indirect
-	github.com/gin-contrib/cors v1.7.6 // indirect
 	github.com/go-test/deep v1.0.7 // indirect
 	github.com/gorilla/schema v1.4.1 // indirect
-	github.com/jub0bs/fcors v0.10.0 // indirect
 )
 
 require (

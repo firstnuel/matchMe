@@ -200,3 +200,20 @@ func ToMessages(entMessages []*ent.Message) []*Message {
 
 	return messages
 }
+
+// ChatListItem represents a chat item in the user's chat list
+type ChatListItem struct {
+	ConnectionID     uuid.UUID `json:"connection_id"`
+	OtherUser        *User     `json:"other_user"`
+	LastMessage      *Message  `json:"last_message,omitempty"`
+	UnreadCount      int       `json:"unread_count"`
+	LastActivity     string    `json:"last_activity"`
+	ConnectionStatus string    `json:"connection_status"`
+}
+
+// ChatList represents a user's complete chat list
+type ChatList struct {
+	Chats       []*ChatListItem `json:"chats"`
+	TotalChats  int             `json:"total_chats"`
+	UnreadTotal int             `json:"unread_total"`
+}

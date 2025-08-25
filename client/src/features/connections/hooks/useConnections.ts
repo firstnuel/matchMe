@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { 
   getConnections, 
   deleteConnections, 
@@ -10,6 +11,7 @@ import {
 import { useAuthStore } from '../../auth/hooks/authStore';
 import { type SendConnectionRequestBody } from '../types/connections';
 import { useUIStore } from '../../../shared/hooks/uiStore';
+
 
 export const useConnections = () => {
   const { authToken } = useAuthStore();

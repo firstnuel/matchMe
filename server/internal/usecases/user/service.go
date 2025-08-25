@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"sort"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"match-me/internal/models"
 	"match-me/internal/pkg/cloudinary"
 	"match-me/internal/pkg/jwt"
+	"match-me/internal/repositories/connections"
 	"match-me/internal/repositories/user"
 	"match-me/internal/requests"
 
@@ -22,11 +24,15 @@ type userUsecase struct {
 	userRepo  user.UserRepository
 	jwtSecret string
 	cld       cloudinary.Cloudinary
+	connRepo  connections.ConnectionRepository
 }
 
-func NewUserUsecase(userRepo user.UserRepository, jwtSecret string, cld cloudinary.Cloudinary) UserUsecase {
+func NewUserUsecase(userRepo user.UserRepository,
+	connRepo connections.ConnectionRepository,
+	jwtSecret string, cld cloudinary.Cloudinary) UserUsecase {
 	return &userUsecase{
 		userRepo:  userRepo,
+		connRepo:  connRepo,
 		jwtSecret: jwtSecret,
 		cld:       cld,
 	}
@@ -228,7 +234,7 @@ func (u *userUsecase) DeleteUserPhoto(ctx context.Context, userID, photoID uuid.
 }
 
 func (u *userUsecase) GetRecommendations(ctx context.Context, userID uuid.UUID) ([]string, error) {
-	// fetch users by user preference
+	// Fetch users by user preference
 	preferredUsers, currentUser, err := u.userRepo.GetUsersByPreference(ctx, userID)
 	if err != nil {
 		return []string{}, err
@@ -247,7 +253,7 @@ func (u *userUsecase) GetRecommendations(ctx context.Context, userID uuid.UUID) 
 
 	for i, v := range preferredUsers {
 		score := 0
-		// check matches in bio max if 5 per field
+		// Check matches in bio max if 5 per field
 		score += countSimilar(currentUser.LookingFor, v.LookingFor)
 		score += countSimilar(currentUser.Interests, v.Interests)
 		score += countSimilar(currentUser.MusicPreferences, v.MusicPreferences)
@@ -266,14 +272,32 @@ func (u *userUsecase) GetRecommendations(ctx context.Context, userID uuid.UUID) 
 		return recommendedIDS[i].userScore > recommendedIDS[j].userScore
 	})
 
-	// Return top 10 userIDs
-	n := 10
-	if len(recommendedIDS) < n {
-		n = len(recommendedIDS)
+	// Fetch existing connections
+	connections, err := u.connRepo.GetUserConnections(ctx, userID)
+	if err != nil {
+		log.Printf("failed to get user connections: %v", err) // only log err
 	}
-	result := make([]string, n)
-	for i := 0; i < n; i++ {
-		result[i] = recommendedIDS[i].userID
+
+	// Create a set of connected user IDs
+	connectedUserIDs := make(map[string]struct{})
+	for _, conn := range connections {
+		if conn.UserAID == userID {
+			connectedUserIDs[conn.UserBID.String()] = struct{}{}
+		} else if conn.UserBID == userID {
+			connectedUserIDs[conn.UserAID.String()] = struct{}{}
+		}
+	}
+
+	// Filter out connected users and collect top 10
+	result := make([]string, 0, 10)
+	for _, ranking := range recommendedIDS {
+		if len(result) >= 10 {
+			break
+		}
+		// Only add users who are not in the connectedUserIDs set
+		if _, exists := connectedUserIDs[ranking.userID]; !exists {
+			result = append(result, ranking.userID)
+		}
 	}
 
 	return result, nil

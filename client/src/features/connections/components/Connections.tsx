@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import ConnectionItem from './ConnectionItem';
-import { useConnections, useConnectionRequests } from '../hooks/useConnections';
+import { useConnections, useConnectionRequests,  } from '../hooks/useConnections';
+import { useConnectionWebSocketEvents } from '../hooks/useConnectionWebSocketEvents';
 import { getInitials } from '../../../shared/utils/utils';
 import '../styles.css'
 
@@ -8,10 +9,9 @@ type TabType = 'requests' | 'matches';
 
 const Connection: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('requests');
-  
+  useConnectionWebSocketEvents(); // Enable WebSocket event listeners for real-time updates
   const { data: connectionsData, isLoading: connectionsLoading } = useConnections();
   const { data: requestsData, isLoading: requestsLoading } = useConnectionRequests();
-  
   const connections = connectionsData && 'connections' in connectionsData ? connectionsData.connections : [];
   const requests = requestsData && 'requests' in requestsData ? requestsData.requests : [];
   

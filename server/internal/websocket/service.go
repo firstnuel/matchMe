@@ -1,42 +1,50 @@
 package websocket
 
 import (
+	"log"
 	"match-me/internal/models"
-	"time"
+	"time" // Make sure time is imported
 
 	"github.com/google/uuid"
 )
 
 // WebSocketService provides methods to integrate WebSocket with business logic
 type WebSocketService struct {
-	hub *Hub
+	chatHub   *ChatHub
+	typingHub *TypingHub
+	statusHub *StatusHub
 }
 
 // NewWebSocketService creates a new WebSocket service
-func NewWebSocketService(hub *Hub) *WebSocketService {
+func NewWebSocketService(chatHub *ChatHub, typingHub *TypingHub, statusHub *StatusHub) *WebSocketService {
 	return &WebSocketService{
-		hub: hub,
+		chatHub:   chatHub,
+		typingHub: typingHub,
+		statusHub: statusHub,
 	}
 }
 
 // BroadcastNewMessage broadcasts a new message to connection participants
 func (s *WebSocketService) BroadcastNewMessage(message *models.Message) {
 	if message == nil {
+		log.Printf("❌ BroadcastNewMessage called with nil message")
 		return
 	}
 
+	// NOTE: Assumes MessageEvent is defined in your package.
 	messageEvent := MessageEvent{
 		Message:      message,
 		ConnectionID: message.ConnectionID,
 		SenderID:     message.SenderID,
-		ReceiverID:   message.ReceiverID,
 	}
 
-	s.hub.BroadcastMessageToConnection(message.ConnectionID, messageEvent)
+	// Use the ChatHub to broadcast the message
+	s.chatHub.BroadcastMessage(message.ConnectionID, messageEvent, message.SenderID)
 }
 
-// BroadcastMessageRead broadcasts message read status to the sender
+// BroadcastMessageRead broadcasts message read status to connection participants
 func (s *WebSocketService) BroadcastMessageRead(messageID, connectionID, readByUserID uuid.UUID) {
+	// NOTE: Assumes MessageReadEvent and EventMessageRead are defined
 	readEvent := MessageReadEvent{
 		MessageID:    messageID,
 		ConnectionID: connectionID,
@@ -44,32 +52,21 @@ func (s *WebSocketService) BroadcastMessageRead(messageID, connectionID, readByU
 		ReadAt:       time.Now(),
 	}
 
-	s.hub.BroadcastMessageRead(connectionID, readEvent)
-}
-
-// BroadcastConnectionMessagesRead broadcasts that all messages in a connection were read
-func (s *WebSocketService) BroadcastConnectionMessagesRead(connectionID, readByUserID uuid.UUID, messageCount int) {
-	// Create a generic read event for the connection
-	readEvent := MessageReadEvent{
-		MessageID:    uuid.Nil, // No specific message ID for bulk read
-		ConnectionID: connectionID,
-		ReadBy:       readByUserID,
-		ReadAt:       time.Now(),
-	}
-
-	s.hub.BroadcastMessageRead(connectionID, readEvent)
+	// Use ChatHub to broadcast read events within the connection
+	s.chatHub.BroadcastEvent(connectionID, EventMessageRead, readEvent, readByUserID)
 }
 
 // BroadcastTypingIndicator broadcasts typing status to connection participants
 func (s *WebSocketService) BroadcastTypingIndicator(connectionID, userID uuid.UUID, isTyping bool) {
+	// NOTE: Assumes TypingEvent is defined.
 	typingEvent := TypingEvent{
 		ConnectionID: connectionID,
 		UserID:       userID,
 		IsTyping:     isTyping,
-		UpdatedAt:    time.Now(),
 	}
 
-	s.hub.broadcastToConnection(connectionID, EventMessageTyping, typingEvent, userID)
+	// Use TypingHub to broadcast typing indicators
+	s.typingHub.BroadcastTypingIndicator(connectionID, typingEvent, userID)
 }
 
 // BroadcastConnectionRequest broadcasts a new connection request to the receiver
@@ -77,13 +74,14 @@ func (s *WebSocketService) BroadcastConnectionRequest(request *models.Connection
 	if request == nil {
 		return
 	}
-
+	// NOTE: Assumes ConnectionRequestEvent is defined.
 	requestEvent := ConnectionRequestEvent{
 		Request: request,
 		Action:  "new",
 	}
 
-	s.hub.BroadcastToUser(request.ReceiverID, EventConnectionRequest, requestEvent)
+	// Use StatusHub to send direct messages to users
+	s.statusHub.BroadcastToUser(request.ReceiverID, EventConnectionRequest, requestEvent)
 }
 
 // BroadcastConnectionAccepted broadcasts that a connection request was accepted
@@ -92,91 +90,90 @@ func (s *WebSocketService) BroadcastConnectionAccepted(request *models.Connectio
 		return
 	}
 
-	// Notify the original sender that their request was accepted
 	requestEvent := ConnectionRequestEvent{
 		Request: request,
 		Action:  "accepted",
 	}
-	s.hub.BroadcastToUser(request.SenderID, EventConnectionRequest, requestEvent)
+	s.statusHub.BroadcastToUser(request.SenderID, EventConnectionRequest, requestEvent)
 
-	// Notify both users about the new connection
+	// NOTE: Assumes ConnectionEvent is defined.
 	connectionEvent := ConnectionEvent{
 		Connection: connection,
 		Action:     "established",
 	}
-	s.hub.BroadcastToUser(request.SenderID, EventConnectionAccepted, connectionEvent)
-	s.hub.BroadcastToUser(request.ReceiverID, EventConnectionAccepted, connectionEvent)
+	s.statusHub.BroadcastToUser(request.SenderID, EventConnectionAccepted, connectionEvent)
+	s.statusHub.BroadcastToUser(request.ReceiverID, EventConnectionAccepted, connectionEvent)
 }
 
-// BroadcastConnectionDeclined broadcasts that a connection request was declined
+// BroadcastConnectionMessagesRead broadcasts that all messages in a connection were read.
+func (s *WebSocketService) BroadcastConnectionMessagesRead(connectionID, readByUserID uuid.UUID, messageCount int) {
+
+	readEvent := MessageReadEvent{
+		MessageID:    uuid.Nil,
+		ConnectionID: connectionID,
+		ReadBy:       readByUserID,
+		ReadAt:       time.Now(),
+	}
+
+	// Use the ChatHub to broadcast the read event to other participants in the connection.
+	s.chatHub.BroadcastEvent(connectionID, EventMessageRead, readEvent, readByUserID)
+}
+
+// BroadcastConnectionDeclined broadcasts that a connection request was declined.
 func (s *WebSocketService) BroadcastConnectionDeclined(request *models.ConnectionRequest) {
 	if request == nil {
 		return
 	}
 
+	// NOTE: Assumes ConnectionRequestEvent and EventConnectionRequest are defined.
 	requestEvent := ConnectionRequestEvent{
 		Request: request,
 		Action:  "declined",
 	}
 
-	s.hub.BroadcastToUser(request.SenderID, EventConnectionRequest, requestEvent)
-}
-
-// BroadcastConnectionDropped broadcasts that a connection was dropped
-func (s *WebSocketService) BroadcastConnectionDropped(connectionID, userAID, userBID uuid.UUID) {
-	connection := &models.Connection{
-		ID:      connectionID,
-		UserAID: userAID,
-		UserBID: userBID,
-		Status:  "dropped",
-	}
-
-	connectionEvent := ConnectionEvent{
-		Connection: connection,
-		Action:     "dropped",
-	}
-
-	s.hub.BroadcastToUser(userAID, EventConnectionDropped, connectionEvent)
-	s.hub.BroadcastToUser(userBID, EventConnectionDropped, connectionEvent)
+	// Use the StatusHub to send the notification directly to the original sender.
+	s.statusHub.BroadcastToUser(request.SenderID, EventConnectionRequest, requestEvent)
 }
 
 // BroadcastUserStatusChange broadcasts user status changes to their connections
 func (s *WebSocketService) BroadcastUserStatusChange(userID uuid.UUID, status string) {
-
-	// This will be handled by the hub's internal logic to broadcast to relevant connections
-	s.hub.broadcastUserStatus(userID, status)
+	s.statusHub.broadcastUserStatus(userID, status)
 }
 
 // GetOnlineUsers returns list of currently online users
 func (s *WebSocketService) GetOnlineUsers() []uuid.UUID {
-	return s.hub.GetOnlineUsers()
+	return s.statusHub.GetOnlineUsers()
 }
 
 // IsUserOnline checks if a specific user is currently online
 func (s *WebSocketService) IsUserOnline(userID uuid.UUID) bool {
-	return s.hub.IsUserOnline(userID)
+	return s.statusHub.IsUserOnline(userID)
 }
 
 // GetConnectionUsers returns users currently connected to a specific connection
-func (s *WebSocketService) GetConnectionUsers(connectionID uuid.UUID) []uuid.UUID {
-	return s.hub.GetConnectionUsers(connectionID)
+func (s *WebSocketService) GetConnectionUsers(connectionID uuid.UUID) ([]uuid.UUID, bool) {
+	// FIX: Call the new method on the ChatHub.
+	return s.chatHub.GetConnectionUsers(connectionID)
 }
 
 // SendDirectMessage sends a direct message to a specific user (for system notifications)
 func (s *WebSocketService) SendDirectMessage(userID uuid.UUID, eventType EventType, data interface{}) {
-	s.hub.BroadcastToUser(userID, eventType, data)
+	s.statusHub.BroadcastToUser(userID, eventType, data)
 }
 
 // SendErrorToUser sends an error message to a specific user
 func (s *WebSocketService) SendErrorToUser(userID uuid.UUID, code int, message string) {
+	// NOTE: Assumes ErrorEvent is defined.
 	errorEvent := ErrorEvent{
 		Code:    code,
 		Message: message,
 	}
-	s.hub.BroadcastToUser(userID, EventError, errorEvent)
+	s.statusHub.BroadcastToUser(userID, EventError, errorEvent)
 }
 
 // Shutdown gracefully shuts down the WebSocket service
 func (s *WebSocketService) Shutdown() {
-	s.hub.Shutdown()
+	s.chatHub.Shutdown()
+	s.typingHub.Shutdown()
+	s.statusHub.Shutdown()
 }

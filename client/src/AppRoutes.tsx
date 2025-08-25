@@ -1,97 +1,32 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import { memo, type ReactNode } from 'react'
-import { useAuthStore } from './features/auth/hooks/authStore'
+import { Routes, Route } from 'react-router-dom'
 import LoginForm from './features/auth/components/LoginForm'
 import RegisterForm from './features/auth/components/RegisterForm'
-import BottomNav from './shared/components/BottomNav'
-import Header from './shared/components/Header'
 import ViewProfile from './features/userProfile/components/ViewProfile'
 import EditProfile from './features/userProfile/components/EditProfile'
-import { useCurrentUser } from './features/userProfile/hooks/useCurrentUser'
 import Home from './features/matches/components/Home'
-import { useUserRecommendations } from './features/matches/hooks/useMatch'
 import Connection from './features/connections/components/Connections'
-
-const ProtectedRoute = memo(({ children }: { children: ReactNode }) => {
-  const { authToken } = useAuthStore();
-    const { isLoading } = useCurrentUser();
-    useUserRecommendations()
-
-  if (!authToken) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (isLoading) {
-    return <div>Loading...</div>; // Or a spinner component
-  }
-
-
-  return (
-    <>
-      <Header />
-      {children}
-      <BottomNav />
-    </>
-  );
-});
-
-ProtectedRoute.displayName = 'ProtectedRoute';
-
+import ProtectedRoute from './ProtectedRoute'
+import ChatInterface from './features/chat/components/ChatInterface'
+  
 
 const AppRoutes = () => {
-
   return (
     <Routes>
+      {/* Public Routes */}
       <Route path="/login" element={<LoginForm />} />
       <Route path="/register" element={<RegisterForm />} />
 
       {/* Protected Routes */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/home"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <ViewProfile />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/edit-profile"
-        element={
-          <ProtectedRoute>
-            <EditProfile />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/connections"
-        element={
-          <ProtectedRoute>
-            <Connection />
-          </ProtectedRoute>
-        }
-      />
-
+      <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/profile" element={<ViewProfile />} />
+        <Route path="/edit-profile" element={<EditProfile />} />
+        <Route path="/connections" element={<Connection />} />
+        <Route path="/chat" element={<ChatInterface />} />
+      </Route>
     </Routes>
   )
 }
 
 export default AppRoutes
-
-

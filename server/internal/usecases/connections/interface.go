@@ -28,4 +28,5 @@ type MessageUsecase interface {
 	GetConnectionMessages(ctx context.Context, userID, connectionID uuid.UUID, limit, offset int) ([]*models.Message, error)
 	MarkMessagesAsRead(ctx context.Context, userID, connectionID uuid.UUID) error
 	GetUnreadCount(ctx context.Context, userID uuid.UUID) (int, error)
+	GetChatList(ctx context.Context, userID uuid.UUID) (*models.ChatList, error)
 }

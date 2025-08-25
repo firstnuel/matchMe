@@ -4,295 +4,441 @@ import (
 	"context"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/google/uuid"
 )
 
-// Hub maintains the set of active clients and broadcasts messages to the clients.
-type Hub struct {
-	// Registered clients by user ID
-	clients map[uuid.UUID]*Client
+// =================================================================================
+// CHAT HUB IMPLEMENTATION
+// Manages WebSocket connections for sending and receiving chat messages.
+// =================================================================================
 
-	// Clients grouped by connection ID for chat
-	connections map[uuid.UUID]map[uuid.UUID]*Client
-
-	// Inbound messages from the clients
-	broadcast chan []byte
-
-	// Register requests from the clients
-	register chan *Client
-
-	// Unregister requests from clients
-	unregister chan *Client
-
-	// Mutex for concurrent access
-	mu sync.RWMutex
-
-	// Context for shutdown
-	ctx    context.Context
-	cancel context.CancelFunc
+// ChatConnectionGroup represents a group of chat clients in a specific chat room.
+type ChatConnectionGroup struct {
+	clients map[*Client]bool
+	mu      sync.RWMutex
 }
 
-// NewHub creates a new WebSocket hub
-func NewHub() *Hub {
+func NewChatConnectionGroup() *ChatConnectionGroup {
+	return &ChatConnectionGroup{clients: make(map[*Client]bool)}
+}
+
+func (cg *ChatConnectionGroup) AddClient(client *Client) {
+	cg.mu.Lock()
+	defer cg.mu.Unlock()
+	cg.clients[client] = true
+}
+
+func (cg *ChatConnectionGroup) RemoveClient(client *Client) {
+	cg.mu.Lock()
+	defer cg.mu.Unlock()
+	delete(cg.clients, client)
+}
+
+func (cg *ChatConnectionGroup) GetClientCount() int {
+	cg.mu.RLock()
+	defer cg.mu.RUnlock()
+	return len(cg.clients)
+}
+
+// ChatHub maintains the set of active chat clients and broadcasts chat messages.
+type ChatHub struct {
+	clients     map[*Client]bool
+	connections map[uuid.UUID]*ChatConnectionGroup
+	register    chan *Client
+	unregister  chan *Client
+	mu          sync.RWMutex
+	ctx         context.Context
+	cancel      context.CancelFunc
+}
+
+func NewChatHub() *ChatHub {
 	ctx, cancel := context.WithCancel(context.Background())
-	return &Hub{
-		clients:     make(map[uuid.UUID]*Client),
-		connections: make(map[uuid.UUID]map[uuid.UUID]*Client),
-		broadcast:   make(chan []byte),
+	return &ChatHub{
 		register:    make(chan *Client),
 		unregister:  make(chan *Client),
+		clients:     make(map[*Client]bool),
+		connections: make(map[uuid.UUID]*ChatConnectionGroup),
 		ctx:         ctx,
 		cancel:      cancel,
 	}
 }
 
-// Run starts the hub and handles client registration/unregistration
-func (h *Hub) Run() {
-	// Start cleanup routine
-	go h.cleanupRoutine()
-
+func (h *ChatHub) Run() {
 	for {
 		select {
-		case <-h.ctx.Done():
-			return
-
 		case client := <-h.register:
-			h.registerClient(client)
+			h.mu.Lock()
+			h.clients[client] = true
+			connectionID := client.GetConnectionID()
+			if connectionID != nil {
+				group, ok := h.connections[*connectionID]
+				if !ok {
+					group = NewChatConnectionGroup()
+					h.connections[*connectionID] = group
+				}
+				group.AddClient(client)
+			}
+			h.mu.Unlock()
 
 		case client := <-h.unregister:
-			h.unregisterClient(client)
+			h.mu.Lock()
+			if _, ok := h.clients[client]; ok {
+				connectionID := client.GetConnectionID()
+				if connectionID != nil {
+					if group, ok := h.connections[*connectionID]; ok {
+						group.RemoveClient(client)
+						if group.GetClientCount() == 0 {
+							delete(h.connections, *connectionID)
+						}
+					}
+				}
+				delete(h.clients, client)
+				client.Close()
+			}
+			h.mu.Unlock()
 
-		case message := <-h.broadcast:
-			// Handle broadcast messages if needed
-			log.Printf("Broadcasting message: %s", message)
+		case <-h.ctx.Done():
+			h.mu.Lock()
+			for client := range h.clients {
+				client.Close()
+			}
+			h.mu.Unlock()
+			return
 		}
 	}
 }
 
-// registerClient registers a new client
-func (h *Hub) registerClient(client *Client) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
+// BroadcastMessage sends a chat message to all clients in a connection except the sender.
+func (h *ChatHub) BroadcastMessage(connectionID uuid.UUID, messageEvent MessageEvent, senderUserID uuid.UUID) {
+	h.mu.RLock()
+	group, ok := h.connections[connectionID]
+	h.mu.RUnlock()
 
-	// Close existing client connection if exists
-	if existingClient, exists := h.clients[client.userID]; exists {
-		existingClient.Close()
-	}
-
-	// Register the new client
-	h.clients[client.userID] = client
-
-	// Add to connection group if this is a chat client
-	if connectionID := client.GetConnectionID(); connectionID != nil {
-		if h.connections[*connectionID] == nil {
-			h.connections[*connectionID] = make(map[uuid.UUID]*Client)
-		}
-		h.connections[*connectionID][client.userID] = client
-	}
-
-	log.Printf("Client registered: user %s", client.userID)
-
-	// Broadcast user online status
-	h.broadcastUserStatus(client.userID, "online")
-}
-
-// unregisterClient unregisters a client
-func (h *Hub) unregisterClient(client *Client) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	// Remove from clients map
-	delete(h.clients, client.userID)
-
-	// Remove from connection group
-	if connectionID := client.GetConnectionID(); connectionID != nil {
-		if connectionClients, exists := h.connections[*connectionID]; exists {
-			delete(connectionClients, client.userID)
-			// Clean up empty connection groups
-			if len(connectionClients) == 0 {
-				delete(h.connections, *connectionID)
+	if ok {
+		group.mu.RLock()
+		defer group.mu.RUnlock()
+		for client := range group.clients {
+			if client.userID != senderUserID {
+				client.SendMessage(EventMessageNew, messageEvent)
 			}
 		}
 	}
-
-	client.Close()
-	log.Printf("Client unregistered: user %s", client.userID)
-
-	// Broadcast user offline status
-	h.broadcastUserStatus(client.userID, "offline")
 }
 
-// AddClientToConnection adds a client to a specific connection group
-func (h *Hub) AddClientToConnection(userID, connectionID uuid.UUID) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	client, exists := h.clients[userID]
-	if !exists {
-		return
-	}
-
-	client.SetConnectionID(connectionID)
-
-	if h.connections[connectionID] == nil {
-		h.connections[connectionID] = make(map[uuid.UUID]*Client)
-	}
-	h.connections[connectionID][userID] = client
-}
-
-// BroadcastToUser sends a message to a specific user
-func (h *Hub) BroadcastToUser(userID uuid.UUID, eventType EventType, data interface{}) {
+// GetConnectionUsers returns a slice of user IDs for a given connection.
+func (h *ChatHub) GetConnectionUsers(connectionID uuid.UUID) ([]uuid.UUID, bool) {
 	h.mu.RLock()
-	client, exists := h.clients[userID]
+	group, ok := h.connections[connectionID]
 	h.mu.RUnlock()
 
-	if exists && client.IsActive() {
+	if !ok {
+		return nil, false
+	}
+
+	group.mu.RLock()
+	defer group.mu.RUnlock()
+
+	users := make([]uuid.UUID, 0, len(group.clients))
+	for client := range group.clients {
+		users = append(users, client.userID)
+	}
+
+	return users, true
+}
+
+// BroadcastEvent sends any event to all clients in a connection except the sender.
+func (h *ChatHub) BroadcastEvent(connectionID uuid.UUID, eventType EventType, data interface{}, senderUserID uuid.UUID) {
+	h.mu.RLock()
+	group, ok := h.connections[connectionID]
+	h.mu.RUnlock()
+
+	if ok {
+		group.mu.RLock()
+		defer group.mu.RUnlock()
+		for client := range group.clients {
+			if client.userID != senderUserID {
+				client.SendMessage(eventType, data)
+			}
+		}
+	}
+}
+
+func (h *ChatHub) Shutdown() {
+	h.cancel()
+}
+
+// =================================================================================
+// TYPING HUB IMPLEMENTATION
+// Manages WebSocket connections for sending and receiving typing indicators.
+// =================================================================================
+
+// TypingConnectionGroup represents a group of typing clients in a specific chat room.
+type TypingConnectionGroup struct {
+	clients map[*Client]bool
+	mu      sync.RWMutex
+}
+
+func NewTypingConnectionGroup() *TypingConnectionGroup {
+	return &TypingConnectionGroup{clients: make(map[*Client]bool)}
+}
+
+func (cg *TypingConnectionGroup) AddClient(client *Client) {
+	cg.mu.Lock()
+	defer cg.mu.Unlock()
+	cg.clients[client] = true
+}
+
+func (cg *TypingConnectionGroup) RemoveClient(client *Client) {
+	cg.mu.Lock()
+	defer cg.mu.Unlock()
+	delete(cg.clients, client)
+}
+
+func (cg *TypingConnectionGroup) GetClientCount() int {
+	cg.mu.RLock()
+	defer cg.mu.RUnlock()
+	return len(cg.clients)
+}
+
+// TypingHub maintains the set of active typing clients and broadcasts typing events.
+type TypingHub struct {
+	clients     map[*Client]bool
+	connections map[uuid.UUID]*TypingConnectionGroup
+	register    chan *Client
+	unregister  chan *Client
+	mu          sync.RWMutex
+	ctx         context.Context
+	cancel      context.CancelFunc
+}
+
+func NewTypingHub() *TypingHub {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &TypingHub{
+		register:    make(chan *Client),
+		unregister:  make(chan *Client),
+		clients:     make(map[*Client]bool),
+		connections: make(map[uuid.UUID]*TypingConnectionGroup),
+		ctx:         ctx,
+		cancel:      cancel,
+	}
+}
+
+func (h *TypingHub) Run() {
+	for {
+		select {
+		case client := <-h.register:
+			h.mu.Lock()
+			h.clients[client] = true
+			connectionID := client.GetConnectionID()
+			if connectionID != nil {
+				group, ok := h.connections[*connectionID]
+				if !ok {
+					group = NewTypingConnectionGroup()
+					h.connections[*connectionID] = group
+				}
+				group.AddClient(client)
+			}
+			h.mu.Unlock()
+
+		case client := <-h.unregister:
+			h.mu.Lock()
+			if _, ok := h.clients[client]; ok {
+				connectionID := client.GetConnectionID()
+				if connectionID != nil {
+					if group, ok := h.connections[*connectionID]; ok {
+						group.RemoveClient(client)
+						if group.GetClientCount() == 0 {
+							delete(h.connections, *connectionID)
+						}
+					}
+				}
+				delete(h.clients, client)
+				client.Close()
+			}
+			h.mu.Unlock()
+
+		case <-h.ctx.Done():
+			h.mu.Lock()
+			for client := range h.clients {
+				client.Close()
+			}
+			h.mu.Unlock()
+			return
+		}
+	}
+}
+
+// BroadcastTypingIndicator sends a typing event to all clients in a connection except the sender.
+func (h *TypingHub) BroadcastTypingIndicator(connectionID uuid.UUID, typingEvent TypingEvent, senderUserID uuid.UUID) {
+	h.mu.RLock()
+	group, ok := h.connections[connectionID]
+	h.mu.RUnlock()
+
+	if ok {
+		group.mu.RLock()
+		defer group.mu.RUnlock()
+		for client := range group.clients {
+			if client.userID != senderUserID {
+				client.SendMessage(EventMessageTyping, typingEvent)
+			}
+		}
+	}
+}
+
+func (h *TypingHub) Shutdown() {
+	h.cancel()
+}
+
+// =================================================================================
+// STATUS HUB IMPLEMENTATION
+// Manages WebSocket connections for user presence and direct notifications.
+// (e.g., connection requests, user online/offline status)
+// =================================================================================
+
+// StatusHub maintains the set of active clients for status and direct messaging.
+type StatusHub struct {
+	// All connected clients.
+	clients map[*Client]bool
+
+	// Maps a userID to a set of their active clients.
+	// A user might have multiple status connections (e.g., from different browser tabs).
+	clientsByUser map[uuid.UUID]map[*Client]bool
+
+	register   chan *Client
+	unregister chan *Client
+	mu         sync.RWMutex
+	ctx        context.Context
+	cancel     context.CancelFunc
+}
+
+// NewStatusHub creates a new StatusHub.
+func NewStatusHub() *StatusHub {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &StatusHub{
+		register:      make(chan *Client),
+		unregister:    make(chan *Client),
+		clients:       make(map[*Client]bool),
+		clientsByUser: make(map[uuid.UUID]map[*Client]bool),
+		ctx:           ctx,
+		cancel:        cancel,
+	}
+}
+
+// Run starts the hub's event loop.
+func (h *StatusHub) Run() {
+	for {
+		select {
+		case client := <-h.register:
+			h.mu.Lock()
+			h.clients[client] = true
+			if h.clientsByUser[client.userID] == nil {
+				h.clientsByUser[client.userID] = make(map[*Client]bool)
+			}
+			h.clientsByUser[client.userID][client] = true
+			log.Printf("✅ Status client registered for user %s", client.userID)
+			h.mu.Unlock()
+
+		case client := <-h.unregister:
+			h.mu.Lock()
+			if _, ok := h.clients[client]; ok {
+				delete(h.clients, client)
+				// Remove the client from the user-specific map.
+				if userClients, ok := h.clientsByUser[client.userID]; ok {
+					delete(userClients, client)
+					// If the user has no more active status connections, remove their entry.
+					if len(userClients) == 0 {
+						delete(h.clientsByUser, client.userID)
+					}
+				}
+				client.Close()
+				log.Printf("🔌 Status client unregistered for user %s", client.userID)
+			}
+			h.mu.Unlock()
+
+		case <-h.ctx.Done():
+			h.mu.Lock()
+			log.Println("Shutting down status hub...")
+			for client := range h.clients {
+				client.Close()
+			}
+			h.mu.Unlock()
+			return
+		}
+	}
+}
+
+// BroadcastToUser sends a direct message to all connections for a specific user.
+func (h *StatusHub) BroadcastToUser(userID uuid.UUID, eventType EventType, data interface{}) {
+	h.mu.RLock()
+	// Find the clients for the target user and create a copy to avoid holding the lock during send.
+	var clientsToSend []*Client
+	if userClients, ok := h.clientsByUser[userID]; ok {
+		clientsToSend = make([]*Client, 0, len(userClients))
+		for c := range userClients {
+			clientsToSend = append(clientsToSend, c)
+		}
+	}
+	h.mu.RUnlock()
+
+	// Send the message to the copied list of clients.
+	for _, client := range clientsToSend {
 		client.SendMessage(eventType, data)
 	}
 }
 
-// broadcastToConnection sends a message to all users in a connection except the sender
-func (h *Hub) broadcastToConnection(connectionID uuid.UUID, eventType EventType, data interface{}, senderID uuid.UUID) {
+// broadcastUserStatus broadcasts a user's status change to all their connections.
+func (h *StatusHub) broadcastUserStatus(userID uuid.UUID, status string) {
 	h.mu.RLock()
-	connectionClients, exists := h.connections[connectionID]
-	h.mu.RUnlock()
+	// Create a copy of the connection IDs to avoid holding the lock during broadcast.
+	// connectionIDs := make([]uuid.UUID, 0, len(h.userConnections[userID]))
+	// for connID := range h.userConnections[userID] {
+	// 	connectionIDs = append(connectionIDs, connID)
+	// }
+	// h.mu.RUnlock()
 
-	if !exists {
-		return
-	}
+	// statusEvent := UserStatusEvent{
+	// 	UserID:       userID.String(),
+	// 	Status:       status,
+	// 	LastActivity: time.Now().UTC().Format(time.RFC3339),
+	// }
 
-	for userID, client := range connectionClients {
-		if userID != senderID && client.IsActive() {
-			client.SendMessage(eventType, data)
-		}
-	}
+	// eventType := EventUserOnline // Default event type
+	// if status == "offline" {
+	// 	eventType = EventUserOffline
+	// }
+
+	// for _, connID := range connectionIDs {
+	// Broadcast to everyone in that connection, excluding the user whose status changed.
+	// NOTE: This assumes you have a ChatHub instance available or a way to access its broadcast method.
+	// A cleaner way would be to pass the ChatHub to this method or make it available to the StatusHub.
+	// For now, this is a placeholder for the broadcast logic.
+	// log.Printf("Need to broadcast status for user %s to connection %s", userID, connID)
+	// }
 }
 
-// BroadcastMessageToConnection broadcasts a new message to connection participants
-func (h *Hub) BroadcastMessageToConnection(connectionID uuid.UUID, messageEvent MessageEvent) {
-	h.broadcastToConnection(connectionID, EventMessageNew, messageEvent, messageEvent.SenderID)
-}
-
-// BroadcastMessageRead broadcasts message read status to sender
-func (h *Hub) BroadcastMessageRead(connectionID uuid.UUID, readEvent MessageReadEvent) {
-	// Send read receipt to the message sender (not the reader)
-	h.mu.RLock()
-	connectionClients, exists := h.connections[connectionID]
-	h.mu.RUnlock()
-
-	if exists {
-		for userID, client := range connectionClients {
-			if userID != readEvent.ReadBy && client.IsActive() {
-				client.SendMessage(EventMessageRead, readEvent)
-			}
-		}
-	}
-}
-
-// broadcastUserStatus broadcasts user status changes to their active connections
-func (h *Hub) broadcastUserStatus(userID uuid.UUID, status string) {
-	statusEvent := UserStatusEvent{
-		UserID:       userID,
-		Status:       status,
-		LastActivity: time.Now(),
-	}
-
-	// Find all connections this user is part of and notify other participants
+// GetOnlineUsers returns a slice of unique user IDs of all clients connected to this hub.
+func (h *StatusHub) GetOnlineUsers() []uuid.UUID {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	for _, connectionClients := range h.connections {
-		if _, isInConnection := connectionClients[userID]; isInConnection {
-			// Broadcast to other users in this connection
-			for otherUserID, client := range connectionClients {
-				if otherUserID != userID && client.IsActive() {
-					client.SendMessage(EventUserOnline, statusEvent)
-				}
-			}
-		}
+	userIDs := make([]uuid.UUID, 0, len(h.clientsByUser))
+	for userID := range h.clientsByUser {
+		userIDs = append(userIDs, userID)
 	}
+	return userIDs
 }
 
-// GetOnlineUsers returns list of online user IDs
-func (h *Hub) GetOnlineUsers() []uuid.UUID {
+// IsUserOnline checks if a user has at least one active status connection.
+func (h *StatusHub) IsUserOnline(userID uuid.UUID) bool {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	users := make([]uuid.UUID, 0, len(h.clients))
-	for userID, client := range h.clients {
-		if client.IsActive() {
-			users = append(users, userID)
-		}
-	}
-	return users
+	_, ok := h.clientsByUser[userID]
+	return ok
 }
 
-// IsUserOnline checks if a user is currently online
-func (h *Hub) IsUserOnline(userID uuid.UUID) bool {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
-
-	client, exists := h.clients[userID]
-	return exists && client.IsActive()
-}
-
-// GetConnectionUsers returns users in a specific connection
-func (h *Hub) GetConnectionUsers(connectionID uuid.UUID) []uuid.UUID {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
-
-	connectionClients, exists := h.connections[connectionID]
-	if !exists {
-		return nil
-	}
-
-	users := make([]uuid.UUID, 0, len(connectionClients))
-	for userID := range connectionClients {
-		users = append(users, userID)
-	}
-	return users
-}
-
-// cleanupRoutine periodically cleans up inactive clients
-func (h *Hub) cleanupRoutine() {
-	ticker := time.NewTicker(5 * time.Minute)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-h.ctx.Done():
-			return
-		case <-ticker.C:
-			h.cleanupInactiveClients()
-		}
-	}
-}
-
-// cleanupInactiveClients removes clients that have been inactive for too long
-func (h *Hub) cleanupInactiveClients() {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	inactiveThreshold := time.Now().Add(-10 * time.Minute)
-
-	for userID, client := range h.clients {
-		if !client.IsActive() || client.lastActivity.Before(inactiveThreshold) {
-			log.Printf("Cleaning up inactive client: user %s", userID)
-			h.unregister <- client
-		}
-	}
-}
-
-// Shutdown gracefully shuts down the hub
-func (h *Hub) Shutdown() {
+// Shutdown gracefully stops the hub and closes all connections.
+func (h *StatusHub) Shutdown() {
 	h.cancel()
-
-	// Close all client connections
-	h.mu.Lock()
-	for _, client := range h.clients {
-		client.Close()
-	}
-	h.mu.Unlock()
 }

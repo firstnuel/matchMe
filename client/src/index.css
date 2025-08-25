@@ -25,5 +25,6 @@
   body {
     /* The hack for Safari */
     height: -webkit-fill-available;
+    background-color: white;
   }
 }
