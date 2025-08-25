@@ -1,7 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { type RegisterData, type AuthData, type AuthError, type LoginData } from "../types/auth";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://192.168.100.44:3000"; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const REGISTER_URL = `${API_BASE_URL}/auth/register`;
 const LOGIN_URL = `${API_BASE_URL}/auth/login`;
 

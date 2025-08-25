@@ -2,7 +2,7 @@ import axios, { AxiosError } from "axios";
 import { type RecommendationsResponse, type MatchError, type DistanceResponse } from './../types/match';
 import { type UserResponse } from "../../userProfile/types/user";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://192.168.100.44:3000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const USER_RECOMMENDATIONS_URL =  API_BASE_URL + "/api/me/recommendations";
 const USER_BASE_URL = API_BASE_URL + "/users"
 // Create Axios instance

@@ -9,7 +9,7 @@ import { type ConnectionError,
     } from "../types/connections";
 
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://192.168.100.44:3000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const CONNECTIONS_URL = API_BASE_URL + "/connections"
 const REQUEST_URL = API_BASE_URL + "/connection-requests"
 

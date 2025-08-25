@@ -101,7 +101,7 @@ export const useSendTextMessage = () => {
 
       return { previousMessages, queryKey };
     },
-    onError: (err: any, newMessage, context: any) => {
+    onError: (err: any, context: any) => {
       console.error('❌ Message sending failed:', err);
       console.error('❌ Error details:', {
         message: err.message,

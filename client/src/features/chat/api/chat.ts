@@ -10,8 +10,7 @@ import {
   type SendMediaMessageBody,
 } from "../types/chat";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://192.168.100.44:3000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const MESSAGES_URL = API_BASE_URL + "/messages";
 
 // Create Axios instance

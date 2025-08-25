@@ -2,7 +2,7 @@ import axios, { AxiosError } from "axios";
 import { type UserResponse, type UserError, type PhotoUploadResponse } from "../types/user";
 import { type UpdateUserRequest } from "../types/user";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://192.168.100.44:3000";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const CURRENT_USER_URL =  API_BASE_URL + "/api/me";
 const UPLOAD_PHOTOS_URL = CURRENT_USER_URL + "/photos";
 
