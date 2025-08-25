@@ -18,8 +18,8 @@ interface ChatMainProps {
   messageInput: string;
   setMessageInput: (input: string) => void;
   handleSendMessage: () => void;
-  handleSendMediaMessage?: (file: File) => void;
-  handleInputKeyDown: (e: React.KeyboardEvent) => void;
+  handleSendMediaMessage?: (file: File, caption?: string) => void;
+  handleInputKeyDown: (e: React.KeyboardEvent, selectedFile?: File) => void;
   messageInputRef: React.RefObject<HTMLTextAreaElement | null>;
   isMobile?: boolean;
   currentUser: User | null | undefined;

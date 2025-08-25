@@ -69,20 +69,11 @@ export const sendTextMessage = async (
   body: SendTextMessageBody
 ): Promise<MessageResponse | MessageError> => {
   try {
-    console.log('🚀 Making API call to:', `${MESSAGES_URL}/text`);
-    console.log('🚀 Request body:', body);
     const { data } = await api.post<MessageResponse>(`${MESSAGES_URL}/text`, body);
     console.log('✅ API Response:', data);
     return data;
   } catch (error) {
-    console.error('❌ API call failed:', error);
     if (error instanceof AxiosError) {
-      console.error('❌ Axios error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.config?.url
-      });
       if (error.response?.data) {
         return error.response.data as MessageError;
       }
@@ -102,6 +93,9 @@ export const sendMediaMessage = async (
     const formData = new FormData();
     formData.append("connection_id", body.connection_id);
     formData.append("media", body.media);
+    if (body.text !== undefined) {
+      formData.append("text", body.text);
+    }
 
     const { data } = await api.post<MessageResponse>(
       `${MESSAGES_URL}/media`,

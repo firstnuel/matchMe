@@ -35,16 +35,22 @@ func (r *messageRepository) CreateTextMessage(ctx context.Context, connectionID,
 	return msg, nil
 }
 
-func (r *messageRepository) CreateMediaMessage(ctx context.Context, connectionID, senderID, receiverID uuid.UUID, mediaURL, mediaType, publicID string) (*ent.Message, error) {
-	msg, err := r.client.Message.Create().
+func (r *messageRepository) CreateMediaMessage(ctx context.Context, connectionID, senderID, receiverID uuid.UUID, mediaURL, mediaType, publicID, txtContent string) (*ent.Message, error) {
+	create := r.client.Message.Create().
 		SetConnectionID(connectionID).
 		SetSenderID(senderID).
 		SetReceiverID(receiverID).
 		SetType(message.TypeMedia).
 		SetMediaURL(mediaURL).
 		SetMediaType(mediaType).
-		SetMediaPublicID(publicID).
-		Save(ctx)
+		SetMediaPublicID(publicID)
+
+	if txtContent != "" {
+		create.SetType(message.TypeMixed)
+		create.SetContent(txtContent)
+	}
+
+	msg, err := create.Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create media message: %w", err)
 	}

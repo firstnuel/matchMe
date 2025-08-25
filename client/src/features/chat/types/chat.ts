@@ -7,7 +7,7 @@ export interface Message {
   connection_id: string;
   sender_id: string;
   receiver_id: string;
-  type: 'text' | 'media';
+  type: 'text' | 'media' | 'mixed';
   content?: string | null;
   media_url?: string | null;
   media_type?: string | null;
@@ -67,6 +67,7 @@ export interface SendTextMessageBody {
 export interface SendMediaMessageBody {
   connection_id: string;
   media: File;
+  text?: string;
 }
 
 export interface ChatListItem {

@@ -15,7 +15,7 @@ import (
 // SendTextMessage handles POST /messages/text
 func (h *ConnectionHandler) SendTextMessage(c *gin.Context) {
 	log.Printf("📨 Received SendTextMessage request from user")
-	
+
 	// Get authenticated user
 	user, exists := middleware.GetUserFromGinContext(c)
 	if !exists {
@@ -23,7 +23,7 @@ func (h *ConnectionHandler) SendTextMessage(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
 		return
 	}
-	
+
 	log.Printf("✅ Authenticated user: %s", user.ID)
 
 	// Parse request body
@@ -118,8 +118,10 @@ func (h *ConnectionHandler) SendMediaMessage(c *gin.Context) {
 		return
 	}
 
+	caption := c.PostForm("text")
+
 	// Send media message
-	message, err := h.MessageUsecase.SendMediaMessage(c.Request.Context(), user.ID, connectionID, file)
+	message, err := h.MessageUsecase.SendMediaMessage(c.Request.Context(), user.ID, connectionID, file, caption)
 	if err != nil {
 		if err.Error() == "connection not found" {
 			c.JSON(http.StatusNotFound, gin.H{

@@ -6,8 +6,8 @@ interface MessageInputProps {
   messageInput: string;
   setMessageInput: (input: string, skipTypingEvent?: boolean) => void;
   handleSendMessage: () => void;
-  handleSendMediaMessage?: (file: File) => void;
-  handleInputKeyDown: (e: React.KeyboardEvent) => void;
+  handleSendMediaMessage?: (file: File, caption?: string) => void;
+  handleInputKeyDown: (e: React.KeyboardEvent, selectedFile?: File) => void;
   messageInputRef: React.RefObject<HTMLTextAreaElement | null>;
   onTyping?: (isTyping: boolean) => void;
 }
@@ -122,8 +122,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
   // Handle sending media
   const handleSendMedia = () => {
     if (selectedFile && handleSendMediaMessage) {
-      handleSendMediaMessage(selectedFile);
+      handleSendMediaMessage(selectedFile, messageInput);
       clearSelectedFile();
+      setMessageInput('');
     }
   };
 
@@ -306,7 +307,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
-          onKeyDown={handleInputKeyDown}
+          onKeyDown={(e) => handleInputKeyDown(e, selectedFile || undefined)}
           onClick={handleTextareaClick}
           onKeyUp={handleKeyUp}
         />

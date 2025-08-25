@@ -36,11 +36,11 @@ type ConnectionRequestRepository interface {
 	GetPendingRequestsForUser(ctx context.Context, userID uuid.UUID) ([]*ent.ConnectionRequest, error)
 	GetSentRequests(ctx context.Context, userID uuid.UUID) ([]*ent.ConnectionRequest, error)
 	GetReceivedRequests(ctx context.Context, userID uuid.UUID) ([]*ent.ConnectionRequest, error)
-	
+
 	// Request actions
 	AcceptRequest(ctx context.Context, requestID uuid.UUID) (*ent.ConnectionRequest, *ent.Connection, error)
 	DeclineRequest(ctx context.Context, requestID uuid.UUID) (*ent.ConnectionRequest, error)
-	
+
 	// Cleanup
 	ExpireOldRequests(ctx context.Context) (int, error)
 }
@@ -49,7 +49,7 @@ type ConnectionRequestRepository interface {
 type MessageRepository interface {
 	// Message management
 	CreateTextMessage(ctx context.Context, connectionID, senderID, receiverID uuid.UUID, content string) (*ent.Message, error)
-	CreateMediaMessage(ctx context.Context, connectionID, senderID, receiverID uuid.UUID, mediaURL, mediaType, publicID string) (*ent.Message, error)
+	CreateMediaMessage(ctx context.Context, connectionID uuid.UUID, senderID uuid.UUID, receiverID uuid.UUID, mediaURL string, mediaType string, publicID string, txtContent string) (*ent.Message, error)
 	GetMessage(ctx context.Context, messageID uuid.UUID) (*ent.Message, error)
 	UpdateMessage(ctx context.Context, messageID uuid.UUID, content string) (*ent.Message, error)
 	DeleteMessage(ctx context.Context, messageID uuid.UUID) error
@@ -57,7 +57,7 @@ type MessageRepository interface {
 	// Connection messages
 	GetConnectionMessages(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]*ent.Message, error)
 	GetConnectionMessagesWithUsers(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]*ent.Message, error)
-	
+
 	// Read status
 	MarkMessageAsRead(ctx context.Context, messageID uuid.UUID) (*ent.Message, error)
 	MarkConnectionMessagesAsRead(ctx context.Context, connectionID, userID uuid.UUID) (int, error)

@@ -24,7 +24,7 @@ type ConnectionRequestUsecase interface {
 // MessageUsecase handles business logic for messaging between connected users
 type MessageUsecase interface {
 	SendTextMessage(ctx context.Context, senderID uuid.UUID, connectionID uuid.UUID, content string) (*models.Message, error)
-	SendMediaMessage(ctx context.Context, senderID uuid.UUID, connectionID uuid.UUID, mediaFile interface{}) (*models.Message, error)
+	SendMediaMessage(ctx context.Context, senderID uuid.UUID, connectionID uuid.UUID, mediaFile interface{}, txtContent string) (*models.Message, error)
 	GetConnectionMessages(ctx context.Context, userID, connectionID uuid.UUID, limit, offset int) ([]*models.Message, error)
 	MarkMessagesAsRead(ctx context.Context, userID, connectionID uuid.UUID) error
 	GetUnreadCount(ctx context.Context, userID uuid.UUID) (int, error)

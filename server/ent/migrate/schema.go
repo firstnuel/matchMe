@@ -168,7 +168,7 @@ var (
 	// MessagesColumns holds the columns for the "messages" table.
 	MessagesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
-		{Name: "type", Type: field.TypeEnum, Enums: []string{"text", "media"}, Default: "text"},
+		{Name: "type", Type: field.TypeEnum, Enums: []string{"text", "media", "mixed"}, Default: "text"},
 		{Name: "content", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "media_url", Type: field.TypeString, Nullable: true},
 		{Name: "media_type", Type: field.TypeString, Nullable: true},

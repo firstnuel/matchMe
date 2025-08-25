@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { createContext, useEffect, useState, type ReactNode, useCallback, useMemo } from 'react';
-import { WebSocketClient, EventType, type UserStatusEvent, type ConnectionRequestEvent } from '../services/websocket';
+import { WebSocketClient, EventType, type UserStatusEvent } from '../services/websocket';
 import { useAuthStore } from '../../features/auth/hooks/authStore';
 import { useCurrentUser } from '../../features/userProfile/hooks/useCurrentUser';
 
@@ -21,7 +21,6 @@ export const WebSocketContext = createContext<WebSocketContextType | undefined>(
 interface WebSocketProviderProps {
   children: ReactNode;
 }
-
 export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
   const { authToken } = useAuthStore();
   const { data: currentUserData } = useCurrentUser();
@@ -35,16 +34,13 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   // Initialize status WebSocket connection
   useEffect(() => {
     if (!authToken || !currentUserData) {
-      console.log('🚫 Missing auth token or user data for status WebSocket');
       return;
     }
 
-    console.log('🟢 Initializing status WebSocket connection');
     const client = new WebSocketClient('/ws/status', authToken);
     
     // Set up event listeners
     client.addEventListener(EventType.USER_ONLINE, (data: UserStatusEvent) => {
-      console.log('🟢 User came online:', data);
       setOnlineUsers(prev => new Set([...prev, data.user_id]));
       setUserStatuses(prev => new Map([...prev, [data.user_id, 'online']]));
     });
@@ -62,12 +58,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       setUserStatuses(prev => new Map([...prev, [data.user_id, 'away']]));
     });
 
-    client.addEventListener(EventType.CONNECTION_REQUEST, (data: ConnectionRequestEvent) => {
-      console.log('New connection request:', data);
+    client.addEventListener(EventType.CONNECTION_REQUEST, () => {
     });
 
-    client.addEventListener(EventType.CONNECTION_ACCEPTED, (data: ConnectionRequestEvent) => {
-      console.log('Connection request accepted:', data);
+    client.addEventListener(EventType.CONNECTION_ACCEPTED, () => {
     });
 
     client.connect()
@@ -94,16 +88,13 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     }
     
     if (chatClients.has(connectionId)) {
-      console.log('♻️ Reusing existing chat client for:', connectionId);
       return chatClients.get(connectionId)!;
     }
 
-    console.log('🔌 Creating new chat WebSocket client for:', connectionId);
     const client = new WebSocketClient(`/ws/chat/${connectionId}`, authToken);
     chatClients.set(connectionId, client);
     
     client.connect().then(() => {
-      console.log('✅ Chat WebSocket connected for:', connectionId);
     }).catch((error) => {
       console.error(`❌ Failed to connect to chat WebSocket for connection ${connectionId}:`, error);
       chatClients.delete(connectionId);
@@ -119,16 +110,13 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     }
     
     if (typingClients.has(connectionId)) {
-      console.log('♻️ Reusing existing typing client for:', connectionId);
       return typingClients.get(connectionId)!;
     }
 
-    console.log('⌨️ Creating new typing WebSocket client for:', connectionId);
     const client = new WebSocketClient(`/ws/typing/${connectionId}`, authToken);
     typingClients.set(connectionId, client);
     
     client.connect().then(() => {
-      console.log('✅ Typing WebSocket connected for:', connectionId);
     }).catch((error) => {
       console.error(`❌ Failed to connect to typing WebSocket for connection ${connectionId}:`, error);
       typingClients.delete(connectionId);

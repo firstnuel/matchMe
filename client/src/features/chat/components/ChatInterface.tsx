@@ -54,18 +54,25 @@ const ChatInterface = () => {
     setMessageInput('');
   };
 
-  const handleSendMediaMessage = (file: File) => {
+  const handleSendMediaMessage = (file: File, caption?: string) => {
     if (!selectedChat || !currentUser) return;
     sendMediaMutation.mutate({
       connection_id: selectedChat.connection_id,
-      media: file
+      media: file,
+      text: caption
     });
   };
 
-  const handleInputKeyDown = (e: React.KeyboardEvent) => {
+  const handleInputKeyDown = (e: React.KeyboardEvent, selectedFile?: File) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      // Use the same logic as the send button
+      if (selectedFile) {
+        handleSendMediaMessage(selectedFile, messageInput);
+        setMessageInput('');
+      } else {
+        handleSendMessage();
+      }
     }
   };
 

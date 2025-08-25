@@ -70,34 +70,26 @@ export const useChatEffects = ({
       return;
     }
 
-    console.log('🔌 Connecting to chat WebSocket for:', connectionId);
     const chatClient = connectToChat(connectionId);
     if (!chatClient) {
       console.error('❌ Failed to get chat client for:', connectionId);
       return;
     }
-    console.log('✅ Chat client connected:', chatClient.isConnected);
 
     const handleNewMessage = (messageData: MessageEvent) => {
-      console.log('📨 Received new message:', messageData);
       if (messageData.connection_id === connectionId) {
-        console.log('✅ Adding new message to local state');
         setLocalMessages((prev) => {
           if (prev.some((msg) => msg.id === messageData.message.id)) {
-            console.log('⚠️ Duplicate message, ignoring');
             return prev;
           }
           return [...prev, messageData.message];
         });
         queryClient.invalidateQueries({ queryKey: ['connectionMessages', connectionId] });
         queryClient.invalidateQueries({ queryKey: ['chatList'] });
-      } else {
-        console.log('⚠️ Message not for this connection:', messageData.connection_id, 'vs', connectionId);
       }
     };
 
     // Add a generic event listener to catch ALL events
-    console.log('🎯 Setting up MESSAGE_NEW event listener for connection:', connectionId);
     chatClient.addEventListener(EventType.MESSAGE_NEW, handleNewMessage);
     setLocalMessages([]);
 
@@ -114,18 +106,14 @@ export const useChatEffects = ({
       return;
     }
 
-    console.log('⌨️ Connecting to typing WebSocket for:', connectionId);
     const typingClient = connectToTyping(connectionId);
     if (!typingClient) {
       console.error('❌ Failed to get typing client for:', connectionId);
       return;
     }
-    console.log('✅ Typing client connected:', typingClient.isConnected);
 
     const handleTypingEvent = (typingData: TypingEvent) => {
-      console.log('⌨️ Received typing event:', typingData);
       if (typingData.connection_id === connectionId && typingData.user_id !== currentUser?.id) {
-        console.log('✅ Setting typing indicator:', typingData.is_typing);
         setIsOtherUserTyping(typingData.is_typing);
         if (typingData.is_typing) {
           if (typingTimeoutRef.current) {
@@ -158,7 +146,17 @@ export const useChatEffects = ({
 
   // Auto-scroll to bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Use setTimeout to ensure DOM has been updated with new messages before scrolling
+    const scrollToBottom = () => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      }
+    };
+
+    // Small delay to ensure all messages are rendered
+    const timeoutId = setTimeout(scrollToBottom, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, [serverMessages.length, localMessages.length, isOtherUserTyping, messagesEndRef]);
 
   // Handle typing events with debouncing
@@ -166,7 +164,6 @@ export const useChatEffects = ({
     const connectionId = selectedChat?.connection_id;
     if (!connectionId || !currentUser?.id) return;
 
-    console.log('⌨️ Sending typing event:', { connectionId, isTyping, userId: currentUser.id });
     const typingClient = connectToTyping(connectionId);
     if (!typingClient) {
       console.error('❌ No typing client available');

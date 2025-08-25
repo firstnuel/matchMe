@@ -62,7 +62,7 @@ func (u *messageUsecase) SendTextMessage(ctx context.Context, senderID uuid.UUID
 					fmt.Printf("🚨 PANIC in BroadcastNewMessage goroutine: %v\n", r)
 				}
 			}()
-			
+
 			fmt.Printf("🔄 Starting BroadcastNewMessage goroutine for message ID: %s\n", msg.ID)
 			u.wsService.BroadcastNewMessage(msg)
 			fmt.Printf("✅ Completed BroadcastNewMessage goroutine for message ID: %s\n", msg.ID)
@@ -72,7 +72,7 @@ func (u *messageUsecase) SendTextMessage(ctx context.Context, senderID uuid.UUID
 	return message, nil
 }
 
-func (u *messageUsecase) SendMediaMessage(ctx context.Context, senderID uuid.UUID, connectionID uuid.UUID, mediaFile interface{}) (*models.Message, error) {
+func (u *messageUsecase) SendMediaMessage(ctx context.Context, senderID uuid.UUID, connectionID uuid.UUID, mediaFile interface{}, txtContent string) (*models.Message, error) {
 	// Verify the connection exists and user is part of it
 	receiverID, err := u.validateConnectionAccess(ctx, senderID, connectionID)
 	if err != nil {
@@ -94,7 +94,7 @@ func (u *messageUsecase) SendMediaMessage(ctx context.Context, senderID uuid.UUI
 	mediaType := "image/jpeg"
 
 	// Create the message
-	entMessage, err := u.messageRepo.CreateMediaMessage(ctx, connectionID, senderID, receiverID, mediaURL, mediaType, publicID)
+	entMessage, err := u.messageRepo.CreateMediaMessage(ctx, connectionID, senderID, receiverID, mediaURL, mediaType, publicID, txtContent)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create media message: %w", err)
 	}
@@ -109,7 +109,7 @@ func (u *messageUsecase) SendMediaMessage(ctx context.Context, senderID uuid.UUI
 					fmt.Printf("🚨 PANIC in BroadcastNewMessage goroutine: %v\n", r)
 				}
 			}()
-			
+
 			fmt.Printf("🔄 Starting BroadcastNewMessage goroutine for message ID: %s\n", msg.ID)
 			u.wsService.BroadcastNewMessage(msg)
 			fmt.Printf("✅ Completed BroadcastNewMessage goroutine for message ID: %s\n", msg.ID)
@@ -209,7 +209,7 @@ func (u *messageUsecase) GetChatList(ctx context.Context, userID uuid.UUID) (*mo
 		latestMessages, err := u.messageRepo.GetConnectionMessages(ctx, entConnection.ID, 1, 0)
 		var lastMessage *models.Message
 		var lastActivity string
-		
+
 		if err == nil && len(latestMessages) > 0 {
 			lastMessage = models.ToMessage(latestMessages[0])
 			lastActivity = lastMessage.CreatedAt

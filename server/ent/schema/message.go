@@ -31,7 +31,7 @@ func (Message) Fields() []ent.Field {
 			Comment("ID of the user who received the message"),
 
 		field.Enum("type").
-			Values("text", "media").
+			Values("text", "media", "mixed").
 			Default("text").
 			Comment("Type of message content"),
 
@@ -107,35 +107,35 @@ func (Message) Indexes() []ent.Index {
 	return []ent.Index{
 		// Index for finding messages by connection (most common query)
 		index.Fields("connection_id"),
-		
+
 		// Index for finding messages by sender
 		index.Fields("sender_id"),
-		
+
 		// Index for finding messages by receiver
 		index.Fields("receiver_id"),
-		
+
 		// Index for finding unread messages
 		index.Fields("receiver_id", "is_read"),
-		
+
 		// Index for finding messages by connection and timestamp (for pagination)
 		index.Fields("connection_id", "created_at"),
-		
+
 		// Index for finding messages by type
 		index.Fields("type"),
-		
+
 		// Index for soft delete queries
 		index.Fields("is_deleted"),
-		
+
 		// Composite index for connection messages with read status
 		index.Fields("connection_id", "is_read"),
-		
+
 		// Index for cleanup queries (deleted messages)
 		index.Fields("is_deleted", "deleted_at"),
-		
+
 		// Index for time-based queries
 		index.Fields("created_at"),
 		index.Fields("updated_at"),
-		
+
 		// Index for media messages
 		index.Fields("type", "media_type"),
 	}

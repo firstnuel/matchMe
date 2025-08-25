@@ -104,7 +104,6 @@ export class WebSocketClient {
         this.ws = new WebSocket(urlWithAuth);
 
         this.ws.onopen = () => {
-          console.log('WebSocket connected to:', this.url);
           this.isConnecting = false;
           this.reconnectAttempts = 0;
           
@@ -115,18 +114,15 @@ export class WebSocketClient {
         };
 
         this.ws.onmessage = (event) => {
-          console.log('🔌 Raw WebSocket message received:', event.data);
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
-            console.log('📨 Parsed WebSocket message:', message);
             this.handleMessage(message);
           } catch (error) {
             console.error('Failed to parse WebSocket message:', error, 'Raw data:', event.data);
           }
         };
 
-        this.ws.onclose = (event) => {
-          console.log('WebSocket disconnected:', event.code, event.reason);
+        this.ws.onclose = () => {
           this.isConnecting = false;
           this.handleReconnect();
         };
@@ -145,23 +141,17 @@ export class WebSocketClient {
   }
 
   private handleMessage(message: WebSocketMessage) {
-    console.log('🎯 Handling WebSocket message type:', message.type);
     const listeners = this.eventListeners.get(message.type);
-    console.log('👂 Found', listeners?.length || 0, 'listeners for', message.type);
     if (listeners) {
-      listeners.forEach((listener, index) => {
-        console.log(`📢 Calling listener ${index + 1}/${listeners.length} for ${message.type}`);
+      listeners.forEach((listener) => {
         listener(message.data);
       });
-    } else {
-      console.log('⚠️ No listeners registered for message type:', message.type);
     }
   }
 
   private handleReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
       
       setTimeout(() => {
         this.connect().catch(error => {
@@ -209,14 +199,13 @@ export class WebSocketClient {
       this.ws.send(JSON.stringify(message));
     } else {
       // Queue the message to be sent when connection is established
-      console.log('WebSocket not ready, queueing message:', type);
       this.messageQueue.push(message);
     }
   }
 
   disconnect() {
     if (this.ws) {
-      this.ws.close();
+      // this.ws.close();
       this.ws = null;
     }
     this.eventListeners.clear();
