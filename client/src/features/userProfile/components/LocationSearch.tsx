@@ -109,7 +109,7 @@ const LocationSearch = ({ location, setLocation }: LocationSearchProps) => {
     <div className="location-section">
       <div>
         <Icon icon="mdi:location" className="location-icon" />
-        Search for your location to help us show you matches nearby
+        Search for your location
       </div>
       
       <div className="location-search-container" ref={dropdownRef} style={{ position: "relative" }}>

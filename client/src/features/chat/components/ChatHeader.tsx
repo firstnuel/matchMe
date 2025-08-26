@@ -22,6 +22,11 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const otherUser = selectedChat.other_user;
+  const profilePhoto =
+    otherUser?.profile_photo ||
+    (otherUser?.photos && otherUser.photos.length > 0 ? otherUser.photos[0].photo_url : null);
+
+  const initials = getInitials(otherUser?.first_name ?? "", otherUser?.last_name ?? "");
 
   const getStatusText = (userId: string) => {
     const status = userStatuses.get(userId);
@@ -55,8 +60,18 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
       </button>
 
       <div className="chat-partner-info">
-        <div className="chat-partner-avatar">
-          {getInitials(otherUser.first_name, otherUser.last_name)}
+        <div className="chat-partner-avatar"
+         style={
+            profilePhoto
+              ? {
+                  backgroundImage: `url(${profilePhoto})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  color: "transparent",
+                }
+              : {}
+          }>
+          {profilePhoto ? "" : initials}
         </div>
         <div className="chat-partner-details">
           <div className="chat-partner-name">

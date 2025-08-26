@@ -122,8 +122,12 @@ func (r *connectionRepository) GetConnectionsWithUsers(ctx context.Context, user
 				connection.UserBIDEQ(userID),
 			),
 		).
-		WithUserA().
-		WithUserB().
+		WithUserA(func(uq *ent.UserQuery) {
+			uq.WithPhotos()
+		}).
+		WithUserB(func(uq *ent.UserQuery) {
+			uq.WithPhotos()
+		}).
 		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get connections with users: %w", err)
