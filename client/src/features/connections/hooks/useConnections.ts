@@ -6,10 +6,11 @@ import {
   getConnectionRequests, 
   sendConnectionRequest, 
   acceptConnectionRequest, 
-  rejectConnectionRequest 
+  rejectConnectionRequest,
+  skipConnectionRequest,
 } from '../api/connections';
 import { useAuthStore } from '../../auth/hooks/authStore';
-import { type SendConnectionRequestBody } from '../types/connections';
+import { type SendConnectionRequestBody, type SkipConnectionRequestBody } from '../types/connections';
 import { useUIStore } from '../../../shared/hooks/uiStore';
 
 
@@ -39,10 +40,14 @@ export const useDeleteConnection = () => {
   
   return useMutation({
     mutationFn: (connectionId: string) => deleteConnections(connectionId),
-    onSuccess: () => {
-      setInfo("Connection deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ['connections'] });
-      queryClient.refetchQueries({ queryKey: ['connections'] });
+    onSuccess: (response) => {
+      if (response && ('error' in response || 'details' in response)) {
+        setError(String(response?.details ?? 'An error occurred'))
+      } else {
+        setInfo("Connection deleted successfully");
+        queryClient.invalidateQueries({ queryKey: ['connections'] });
+        queryClient.refetchQueries({ queryKey: ['connections'] });
+      }
     },
     onError: (err: Error) => {
       setError(err.message);
@@ -56,10 +61,14 @@ export const useSendConnectionRequest = () => {
   
   return useMutation({
     mutationFn: (requestData: SendConnectionRequestBody) => sendConnectionRequest(requestData),
-    onSuccess: () => {
-      setInfo("Connection request sent successfully");
-      queryClient.invalidateQueries({ queryKey: ['connectionRequests'] });
-      queryClient.refetchQueries({ queryKey: ['connectionRequests'] });
+    onSuccess: (response) => {
+      if (response && ('error' in response || 'details' in response)) {
+        setError(String(response?.details ?? 'An error occurred'))
+      } else {
+        setInfo("Connection request sent successfully");
+        queryClient.invalidateQueries({ queryKey: ['connectionRequests'] });
+        queryClient.refetchQueries({ queryKey: ['connectionRequests'] });
+      }
     },
     onError: (err: Error) => {
       setError(err.message);
@@ -67,18 +76,44 @@ export const useSendConnectionRequest = () => {
   });
 };
 
+export const useSkipConnectionRequest = () => {
+  const queryClient = useQueryClient();
+  const { setInfo, setError } = useUIStore();
+  
+  return useMutation({
+    mutationFn: (requestData: SkipConnectionRequestBody) => skipConnectionRequest(requestData),
+    onSuccess: (response) => {
+      if (response && ('error' in response || 'details' in response)) {
+        setError(String(response?.details ?? 'An error occurred'))
+      } else {
+        setInfo("Connection request skipped successfully");
+        queryClient.invalidateQueries({ queryKey: ['userRecommendations'] });
+        queryClient.refetchQueries({ queryKey: ['userRecommendations'] });
+      }
+    },
+    onError: (err: Error) => {
+      setError(err.message);
+    }
+  });
+};
+
+
 export const useAcceptConnectionRequest = () => {
   const queryClient = useQueryClient();
   const { setInfo, setError } = useUIStore();
   
   return useMutation({
     mutationFn: (requestId: string) => acceptConnectionRequest(requestId),
-    onSuccess: () => {
-      setInfo("Connection request accepted successfully");
-      queryClient.invalidateQueries({ queryKey: ['connectionRequests'] });
-      queryClient.invalidateQueries({ queryKey: ['connections'] });
-      queryClient.refetchQueries({ queryKey: ['connectionRequests'] });
-      queryClient.refetchQueries({ queryKey: ['connections'] });
+    onSuccess: (response) => {
+      if (response && ('error' in response || 'details' in response)) {
+        setError(String(response?.details ?? 'An error occurred'))
+      } else {
+        setInfo("Connection request accepted successfully");
+        queryClient.invalidateQueries({ queryKey: ['connectionRequests'] });
+        queryClient.invalidateQueries({ queryKey: ['connections'] });
+        queryClient.refetchQueries({ queryKey: ['connectionRequests'] });
+        queryClient.refetchQueries({ queryKey: ['connections'] });
+      }
     },
     onError: (err: Error) => {
       setError(err.message);
@@ -92,10 +127,14 @@ export const useRejectConnectionRequest = () => {
   
   return useMutation({
     mutationFn: (requestId: string) => rejectConnectionRequest(requestId),
-    onSuccess: () => {
-      setInfo("Connection request declined successfully");
-      queryClient.invalidateQueries({ queryKey: ['connectionRequests'] });
-      queryClient.refetchQueries({ queryKey: ['connectionRequests'] });
+    onSuccess: (response) => {
+      if (response && ('error' in response || 'details' in response)) {
+        setError(String(response?.details ?? 'An error occurred'))
+      } else {
+        setInfo("Connection request declined successfully");
+        queryClient.invalidateQueries({ queryKey: ['connectionRequests'] });
+        queryClient.refetchQueries({ queryKey: ['connectionRequests'] });
+      }
     },
     onError: (err: Error) => {
       setError(err.message);

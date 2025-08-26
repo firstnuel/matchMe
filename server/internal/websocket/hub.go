@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -331,6 +332,7 @@ func (h *StatusHub) Run() {
 		select {
 		case client := <-h.register:
 			h.mu.Lock()
+			wasOffline := len(h.clientsByUser[client.userID]) == 0
 			h.clients[client] = true
 			if h.clientsByUser[client.userID] == nil {
 				h.clientsByUser[client.userID] = make(map[*Client]bool)
@@ -339,22 +341,39 @@ func (h *StatusHub) Run() {
 			log.Printf("✅ Status client registered for user %s", client.userID)
 			h.mu.Unlock()
 
+			// Broadcast user online status if they were offline
+			if wasOffline {
+				h.BroadcastUserStatus(client.userID, "online")
+			}
+
 		case client := <-h.unregister:
 			h.mu.Lock()
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
+				userID := client.userID
 				// Remove the client from the user-specific map.
-				if userClients, ok := h.clientsByUser[client.userID]; ok {
+				if userClients, ok := h.clientsByUser[userID]; ok {
 					delete(userClients, client)
+					// Check if user will be offline after removing this client
+					willBeOffline := len(userClients) == 0
 					// If the user has no more active status connections, remove their entry.
-					if len(userClients) == 0 {
-						delete(h.clientsByUser, client.userID)
+					if willBeOffline {
+						delete(h.clientsByUser, userID)
 					}
+					client.Close()
+					log.Printf("🔌 Status client unregistered for user %s", userID)
+					h.mu.Unlock()
+
+					// Broadcast user offline status if they have no more connections
+					if willBeOffline {
+						h.BroadcastUserStatus(userID, "offline")
+					}
+				} else {
+					h.mu.Unlock()
 				}
-				client.Close()
-				log.Printf("🔌 Status client unregistered for user %s", client.userID)
+			} else {
+				h.mu.Unlock()
 			}
-			h.mu.Unlock()
 
 		case <-h.ctx.Done():
 			h.mu.Lock()
@@ -387,34 +406,66 @@ func (h *StatusHub) BroadcastToUser(userID uuid.UUID, eventType EventType, data 
 	}
 }
 
-// broadcastUserStatus broadcasts a user's status change to all their connections.
-func (h *StatusHub) broadcastUserStatus(userID uuid.UUID, status string) {
+// BroadcastUserStatus broadcasts a user's status change to all connected status clients.
+func (h *StatusHub) BroadcastUserStatus(userID uuid.UUID, status string) {
 	h.mu.RLock()
-	// Create a copy of the connection IDs to avoid holding the lock during broadcast.
-	// connectionIDs := make([]uuid.UUID, 0, len(h.userConnections[userID]))
-	// for connID := range h.userConnections[userID] {
-	// 	connectionIDs = append(connectionIDs, connID)
-	// }
-	// h.mu.RUnlock()
+	// Create a copy of all clients to avoid holding the lock during broadcast
+	clientsToSend := make([]*Client, 0, len(h.clients))
+	for client := range h.clients {
+		clientsToSend = append(clientsToSend, client)
+	}
+	h.mu.RUnlock()
 
-	// statusEvent := UserStatusEvent{
-	// 	UserID:       userID.String(),
-	// 	Status:       status,
-	// 	LastActivity: time.Now().UTC().Format(time.RFC3339),
-	// }
+	// Create the status event
+	statusEvent := UserStatusEvent{
+		UserID:       userID,
+		Status:       status,
+		LastActivity: time.Now().UTC(),
+	}
 
-	// eventType := EventUserOnline // Default event type
-	// if status == "offline" {
-	// 	eventType = EventUserOffline
-	// }
+	// Determine the correct event type
+	var eventType EventType
+	switch status {
+	case "online":
+		eventType = EventUserOnline
+	case "offline":
+		eventType = EventUserOffline
+	case "away":
+		eventType = EventUserAway
+	default:
+		eventType = EventUserOnline
+	}
 
-	// for _, connID := range connectionIDs {
-	// Broadcast to everyone in that connection, excluding the user whose status changed.
-	// NOTE: This assumes you have a ChatHub instance available or a way to access its broadcast method.
-	// A cleaner way would be to pass the ChatHub to this method or make it available to the StatusHub.
-	// For now, this is a placeholder for the broadcast logic.
-	// log.Printf("Need to broadcast status for user %s to connection %s", userID, connID)
-	// }
+	// Broadcast to all status clients
+	for _, client := range clientsToSend {
+		client.SendMessage(eventType, statusEvent)
+	}
+
+	log.Printf("📡 Broadcasted %s status for user %s to %d clients", status, userID, len(clientsToSend))
+}
+
+// SetUserAway marks a user as away and broadcasts the status change
+func (h *StatusHub) SetUserAway(userID uuid.UUID) {
+	h.mu.RLock()
+	_, userExists := h.clientsByUser[userID]
+	h.mu.RUnlock()
+
+	// Only broadcast if user is currently online
+	if userExists {
+		h.BroadcastUserStatus(userID, "away")
+	}
+}
+
+// SetUserOnline marks a user as online and broadcasts the status change
+func (h *StatusHub) SetUserOnline(userID uuid.UUID) {
+	h.mu.RLock()
+	_, userExists := h.clientsByUser[userID]
+	h.mu.RUnlock()
+
+	// Only broadcast if user is currently online
+	if userExists {
+		h.BroadcastUserStatus(userID, "online")
+	}
 }
 
 // GetOnlineUsers returns a slice of unique user IDs of all clients connected to this hub.

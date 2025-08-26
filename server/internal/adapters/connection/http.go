@@ -9,6 +9,7 @@ import (
 	"match-me/internal/repositories/connections"
 	"match-me/internal/requests"
 	connectionUsecases "match-me/internal/usecases/connections"
+	"match-me/internal/usecases/interactions"
 	userUsecase "match-me/internal/usecases/user"
 	"match-me/internal/websocket"
 
@@ -20,6 +21,7 @@ type ConnectionHandler struct {
 	ConnectionRequestUsecase connectionUsecases.ConnectionRequestUsecase
 	MessageUsecase           connectionUsecases.MessageUsecase
 	UserUsecase              userUsecase.UserUsecase
+	InteractionUsecase       interactions.UserInteractionUsecase
 	validationService        *requests.ValidationService
 	cfg                      *config.Config
 }
@@ -31,6 +33,7 @@ func NewConnectionHandler(
 	cld cloudinary.Cloudinary,
 	wsService *websocket.WebSocketService,
 	userUsecase userUsecase.UserUsecase,
+	interactionUC interactions.UserInteractionUsecase,
 ) *ConnectionHandler {
 
 	// Create repositories
@@ -39,8 +42,8 @@ func NewConnectionHandler(
 	messageRepo := connections.NewMessageRepository(client)
 
 	// Create usecases
-	connectionUsecase := connectionUsecases.NewConnectionUsecase(connectionRepo)
-	connectionRequestUsecase := connectionUsecases.NewConnectionRequestUsecase(requestRepo, connectionRepo, wsService)
+	connectionUsecase := connectionUsecases.NewConnectionUsecase(messageRepo, connectionRepo, interactionUC, cld)
+	connectionRequestUsecase := connectionUsecases.NewConnectionRequestUsecase(requestRepo, connectionRepo, interactionUC, wsService)
 	messageUsecase := connectionUsecases.NewMessageUsecase(messageRepo, connectionRepo, cld, wsService)
 
 	return &ConnectionHandler{
@@ -48,6 +51,7 @@ func NewConnectionHandler(
 		ConnectionRequestUsecase: connectionRequestUsecase,
 		MessageUsecase:           messageUsecase,
 		UserUsecase:              userUsecase,
+		InteractionUsecase:       interactionUC,
 		validationService:        validationService,
 		cfg:                      cfg,
 	}
@@ -69,6 +73,7 @@ func (h *ConnectionHandler) RegisterRoutes(r *gin.Engine) *gin.Engine {
 		requestGroup.GET("/", h.GetPendingRequests)
 		requestGroup.PUT("/:requestId/accept", h.AcceptRequest)
 		requestGroup.PUT("/:requestId/decline", h.DeclineRequest)
+		requestGroup.POST("/skip", h.SkipConnection)
 	}
 
 	// Message routes

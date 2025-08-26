@@ -81,8 +81,8 @@ func (u *messageUsecase) SendMediaMessage(ctx context.Context, senderID uuid.UUI
 
 	// Upload image to Cloudinary
 	uploadParams := uploader.UploadParams{
-		Folder:   "media-photos",
-		PublicID: fmt.Sprintf("message_%s_photo", connectionID.String()),
+		Folder:   fmt.Sprintf("%s_media_photo", connectionID.String()),
+		PublicID: fmt.Sprintf("message_%s_photo", senderID.String()),
 	}
 
 	mediaURL, publicID, err := u.cld.UploadImage(mediaFile, uploadParams)

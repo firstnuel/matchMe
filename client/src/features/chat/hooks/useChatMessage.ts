@@ -55,11 +55,9 @@ export const useSendTextMessage = () => {
 
   return useMutation({
     mutationFn: (body: SendTextMessageBody) => {
-      console.log('📤 Sending message to server:', body);
       return sendTextMessage(body);
     },
     onMutate: async (newMessage) => {
-      // Cancel queries for this connection - need to match the exact query key format
       await queryClient.cancelQueries({ 
         queryKey: ["connectionMessages", newMessage.connection_id],
         exact: false // This will cancel all variants with different limit/offset
@@ -82,55 +80,42 @@ export const useSendTextMessage = () => {
         sending: true
       };
 
-      console.log('🚀 Adding optimistic message to query key:', queryKey);
-      console.log('🚀 Optimistic message:', optimisticMessage);
-
       // Update the specific query that ChatMain is reading from
       queryClient.setQueryData(queryKey, (old: any) => {
         const currentData = old || { messages: [] };
         const existingMessages = currentData.messages || [];
         
-        console.log('📊 Existing messages count:', existingMessages.length);
         const newData = {
           ...currentData,
           messages: [...existingMessages, optimisticMessage]
         };
-        console.log('📊 New messages count:', newData.messages.length);
         return newData;
       });
 
       return { previousMessages, queryKey };
     },
     onError: (err: any, context: any) => {
-      console.error('❌ Message sending failed:', err);
-      console.error('❌ Error details:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status
-      });
-      
       if (context?.previousMessages && context?.queryKey) {
         queryClient.setQueryData(context.queryKey, context.previousMessages);
       }
       setError(err.message || 'Failed to send message');
     },
     onSuccess: (response, variables) => {
-      setInfo("Message sent successfully");
-      
-      console.log('✅ Message sent successfully, server response:', response);
-      
-      // Small delay before invalidation to let optimistic update settle
-      setTimeout(() => {
-        // Invalidate all connectionMessages queries for this connection (with any limit/offset)
-        queryClient.invalidateQueries({ 
-          queryKey: ["connectionMessages", variables.connection_id],
-          exact: false // This will invalidate all variants
-        });
-        queryClient.invalidateQueries({ queryKey: ["chatList"] });
-        queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
-        
-        console.log('✅ Invalidated queries for connection:', variables.connection_id);
-      }, 100);
+      if (response && ('error' in response || 'details' in response)) {
+        setError(String(response?.details ?? 'An error occurred'))
+      } else{
+        setInfo("Message sent successfully");
+        // Small delay before invalidation to let optimistic update settle
+        setTimeout(() => {
+          // Invalidate all connectionMessages queries for this connection (with any limit/offset)
+          queryClient.invalidateQueries({ 
+            queryKey: ["connectionMessages", variables.connection_id],
+            exact: false // This will invalidate all variants
+          });
+          queryClient.invalidateQueries({ queryKey: ["chatList"] });
+          queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
+        }, 100);
+      }
     },
   });
 };
@@ -160,17 +145,19 @@ export const useSendMediaMessage = () => {
       }
       setError(err.message);
     },
-    onSuccess: (_, variables) => {
-      setInfo("Media message sent successfully");
-      // Invalidate all connectionMessages queries for this connection (with any limit/offset)
-      queryClient.invalidateQueries({ 
-        queryKey: ["connectionMessages", variables.connection_id],
-        exact: false // This will invalidate all variants
-      });
-      queryClient.invalidateQueries({ queryKey: ["chatList"] });
-      queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
-      
-      console.log('✅ Invalidated queries for connection:', variables.connection_id);
+    onSuccess: (response, variables) => {
+      if (response && ('error' in response || 'details' in response)) {
+        setError(String(response?.details ?? 'An error occurred'))
+      } else {
+        setInfo("Media message sent successfully");
+        // Invalidate all connectionMessages queries for this connection (with any limit/offset)
+        queryClient.invalidateQueries({ 
+          queryKey: ["connectionMessages", variables.connection_id],
+          exact: false // This will invalidate all variants
+        });
+        queryClient.invalidateQueries({ queryKey: ["chatList"] });
+        queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
+      }
     },
   });
 };
@@ -182,11 +169,15 @@ export const useMarkMessagesAsRead = () => {
 
   return useMutation({
     mutationFn: (connectionId: string) => markMessagesAsRead(connectionId),
-    onSuccess: (_, connectionId) => {
-      setInfo("Messages marked as read");
-      queryClient.invalidateQueries({ queryKey: ["connectionMessages", connectionId] });
-      queryClient.invalidateQueries({ queryKey: ["chatList"] });
-      queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
+    onSuccess: (response, connectionId) => {
+      if (response && ('error' in response || 'details' in response)) {
+        setError(String(response?.details ?? 'An error occurred'))
+      } else {
+        setInfo("Messages marked as read");
+        queryClient.invalidateQueries({ queryKey: ["connectionMessages", connectionId] });
+        queryClient.invalidateQueries({ queryKey: ["chatList"] });
+        queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
+      }
     },
     onError: (err: Error) => {
       setError(err.message);

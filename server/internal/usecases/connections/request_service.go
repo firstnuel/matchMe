@@ -6,26 +6,30 @@ import (
 	"match-me/ent"
 	"match-me/internal/models"
 	"match-me/internal/repositories/connections"
+	"match-me/internal/usecases/interactions"
 	"match-me/internal/websocket"
 
 	"github.com/google/uuid"
 )
 
 type connectionRequestUsecase struct {
-	requestRepo    connections.ConnectionRequestRepository
-	connectionRepo connections.ConnectionRepository
-	wsService      *websocket.WebSocketService
+	requestRepo      connections.ConnectionRequestRepository
+	connectionRepo   connections.ConnectionRepository
+	interactionUC    interactions.UserInteractionUsecase
+	wsService        *websocket.WebSocketService
 }
 
 func NewConnectionRequestUsecase(
 	requestRepo connections.ConnectionRequestRepository,
 	connectionRepo connections.ConnectionRepository,
+	interactionUC interactions.UserInteractionUsecase,
 	wsService *websocket.WebSocketService,
 ) ConnectionRequestUsecase {
 	return &connectionRequestUsecase{
-		requestRepo:    requestRepo,
-		connectionRepo: connectionRepo,
-		wsService:      wsService,
+		requestRepo:      requestRepo,
+		connectionRepo:   connectionRepo,
+		interactionUC:    interactionUC,
+		wsService:        wsService,
 	}
 }
 
@@ -139,6 +143,15 @@ func (u *connectionRequestUsecase) DeclineRequest(ctx context.Context, userID, r
 	updatedRequest, err := u.requestRepo.DeclineRequest(ctx, requestID)
 	if err != nil {
 		return fmt.Errorf("failed to decline request: %w", err)
+	}
+
+	// Record the declined request interaction
+	if u.interactionUC != nil {
+		err = u.interactionUC.RecordDeclinedRequest(ctx, userID, request.SenderID)
+		if err != nil {
+			// Log the error but don't fail the decline operation
+			fmt.Printf("Warning: Failed to record declined request interaction: %v\n", err)
+		}
 	}
 
 	// Broadcast the connection decline via WebSocket

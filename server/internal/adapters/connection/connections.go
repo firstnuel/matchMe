@@ -82,3 +82,35 @@ func (h *ConnectionHandler) DeleteConnection(c *gin.Context) {
 		"message": "Connection deleted successfully",
 	})
 }
+
+func (h *ConnectionHandler) SkipConnection(c *gin.Context) {
+	user, _ := middleware.GetUserFromGinContext(c)
+
+	var req struct {
+		TargetUserID string `json:"target_userId" binding:"required,uuid"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Invalid request data",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	targetUUID, err := uuid.Parse(req.TargetUserID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid target user ID"})
+		return
+	}
+
+	if err := h.InteractionUsecase.RecordSkippedProfile(c.Request.Context(), user.ID, targetUUID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to record skipped profile",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Profile skipped successfully"})
+}

@@ -18,8 +18,9 @@ import type { RegisterData } from '../types/auth'
 
 
 const RegisterForm = () => {
+  const [showPassword, setShowPassword] = useState(false)
   const { reset: emailReset, ...email } = useField('email', 'email', '')
-  const { reset: passwordReset, ...password } = useField('password', 'password')
+  const { reset: passwordReset, ...password } = useField('password', showPassword? 'text': 'password')
   const { reset: firstNameReset, ...firstName } = useField('text', 'text', '')
   const { reset: lastNameReset, ...lastName } = useField('text', 'text', '')
   const { reset: genderReset, ...gender } = useField('text', 'text', '')
@@ -29,7 +30,7 @@ const RegisterForm = () => {
   const [errorMsg, setErrorMsg] = useState<string>("")
   const [infoMsg, setInfoMsg] = useState<string>("")
 
-    const { setAuthToken } = useAuthStore()
+  const { setAuthToken } = useAuthStore()
   const mutation = useMutation({
     mutationFn: registerUser,
     onSuccess: (data) => {
@@ -51,6 +52,10 @@ const RegisterForm = () => {
         }
     }
   })
+
+    const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword)
+  }
 
   useEffect(() => {
     if (errorMsg) {
@@ -113,6 +118,12 @@ const RegisterForm = () => {
               <Icon icon="mdi:lock" className="icon" />
             </InputGroup.Text>
             <Form.Control size="lg" {...password} placeholder="Password" autoComplete='new-password'/>
+            <InputGroup.Text onClick={togglePasswordVisibility} style={{ cursor: "pointer" }}>
+              {showPassword? 
+                <Icon icon="mdi:eye-off" className="icon" />
+                : <Icon icon="mdi:eye" className="icon" />
+              }
+            </InputGroup.Text>
           </InputGroup>
 
           <InputGroup className="mb-3">
@@ -130,7 +141,7 @@ const RegisterForm = () => {
 
         <InputGroup className="mb-3">
           <InputGroup.Text>
-            <Icon icon="mdi:calendar" className="icon" />
+            <Icon icon="mdi:cake" className="icon" />
           </InputGroup.Text>
           <Form.Control 
             size="lg" 

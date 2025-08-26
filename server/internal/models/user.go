@@ -65,7 +65,7 @@ func ToUser(entUser *ent.User, accessLevel AccessLevel) *User {
 		// Only return basic info: ID, name, and profile picture link
 		if entUser.Edges.Photos != nil {
 			for _, photo := range entUser.Edges.Photos {
-				if photo.Order == 0 { // Assuming order 0 is the main profile photo
+				if photo.Order == 1 {
 					user.ProfilePhoto = &photo.PhotoURL
 					break
 				}
@@ -201,4 +201,12 @@ func ToUser(entUser *ent.User, accessLevel AccessLevel) *User {
 	}
 
 	return user
+}
+
+// UserInteractionStats represents statistics about user interactions
+type UserInteractionStats struct {
+	DeclinedRequests   int `json:"declined_requests"`
+	SkippedProfiles    int `json:"skipped_profiles"`
+	DeletedConnections int `json:"deleted_connections"`
+	TotalInteractions  int `json:"total_interactions"`
 }

@@ -6,6 +6,7 @@ import { type ConnectionError,
      type SendConnectionRequestBody,
      type ConnectionAcceptResponse,
      type ConnectionNoContentResponse,
+     type SkipConnectionRequestBody
     } from "../types/connections";
 
 
@@ -112,6 +113,24 @@ export const sendConnectionRequest = async (reqData: SendConnectionRequestBody):
     }
     return {
       error: "Failed to fetch send Connection request",
+      details: "An unexpected error occurred. Please try again later.",
+    } as ConnectionError;
+  }
+};
+
+export const skipConnectionRequest = async (reqData: SkipConnectionRequestBody): Promise<ConnectionRequestResponse | ConnectionError> => {
+  try {
+    const { data } = await api.post<ConnectionRequestResponse>(
+      `${REQUEST_URL}/skip`, 
+      reqData,
+    );
+    return data;
+  } catch (error) {
+    if (error instanceof AxiosError && error.response?.data) {
+      return error.response.data as ConnectionError;
+    }
+    return {
+      error: "Failed to fetch skip Connection request",
       details: "An unexpected error occurred. Please try again later.",
     } as ConnectionError;
   }

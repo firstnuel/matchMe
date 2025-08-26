@@ -18,5 +18,8 @@ type Message func(*sql.Selector)
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
 
+// UserInteraction is the predicate function for userinteraction builders.
+type UserInteraction func(*sql.Selector)
+
 // UserPhoto is the predicate function for userphoto builders.
 type UserPhoto func(*sql.Selector)

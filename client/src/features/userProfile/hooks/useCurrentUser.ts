@@ -35,9 +35,13 @@ export const useUpdateUser = () => {
       }
       setError(err.message);
     },
-    onSuccess: () => {
-      setInfo('User updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+    onSuccess: (response) => {
+      if (response && ('error' in response || 'details' in response)) {
+        setError(String(response?.details ?? 'An error occurred'))
+      } else {
+        setInfo('User updated successfully');
+        queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      }
     },
   });
 };
@@ -64,9 +68,13 @@ export const useUploadPhotos = () => {
       }
       setError(err.message);
     },
-    onSuccess: () => {
-      setInfo('User photo updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+    onSuccess: (response) => {
+      if (response && ('error' in response || 'details' in response)) {
+        setError(String(response?.details ?? 'An error occurred'))
+      } else {
+        setInfo('User photo updated successfully');
+        queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      }
     },
   });
 };
@@ -93,9 +101,13 @@ export const useDeletePhoto = () => {
       }
       setError(err.message);
     },
-    onSuccess: () => {
-      setInfo('User photo deleted successfully');
-      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+    onSuccess: (response) => {
+      if (response && ('error' in response || 'details' in response)) {
+        setError(String(response?.details ?? 'An error occurred'))
+      } else {
+        setInfo('User photo deleted successfully');
+        queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      }
     },
   });
 };

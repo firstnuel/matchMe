@@ -20,5 +20,6 @@ type UserUsecase interface {
 	DeleteUserPhoto(ctx context.Context, userID, photoID uuid.UUID) error
 
 	GetRecommendations(ctx context.Context, userID uuid.UUID) ([]string, error)
+	SkipRecommendation(ctx context.Context, userID, targetUserID uuid.UUID) error
 	GetDistanceBetweenUsers(ctx context.Context, userAID, userBID uuid.UUID) (float64, error)
 }

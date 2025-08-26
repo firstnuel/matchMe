@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"strings"
 )
 
 type Config struct {
 	AppEnv        string
 	Port          string
+	Host          string
 	DbURL         string
 	DbName        string
 	JWTSecret     string
@@ -43,11 +45,16 @@ func getEnvStrArray(key string, defaultVal []string) []string {
 		return defaultVal
 	}
 
+	// Try JSON first
 	var arr []string
-	if err := json.Unmarshal([]byte(val), &arr); err != nil {
-		log.Printf("Error parsing '%s' as JSON array: %v, using default value", key, err)
-		return defaultVal
+	if err := json.Unmarshal([]byte(val), &arr); err == nil {
+		return arr
 	}
 
-	return arr
+	// Fallback: comma-separated
+	parts := strings.Split(val, ",")
+	for i := range parts {
+		parts[i] = strings.TrimSpace(parts[i])
+	}
+	return parts
 }

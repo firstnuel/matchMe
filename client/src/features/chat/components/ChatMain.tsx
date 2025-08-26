@@ -155,6 +155,7 @@ const ChatMain: React.FC<ChatMainProps> = ({
         handleSendMediaMessage={handleSendMediaMessage}
         handleInputKeyDown={handleInputKeyDown}
         messageInputRef={messageInputRef}
+        isMobile={isMobile}
         onTyping={handleTyping}
       />
     </div>

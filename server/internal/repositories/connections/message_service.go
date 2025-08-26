@@ -76,9 +76,18 @@ func (r *messageRepository) UpdateMessage(ctx context.Context, messageID uuid.UU
 }
 
 func (r *messageRepository) DeleteMessage(ctx context.Context, messageID uuid.UUID) error {
-	err := r.client.Message.UpdateOneID(messageID).
-		SetIsDeleted(true).
-		SetDeletedAt(time.Now()).
+	err := r.client.Message.DeleteOneID(messageID).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete message: %w", err)
+	}
+	return nil
+}
+
+func (r *messageRepository) DeleteMessagesByConnection(ctx context.Context, connID uuid.UUID) error {
+	_, err := r.client.Message.Delete().Where(
+		message.ConnectionIDEQ(connID),
+	).
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to delete message: %w", err)

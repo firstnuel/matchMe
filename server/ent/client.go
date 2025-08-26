@@ -15,6 +15,7 @@ import (
 	"match-me/ent/connectionrequest"
 	"match-me/ent/message"
 	"match-me/ent/user"
+	"match-me/ent/userinteraction"
 	"match-me/ent/userphoto"
 
 	"entgo.io/ent"
@@ -37,6 +38,8 @@ type Client struct {
 	Message *MessageClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// UserInteraction is the client for interacting with the UserInteraction builders.
+	UserInteraction *UserInteractionClient
 	// UserPhoto is the client for interacting with the UserPhoto builders.
 	UserPhoto *UserPhotoClient
 }
@@ -54,6 +57,7 @@ func (c *Client) init() {
 	c.ConnectionRequest = NewConnectionRequestClient(c.config)
 	c.Message = NewMessageClient(c.config)
 	c.User = NewUserClient(c.config)
+	c.UserInteraction = NewUserInteractionClient(c.config)
 	c.UserPhoto = NewUserPhotoClient(c.config)
 }
 
@@ -151,6 +155,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ConnectionRequest: NewConnectionRequestClient(cfg),
 		Message:           NewMessageClient(cfg),
 		User:              NewUserClient(cfg),
+		UserInteraction:   NewUserInteractionClient(cfg),
 		UserPhoto:         NewUserPhotoClient(cfg),
 	}, nil
 }
@@ -175,6 +180,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ConnectionRequest: NewConnectionRequestClient(cfg),
 		Message:           NewMessageClient(cfg),
 		User:              NewUserClient(cfg),
+		UserInteraction:   NewUserInteractionClient(cfg),
 		UserPhoto:         NewUserPhotoClient(cfg),
 	}, nil
 }
@@ -204,21 +210,23 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Connection.Use(hooks...)
-	c.ConnectionRequest.Use(hooks...)
-	c.Message.Use(hooks...)
-	c.User.Use(hooks...)
-	c.UserPhoto.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.Connection, c.ConnectionRequest, c.Message, c.User, c.UserInteraction,
+		c.UserPhoto,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.Connection.Intercept(interceptors...)
-	c.ConnectionRequest.Intercept(interceptors...)
-	c.Message.Intercept(interceptors...)
-	c.User.Intercept(interceptors...)
-	c.UserPhoto.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.Connection, c.ConnectionRequest, c.Message, c.User, c.UserInteraction,
+		c.UserPhoto,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -232,6 +240,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Message.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
+	case *UserInteractionMutation:
+		return c.UserInteraction.mutate(ctx, m)
 	case *UserPhotoMutation:
 		return c.UserPhoto.mutate(ctx, m)
 	default:
@@ -899,6 +909,171 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 	}
 }
 
+// UserInteractionClient is a client for the UserInteraction schema.
+type UserInteractionClient struct {
+	config
+}
+
+// NewUserInteractionClient returns a client for the UserInteraction from the given config.
+func NewUserInteractionClient(c config) *UserInteractionClient {
+	return &UserInteractionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `userinteraction.Hooks(f(g(h())))`.
+func (c *UserInteractionClient) Use(hooks ...Hook) {
+	c.hooks.UserInteraction = append(c.hooks.UserInteraction, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `userinteraction.Intercept(f(g(h())))`.
+func (c *UserInteractionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.UserInteraction = append(c.inters.UserInteraction, interceptors...)
+}
+
+// Create returns a builder for creating a UserInteraction entity.
+func (c *UserInteractionClient) Create() *UserInteractionCreate {
+	mutation := newUserInteractionMutation(c.config, OpCreate)
+	return &UserInteractionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of UserInteraction entities.
+func (c *UserInteractionClient) CreateBulk(builders ...*UserInteractionCreate) *UserInteractionCreateBulk {
+	return &UserInteractionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *UserInteractionClient) MapCreateBulk(slice any, setFunc func(*UserInteractionCreate, int)) *UserInteractionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &UserInteractionCreateBulk{err: fmt.Errorf("calling to UserInteractionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*UserInteractionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &UserInteractionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for UserInteraction.
+func (c *UserInteractionClient) Update() *UserInteractionUpdate {
+	mutation := newUserInteractionMutation(c.config, OpUpdate)
+	return &UserInteractionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UserInteractionClient) UpdateOne(_m *UserInteraction) *UserInteractionUpdateOne {
+	mutation := newUserInteractionMutation(c.config, OpUpdateOne, withUserInteraction(_m))
+	return &UserInteractionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UserInteractionClient) UpdateOneID(id uuid.UUID) *UserInteractionUpdateOne {
+	mutation := newUserInteractionMutation(c.config, OpUpdateOne, withUserInteractionID(id))
+	return &UserInteractionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for UserInteraction.
+func (c *UserInteractionClient) Delete() *UserInteractionDelete {
+	mutation := newUserInteractionMutation(c.config, OpDelete)
+	return &UserInteractionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *UserInteractionClient) DeleteOne(_m *UserInteraction) *UserInteractionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *UserInteractionClient) DeleteOneID(id uuid.UUID) *UserInteractionDeleteOne {
+	builder := c.Delete().Where(userinteraction.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &UserInteractionDeleteOne{builder}
+}
+
+// Query returns a query builder for UserInteraction.
+func (c *UserInteractionClient) Query() *UserInteractionQuery {
+	return &UserInteractionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeUserInteraction},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a UserInteraction entity by its id.
+func (c *UserInteractionClient) Get(ctx context.Context, id uuid.UUID) (*UserInteraction, error) {
+	return c.Query().Where(userinteraction.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UserInteractionClient) GetX(ctx context.Context, id uuid.UUID) *UserInteraction {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a UserInteraction.
+func (c *UserInteractionClient) QueryUser(_m *UserInteraction) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userinteraction.Table, userinteraction.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, userinteraction.UserTable, userinteraction.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTargetUser queries the target_user edge of a UserInteraction.
+func (c *UserInteractionClient) QueryTargetUser(_m *UserInteraction) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userinteraction.Table, userinteraction.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, userinteraction.TargetUserTable, userinteraction.TargetUserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *UserInteractionClient) Hooks() []Hook {
+	return c.hooks.UserInteraction
+}
+
+// Interceptors returns the client interceptors.
+func (c *UserInteractionClient) Interceptors() []Interceptor {
+	return c.inters.UserInteraction
+}
+
+func (c *UserInteractionClient) mutate(ctx context.Context, m *UserInteractionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&UserInteractionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&UserInteractionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&UserInteractionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&UserInteractionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown UserInteraction mutation op: %q", m.Op())
+	}
+}
+
 // UserPhotoClient is a client for the UserPhoto schema.
 type UserPhotoClient struct {
 	config
@@ -1051,9 +1226,11 @@ func (c *UserPhotoClient) mutate(ctx context.Context, m *UserPhotoMutation) (Val
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Connection, ConnectionRequest, Message, User, UserPhoto []ent.Hook
+		Connection, ConnectionRequest, Message, User, UserInteraction,
+		UserPhoto []ent.Hook
 	}
 	inters struct {
-		Connection, ConnectionRequest, Message, User, UserPhoto []ent.Interceptor
+		Connection, ConnectionRequest, Message, User, UserInteraction,
+		UserPhoto []ent.Interceptor
 	}
 )

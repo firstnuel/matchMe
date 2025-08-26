@@ -53,6 +53,7 @@ type MessageRepository interface {
 	GetMessage(ctx context.Context, messageID uuid.UUID) (*ent.Message, error)
 	UpdateMessage(ctx context.Context, messageID uuid.UUID, content string) (*ent.Message, error)
 	DeleteMessage(ctx context.Context, messageID uuid.UUID) error
+	DeleteMessagesByConnection(ctx context.Context, connID uuid.UUID) error
 
 	// Connection messages
 	GetConnectionMessages(ctx context.Context, connectionID uuid.UUID, limit, offset int) ([]*ent.Message, error)

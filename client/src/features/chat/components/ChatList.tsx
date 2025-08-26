@@ -17,6 +17,13 @@ const ChatList: React.FC<ChatListProps> = ({
   isLoading
 }) => {
   const { onlineUsers } = useWebSocketContext();
+    const otherUser = selectedChat?.other_user;
+    const profilePhoto =
+      otherUser?.profile_photo ||
+      (otherUser?.photos && otherUser.photos.length > 0 ? otherUser.photos[0].photo_url : null);
+  
+    const initials = getInitials(otherUser?.first_name ?? "", otherUser?.last_name ?? "");
+  
   if (isLoading) {
     return (
       <div className="chat-list">
@@ -53,8 +60,17 @@ const ChatList: React.FC<ChatListProps> = ({
             className={`chat-item ${selectedChat?.connection_id === chat.connection_id ? 'active' : ''} ${chat.unread_count > 0 ? 'unread' : ''}`}
             onClick={() => setSelectedChat(chat)}
           >
-            <div className="chat-avatar">
-              {getInitials(otherUser.first_name, otherUser.last_name)}
+            <div className="chat-avatar" style={
+              profilePhoto
+                ? {
+                    backgroundImage: `url(${profilePhoto})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    color: "transparent",
+                  }
+                : {}
+            }>
+            {profilePhoto ? "" : initials}
               {onlineUsers.has(otherUser.id) && <div className="online-indicator"></div>}
             </div>
             <div className="chat-info">

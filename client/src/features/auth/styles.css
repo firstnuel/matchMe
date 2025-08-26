@@ -23,6 +23,8 @@
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
+
+
 /* Error and Info messages */
 .error, .info, .success {
     font-size: 0.875rem;
