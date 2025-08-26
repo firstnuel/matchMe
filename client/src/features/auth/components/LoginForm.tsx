@@ -12,12 +12,13 @@ import { type LoginData } from '../types/auth'
 import '../styles.css'
 import { useAuthStore } from '../hooks/authStore'
 import { useUIStore } from '../../../shared/hooks/uiStore'
-import type { FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 
 
 const LoginForm = () => {
+  const [showPassword, setShowPassword] = useState(false)
   const { reset: emailReset, ...email } = useField('email', 'email', '')
-  const { reset: passwordReset, ...password } = useField('password', 'password')
+  const { reset: passwordReset, ...password } = useField('password', showPassword? 'text': 'password')
   const { errorMsg, infoMsg, setInfo, setError, clearMsgs } = useUIStore()
   const { setAuthToken } = useAuthStore()
   const navigate = useNavigate()
@@ -50,6 +51,10 @@ const LoginForm = () => {
     mutation.mutate(formData)
  }
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword)
+    }
+
   return ( 
     <div className='container-fluid' >       
         <Container className='form-container'>
@@ -69,7 +74,13 @@ const LoginForm = () => {
                     <InputGroup.Text>
                     <Icon icon="mdi:lock" className="icon" />
                     </InputGroup.Text>
-                    <Form.Control size="lg" {...password} placeholder="Password"  autoComplete='current-password'/>
+                    <Form.Control size="lg" {...password} placeholder="Password" autoComplete='new-password'/>
+                    <InputGroup.Text onClick={togglePasswordVisibility} style={{ cursor: "pointer" }}>
+                    {showPassword? 
+                        <Icon icon="mdi:eye-off" className="icon" />
+                        : <Icon icon="mdi:eye" className="icon" />
+                    }
+                    </InputGroup.Text>
                 </InputGroup>
 
                 <Button variant="primary" type="submit"  size="lg" className='formButton'>

@@ -12,6 +12,7 @@ import (
 	"match-me/ent/predicate"
 	"match-me/ent/schema"
 	"match-me/ent/user"
+	"match-me/ent/userinteraction"
 	"match-me/ent/userphoto"
 	"sync"
 	"time"
@@ -34,6 +35,7 @@ const (
 	TypeConnectionRequest = "ConnectionRequest"
 	TypeMessage           = "Message"
 	TypeUser              = "User"
+	TypeUserInteraction   = "UserInteraction"
 	TypeUserPhoto         = "UserPhoto"
 )
 
@@ -4919,6 +4921,749 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)
+}
+
+// UserInteractionMutation represents an operation that mutates the UserInteraction nodes in the graph.
+type UserInteractionMutation struct {
+	config
+	op                 Op
+	typ                string
+	id                 *uuid.UUID
+	interaction_type   *userinteraction.InteractionType
+	created_at         *time.Time
+	expires_at         *time.Time
+	metadata           *map[string]interface{}
+	clearedFields      map[string]struct{}
+	user               *uuid.UUID
+	cleareduser        bool
+	target_user        *uuid.UUID
+	clearedtarget_user bool
+	done               bool
+	oldValue           func(context.Context) (*UserInteraction, error)
+	predicates         []predicate.UserInteraction
+}
+
+var _ ent.Mutation = (*UserInteractionMutation)(nil)
+
+// userinteractionOption allows management of the mutation configuration using functional options.
+type userinteractionOption func(*UserInteractionMutation)
+
+// newUserInteractionMutation creates new mutation for the UserInteraction entity.
+func newUserInteractionMutation(c config, op Op, opts ...userinteractionOption) *UserInteractionMutation {
+	m := &UserInteractionMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeUserInteraction,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withUserInteractionID sets the ID field of the mutation.
+func withUserInteractionID(id uuid.UUID) userinteractionOption {
+	return func(m *UserInteractionMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *UserInteraction
+		)
+		m.oldValue = func(ctx context.Context) (*UserInteraction, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().UserInteraction.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withUserInteraction sets the old UserInteraction of the mutation.
+func withUserInteraction(node *UserInteraction) userinteractionOption {
+	return func(m *UserInteractionMutation) {
+		m.oldValue = func(context.Context) (*UserInteraction, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m UserInteractionMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m UserInteractionMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of UserInteraction entities.
+func (m *UserInteractionMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *UserInteractionMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *UserInteractionMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().UserInteraction.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetUserID sets the "user_id" field.
+func (m *UserInteractionMutation) SetUserID(u uuid.UUID) {
+	m.user = &u
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *UserInteractionMutation) UserID() (r uuid.UUID, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the UserInteraction entity.
+// If the UserInteraction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserInteractionMutation) OldUserID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *UserInteractionMutation) ResetUserID() {
+	m.user = nil
+}
+
+// SetTargetUserID sets the "target_user_id" field.
+func (m *UserInteractionMutation) SetTargetUserID(u uuid.UUID) {
+	m.target_user = &u
+}
+
+// TargetUserID returns the value of the "target_user_id" field in the mutation.
+func (m *UserInteractionMutation) TargetUserID() (r uuid.UUID, exists bool) {
+	v := m.target_user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTargetUserID returns the old "target_user_id" field's value of the UserInteraction entity.
+// If the UserInteraction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserInteractionMutation) OldTargetUserID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTargetUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTargetUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTargetUserID: %w", err)
+	}
+	return oldValue.TargetUserID, nil
+}
+
+// ResetTargetUserID resets all changes to the "target_user_id" field.
+func (m *UserInteractionMutation) ResetTargetUserID() {
+	m.target_user = nil
+}
+
+// SetInteractionType sets the "interaction_type" field.
+func (m *UserInteractionMutation) SetInteractionType(ut userinteraction.InteractionType) {
+	m.interaction_type = &ut
+}
+
+// InteractionType returns the value of the "interaction_type" field in the mutation.
+func (m *UserInteractionMutation) InteractionType() (r userinteraction.InteractionType, exists bool) {
+	v := m.interaction_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldInteractionType returns the old "interaction_type" field's value of the UserInteraction entity.
+// If the UserInteraction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserInteractionMutation) OldInteractionType(ctx context.Context) (v userinteraction.InteractionType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldInteractionType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldInteractionType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldInteractionType: %w", err)
+	}
+	return oldValue.InteractionType, nil
+}
+
+// ResetInteractionType resets all changes to the "interaction_type" field.
+func (m *UserInteractionMutation) ResetInteractionType() {
+	m.interaction_type = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *UserInteractionMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *UserInteractionMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the UserInteraction entity.
+// If the UserInteraction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserInteractionMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *UserInteractionMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetExpiresAt sets the "expires_at" field.
+func (m *UserInteractionMutation) SetExpiresAt(t time.Time) {
+	m.expires_at = &t
+}
+
+// ExpiresAt returns the value of the "expires_at" field in the mutation.
+func (m *UserInteractionMutation) ExpiresAt() (r time.Time, exists bool) {
+	v := m.expires_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldExpiresAt returns the old "expires_at" field's value of the UserInteraction entity.
+// If the UserInteraction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserInteractionMutation) OldExpiresAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldExpiresAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldExpiresAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldExpiresAt: %w", err)
+	}
+	return oldValue.ExpiresAt, nil
+}
+
+// ClearExpiresAt clears the value of the "expires_at" field.
+func (m *UserInteractionMutation) ClearExpiresAt() {
+	m.expires_at = nil
+	m.clearedFields[userinteraction.FieldExpiresAt] = struct{}{}
+}
+
+// ExpiresAtCleared returns if the "expires_at" field was cleared in this mutation.
+func (m *UserInteractionMutation) ExpiresAtCleared() bool {
+	_, ok := m.clearedFields[userinteraction.FieldExpiresAt]
+	return ok
+}
+
+// ResetExpiresAt resets all changes to the "expires_at" field.
+func (m *UserInteractionMutation) ResetExpiresAt() {
+	m.expires_at = nil
+	delete(m.clearedFields, userinteraction.FieldExpiresAt)
+}
+
+// SetMetadata sets the "metadata" field.
+func (m *UserInteractionMutation) SetMetadata(value map[string]interface{}) {
+	m.metadata = &value
+}
+
+// Metadata returns the value of the "metadata" field in the mutation.
+func (m *UserInteractionMutation) Metadata() (r map[string]interface{}, exists bool) {
+	v := m.metadata
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMetadata returns the old "metadata" field's value of the UserInteraction entity.
+// If the UserInteraction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserInteractionMutation) OldMetadata(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMetadata is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMetadata requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMetadata: %w", err)
+	}
+	return oldValue.Metadata, nil
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (m *UserInteractionMutation) ClearMetadata() {
+	m.metadata = nil
+	m.clearedFields[userinteraction.FieldMetadata] = struct{}{}
+}
+
+// MetadataCleared returns if the "metadata" field was cleared in this mutation.
+func (m *UserInteractionMutation) MetadataCleared() bool {
+	_, ok := m.clearedFields[userinteraction.FieldMetadata]
+	return ok
+}
+
+// ResetMetadata resets all changes to the "metadata" field.
+func (m *UserInteractionMutation) ResetMetadata() {
+	m.metadata = nil
+	delete(m.clearedFields, userinteraction.FieldMetadata)
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *UserInteractionMutation) ClearUser() {
+	m.cleareduser = true
+	m.clearedFields[userinteraction.FieldUserID] = struct{}{}
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *UserInteractionMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *UserInteractionMutation) UserIDs() (ids []uuid.UUID) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *UserInteractionMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// ClearTargetUser clears the "target_user" edge to the User entity.
+func (m *UserInteractionMutation) ClearTargetUser() {
+	m.clearedtarget_user = true
+	m.clearedFields[userinteraction.FieldTargetUserID] = struct{}{}
+}
+
+// TargetUserCleared reports if the "target_user" edge to the User entity was cleared.
+func (m *UserInteractionMutation) TargetUserCleared() bool {
+	return m.clearedtarget_user
+}
+
+// TargetUserIDs returns the "target_user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TargetUserID instead. It exists only for internal usage by the builders.
+func (m *UserInteractionMutation) TargetUserIDs() (ids []uuid.UUID) {
+	if id := m.target_user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTargetUser resets all changes to the "target_user" edge.
+func (m *UserInteractionMutation) ResetTargetUser() {
+	m.target_user = nil
+	m.clearedtarget_user = false
+}
+
+// Where appends a list predicates to the UserInteractionMutation builder.
+func (m *UserInteractionMutation) Where(ps ...predicate.UserInteraction) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the UserInteractionMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *UserInteractionMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.UserInteraction, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *UserInteractionMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *UserInteractionMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (UserInteraction).
+func (m *UserInteractionMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *UserInteractionMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.user != nil {
+		fields = append(fields, userinteraction.FieldUserID)
+	}
+	if m.target_user != nil {
+		fields = append(fields, userinteraction.FieldTargetUserID)
+	}
+	if m.interaction_type != nil {
+		fields = append(fields, userinteraction.FieldInteractionType)
+	}
+	if m.created_at != nil {
+		fields = append(fields, userinteraction.FieldCreatedAt)
+	}
+	if m.expires_at != nil {
+		fields = append(fields, userinteraction.FieldExpiresAt)
+	}
+	if m.metadata != nil {
+		fields = append(fields, userinteraction.FieldMetadata)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *UserInteractionMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case userinteraction.FieldUserID:
+		return m.UserID()
+	case userinteraction.FieldTargetUserID:
+		return m.TargetUserID()
+	case userinteraction.FieldInteractionType:
+		return m.InteractionType()
+	case userinteraction.FieldCreatedAt:
+		return m.CreatedAt()
+	case userinteraction.FieldExpiresAt:
+		return m.ExpiresAt()
+	case userinteraction.FieldMetadata:
+		return m.Metadata()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *UserInteractionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case userinteraction.FieldUserID:
+		return m.OldUserID(ctx)
+	case userinteraction.FieldTargetUserID:
+		return m.OldTargetUserID(ctx)
+	case userinteraction.FieldInteractionType:
+		return m.OldInteractionType(ctx)
+	case userinteraction.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case userinteraction.FieldExpiresAt:
+		return m.OldExpiresAt(ctx)
+	case userinteraction.FieldMetadata:
+		return m.OldMetadata(ctx)
+	}
+	return nil, fmt.Errorf("unknown UserInteraction field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserInteractionMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case userinteraction.FieldUserID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case userinteraction.FieldTargetUserID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTargetUserID(v)
+		return nil
+	case userinteraction.FieldInteractionType:
+		v, ok := value.(userinteraction.InteractionType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetInteractionType(v)
+		return nil
+	case userinteraction.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case userinteraction.FieldExpiresAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetExpiresAt(v)
+		return nil
+	case userinteraction.FieldMetadata:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMetadata(v)
+		return nil
+	}
+	return fmt.Errorf("unknown UserInteraction field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *UserInteractionMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *UserInteractionMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *UserInteractionMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown UserInteraction numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *UserInteractionMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(userinteraction.FieldExpiresAt) {
+		fields = append(fields, userinteraction.FieldExpiresAt)
+	}
+	if m.FieldCleared(userinteraction.FieldMetadata) {
+		fields = append(fields, userinteraction.FieldMetadata)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *UserInteractionMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *UserInteractionMutation) ClearField(name string) error {
+	switch name {
+	case userinteraction.FieldExpiresAt:
+		m.ClearExpiresAt()
+		return nil
+	case userinteraction.FieldMetadata:
+		m.ClearMetadata()
+		return nil
+	}
+	return fmt.Errorf("unknown UserInteraction nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *UserInteractionMutation) ResetField(name string) error {
+	switch name {
+	case userinteraction.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case userinteraction.FieldTargetUserID:
+		m.ResetTargetUserID()
+		return nil
+	case userinteraction.FieldInteractionType:
+		m.ResetInteractionType()
+		return nil
+	case userinteraction.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case userinteraction.FieldExpiresAt:
+		m.ResetExpiresAt()
+		return nil
+	case userinteraction.FieldMetadata:
+		m.ResetMetadata()
+		return nil
+	}
+	return fmt.Errorf("unknown UserInteraction field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *UserInteractionMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.user != nil {
+		edges = append(edges, userinteraction.EdgeUser)
+	}
+	if m.target_user != nil {
+		edges = append(edges, userinteraction.EdgeTargetUser)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *UserInteractionMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case userinteraction.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	case userinteraction.EdgeTargetUser:
+		if id := m.target_user; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *UserInteractionMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *UserInteractionMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *UserInteractionMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.cleareduser {
+		edges = append(edges, userinteraction.EdgeUser)
+	}
+	if m.clearedtarget_user {
+		edges = append(edges, userinteraction.EdgeTargetUser)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *UserInteractionMutation) EdgeCleared(name string) bool {
+	switch name {
+	case userinteraction.EdgeUser:
+		return m.cleareduser
+	case userinteraction.EdgeTargetUser:
+		return m.clearedtarget_user
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *UserInteractionMutation) ClearEdge(name string) error {
+	switch name {
+	case userinteraction.EdgeUser:
+		m.ClearUser()
+		return nil
+	case userinteraction.EdgeTargetUser:
+		m.ClearTargetUser()
+		return nil
+	}
+	return fmt.Errorf("unknown UserInteraction unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *UserInteractionMutation) ResetEdge(name string) error {
+	switch name {
+	case userinteraction.EdgeUser:
+		m.ResetUser()
+		return nil
+	case userinteraction.EdgeTargetUser:
+		m.ResetTargetUser()
+		return nil
+	}
+	return fmt.Errorf("unknown UserInteraction edge %s", name)
 }
 
 // UserPhotoMutation represents an operation that mutates the UserPhoto nodes in the graph.

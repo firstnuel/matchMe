@@ -202,3 +202,11 @@ func ToUser(entUser *ent.User, accessLevel AccessLevel) *User {
 
 	return user
 }
+
+// UserInteractionStats represents statistics about user interactions
+type UserInteractionStats struct {
+	DeclinedRequests   int `json:"declined_requests"`
+	SkippedProfiles    int `json:"skipped_profiles"`
+	DeletedConnections int `json:"deleted_connections"`
+	TotalInteractions  int `json:"total_interactions"`
+}

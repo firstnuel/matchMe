@@ -312,6 +312,83 @@ var (
 			},
 		},
 	}
+	// UserInteractionsColumns holds the columns for the "user_interactions" table.
+	UserInteractionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "interaction_type", Type: field.TypeEnum, Enums: []string{"declined_request", "skipped_profile", "deleted_connection"}},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "expires_at", Type: field.TypeTime, Nullable: true},
+		{Name: "metadata", Type: field.TypeJSON, Nullable: true},
+		{Name: "user_id", Type: field.TypeUUID},
+		{Name: "target_user_id", Type: field.TypeUUID},
+	}
+	// UserInteractionsTable holds the schema information for the "user_interactions" table.
+	UserInteractionsTable = &schema.Table{
+		Name:       "user_interactions",
+		Columns:    UserInteractionsColumns,
+		PrimaryKey: []*schema.Column{UserInteractionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_interactions_users_user",
+				Columns:    []*schema.Column{UserInteractionsColumns[5]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "user_interactions_users_target_user",
+				Columns:    []*schema.Column{UserInteractionsColumns[6]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "userinteraction_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{UserInteractionsColumns[5]},
+			},
+			{
+				Name:    "userinteraction_target_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{UserInteractionsColumns[6]},
+			},
+			{
+				Name:    "userinteraction_interaction_type",
+				Unique:  false,
+				Columns: []*schema.Column{UserInteractionsColumns[1]},
+			},
+			{
+				Name:    "userinteraction_user_id_interaction_type",
+				Unique:  false,
+				Columns: []*schema.Column{UserInteractionsColumns[5], UserInteractionsColumns[1]},
+			},
+			{
+				Name:    "userinteraction_user_id_target_user_id",
+				Unique:  false,
+				Columns: []*schema.Column{UserInteractionsColumns[5], UserInteractionsColumns[6]},
+			},
+			{
+				Name:    "userinteraction_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{UserInteractionsColumns[2]},
+			},
+			{
+				Name:    "userinteraction_expires_at",
+				Unique:  false,
+				Columns: []*schema.Column{UserInteractionsColumns[3]},
+			},
+			{
+				Name:    "userinteraction_user_id_interaction_type_expires_at",
+				Unique:  false,
+				Columns: []*schema.Column{UserInteractionsColumns[5], UserInteractionsColumns[1], UserInteractionsColumns[3]},
+			},
+			{
+				Name:    "userinteraction_user_id_target_user_id_interaction_type",
+				Unique:  true,
+				Columns: []*schema.Column{UserInteractionsColumns[5], UserInteractionsColumns[6], UserInteractionsColumns[1]},
+			},
+		},
+	}
 	// UserPhotosColumns holds the columns for the "user_photos" table.
 	UserPhotosColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -340,6 +417,7 @@ var (
 		ConnectionRequestsTable,
 		MessagesTable,
 		UsersTable,
+		UserInteractionsTable,
 		UserPhotosTable,
 	}
 )
@@ -352,5 +430,7 @@ func init() {
 	MessagesTable.ForeignKeys[0].RefTable = ConnectionsTable
 	MessagesTable.ForeignKeys[1].RefTable = UsersTable
 	MessagesTable.ForeignKeys[2].RefTable = UsersTable
+	UserInteractionsTable.ForeignKeys[0].RefTable = UsersTable
+	UserInteractionsTable.ForeignKeys[1].RefTable = UsersTable
 	UserPhotosTable.ForeignKeys[0].RefTable = UsersTable
 }

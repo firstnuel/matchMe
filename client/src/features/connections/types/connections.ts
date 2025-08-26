@@ -54,3 +54,8 @@ export interface SendConnectionRequestBody {
   receiver_id: string;
   message?: string;
 }
+
+
+export interface SkipConnectionRequestBody {
+  target_userId: string;
+}

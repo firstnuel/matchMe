@@ -15,26 +15,33 @@ import (
 	"match-me/internal/repositories/connections"
 	"match-me/internal/repositories/user"
 	"match-me/internal/requests"
+	"match-me/internal/usecases/interactions"
 
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/google/uuid"
 )
 
 type userUsecase struct {
-	userRepo  user.UserRepository
-	jwtSecret string
-	cld       cloudinary.Cloudinary
-	connRepo  connections.ConnectionRepository
+	userRepo      user.UserRepository
+	jwtSecret     string
+	cld           cloudinary.Cloudinary
+	connRepo      connections.ConnectionRepository
+	connReqRepo   connections.ConnectionRequestRepository
+	interactionUC interactions.UserInteractionUsecase
 }
 
 func NewUserUsecase(userRepo user.UserRepository,
 	connRepo connections.ConnectionRepository,
+	connReqRepo connections.ConnectionRequestRepository,
+	interactionUC interactions.UserInteractionUsecase,
 	jwtSecret string, cld cloudinary.Cloudinary) UserUsecase {
 	return &userUsecase{
-		userRepo:  userRepo,
-		connRepo:  connRepo,
-		jwtSecret: jwtSecret,
-		cld:       cld,
+		userRepo:      userRepo,
+		connRepo:      connRepo,
+		connReqRepo:   connReqRepo,
+		interactionUC: interactionUC,
+		jwtSecret:     jwtSecret,
+		cld:           cld,
 	}
 }
 
@@ -277,7 +284,6 @@ func (u *userUsecase) GetRecommendations(ctx context.Context, userID uuid.UUID) 
 	if err != nil {
 		log.Printf("failed to get user connections: %v", err) // only log err
 	}
-
 	// Create a set of connected user IDs
 	connectedUserIDs := make(map[string]struct{})
 	for _, conn := range connections {
@@ -288,19 +294,87 @@ func (u *userUsecase) GetRecommendations(ctx context.Context, userID uuid.UUID) 
 		}
 	}
 
-	// Filter out connected users and collect top 10
+	// Fetch excluded user IDs based on interactions
+	var excludedUserIDs map[string]struct{}
+	if u.interactionUC != nil {
+		excludedIDs, err := u.interactionUC.GetExcludedUserIDs(ctx, userID)
+		if err != nil {
+			log.Printf("failed to get excluded user IDs: %v", err) // only log err
+			excludedUserIDs = make(map[string]struct{})
+		} else {
+			excludedUserIDs = make(map[string]struct{})
+			for _, id := range excludedIDs {
+				excludedUserIDs[id.String()] = struct{}{}
+			}
+		}
+	} else {
+		excludedUserIDs = make(map[string]struct{})
+	}
+
+	// Filter out connected, pending, and excluded users, collect top 10
 	result := make([]string, 0, 10)
 	for _, ranking := range recommendedIDS {
 		if len(result) >= 10 {
 			break
 		}
-		// Only add users who are not in the connectedUserIDs set
-		if _, exists := connectedUserIDs[ranking.userID]; !exists {
-			result = append(result, ranking.userID)
+		
+		// Check if user is connected
+		if _, connected := connectedUserIDs[ranking.userID]; connected {
+			continue
 		}
+		
+		// Check if there's a pending request in either direction
+		targetUserID, err := uuid.Parse(ranking.userID)
+		if err != nil {
+			continue // Skip if userID is invalid
+		}
+		
+		// Check userID -> targetUserID
+		req1, _ := u.connReqRepo.GetConnectionRequestBetweenUsers(ctx, userID, targetUserID)
+		// Check targetUserID -> userID  
+		req2, _ := u.connReqRepo.GetConnectionRequestBetweenUsers(ctx, targetUserID, userID)
+		
+		if req1 != nil || req2 != nil {
+			continue // Skip if there's a pending request in either direction
+		}
+		
+		// Check if excluded by interactions
+		if _, excluded := excludedUserIDs[ranking.userID]; excluded {
+			continue
+		}
+		
+		result = append(result, ranking.userID)
 	}
 
 	return result, nil
+}
+
+func (u *userUsecase) SkipRecommendation(ctx context.Context, userID, targetUserID uuid.UUID) error {
+	// Validate that users are not the same
+	if userID == targetUserID {
+		return fmt.Errorf("cannot skip recommendation for yourself")
+	}
+
+	// Check if both users exist
+	_, err := u.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("user not found: %w", err)
+	}
+
+	_, err = u.userRepo.GetByID(ctx, targetUserID)
+	if err != nil {
+		return fmt.Errorf("target user not found: %w", err)
+	}
+
+	// Record the skipped profile interaction
+	if u.interactionUC != nil {
+		err = u.interactionUC.RecordSkippedProfile(ctx, userID, targetUserID)
+		if err != nil {
+			return fmt.Errorf("failed to record skipped profile: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (u *userUsecase) GetDistanceBetweenUsers(ctx context.Context, userAID, userBID uuid.UUID) (float64, error) {

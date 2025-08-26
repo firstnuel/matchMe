@@ -9,6 +9,7 @@ import (
 type Config struct {
 	AppEnv        string
 	Port          string
+	Host          string
 	DbURL         string
 	DbName        string
 	JWTSecret     string

@@ -10,6 +10,7 @@ interface MessageInputProps {
   handleInputKeyDown: (e: React.KeyboardEvent, selectedFile?: File) => void;
   messageInputRef: React.RefObject<HTMLTextAreaElement | null>;
   onTyping?: (isTyping: boolean) => void;
+  isMobile?: boolean;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
@@ -19,6 +20,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
   handleSendMediaMessage,
   handleInputKeyDown,
   messageInputRef,
+  isMobile = false,
   onTyping
 }) => {
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -170,10 +172,6 @@ const MessageInput: React.FC<MessageInputProps> = ({
     
     // Trigger typing event
     handleTypingEvent(true);
-    
-    // Optional: Keep picker open for multiple selections
-    // Comment out the line below if you want picker to stay open
-    // setShowEmojiPicker(false);
   };
 
   // Handle emoji button click
@@ -289,13 +287,14 @@ const MessageInput: React.FC<MessageInputProps> = ({
           >
             <Icon icon="mdi:camera" />
           </button>
+        {!isMobile &&   
           <button 
             className="input-action-btn emoji-button" 
             title="Add emoji"
             onClick={handleEmojiButtonClick}
           >
             <Icon icon="mdi:emoticon-happy-outline" />
-          </button>
+          </button>}
         </div>
         <textarea
           ref={messageInputRef}

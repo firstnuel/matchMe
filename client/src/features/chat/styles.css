@@ -9,7 +9,6 @@
     border-radius: 8px;
     overflow: hidden;
 }
-
 /* Ensure the message input container has relative positioning */
 .message-input-container {
     position: relative;
@@ -674,7 +673,6 @@
 .input-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
 }
 
 .input-action-btn {
@@ -767,6 +765,15 @@
   0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
   40% { transform: scale(1); opacity: 1; }
 }
+
+/* Read Indicator Styles */
+.read-indicator {
+  display: flex;
+  justify-content: flex-end;
+  padding: 5px 15px;
+  margin-top: 5px;
+}
+
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {

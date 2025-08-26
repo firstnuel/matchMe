@@ -4,6 +4,7 @@ import { useUserRecommendations, useUserProfile, useUserDistance } from '../hook
 import { useCurrentUser } from '../../userProfile/hooks/useCurrentUser';
 import { useSendConnectionRequest } from '../../connections/hooks/useConnections';
 import { useNavigate } from 'react-router';
+import { useSkipConnectionRequest } from '../../connections/hooks/useConnections';
 import '../styles.css';
 
 const Home = () => {
@@ -12,6 +13,7 @@ const Home = () => {
     const [actionedProfiles, setActionedProfiles] = useState<Set<string>>(new Set());
     const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
     const sendRequest = useSendConnectionRequest()
+    const skipProfile = useSkipConnectionRequest()
     const navigate = useNavigate()
     
     // Get current user and profile completion
@@ -64,6 +66,7 @@ const Home = () => {
 
     const handleReject = () => {
         if (currentProfileId) {
+            skipProfile.mutate({ target_userId: currentProfileId })
             handleAction(currentProfileId, 'reject');
         }
     };

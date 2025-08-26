@@ -137,7 +137,7 @@ func (s *WebSocketService) BroadcastConnectionDeclined(request *models.Connectio
 
 // BroadcastUserStatusChange broadcasts user status changes to their connections
 func (s *WebSocketService) BroadcastUserStatusChange(userID uuid.UUID, status string) {
-	s.statusHub.broadcastUserStatus(userID, status)
+	s.statusHub.BroadcastUserStatus(userID, status)
 }
 
 // GetOnlineUsers returns list of currently online users

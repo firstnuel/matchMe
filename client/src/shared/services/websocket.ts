@@ -44,6 +44,13 @@ export interface TypingEvent {
   updated_at: string;
 }
 
+export interface MessageReadEvent {
+  message_id?: string;
+  connection_id: string;
+  read_by: string;
+  read_at: string;
+}
+
 export interface UserStatusEvent {
   user_id: string;
   status: 'online' | 'offline' | 'away';

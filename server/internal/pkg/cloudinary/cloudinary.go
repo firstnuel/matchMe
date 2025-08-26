@@ -2,9 +2,11 @@ package cloudinary
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/admin"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 )
 
@@ -12,6 +14,7 @@ type Cloudinary interface {
 	UploadImage(file any, params uploader.UploadParams) (string, string, error)
 	DeleteImage(publicID string) error
 	GetImageURL(publicID string, transformations ...string) string
+	DeleteFolder(folderPath string) error
 }
 
 type cloudinry struct {
@@ -72,4 +75,26 @@ func (c *cloudinry) GetImageURL(publicID string, transformations ...string) stri
 	}
 
 	return url
+}
+
+func (c *cloudinry) DeleteFolder(folderPath string) error {
+	// The public ID prefix for the folder is the folder name followed by a slash.
+	prefix := folderPath + "/"
+
+	// Cloudinary's Admin API is used for bulk operations.
+	_, err := c.cld.Admin.DeleteAssetsByPrefix(c.ctx, admin.DeleteAssetsByPrefixParams{
+		Prefix: []string{prefix},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete folder: %w", err)
+	}
+
+	_, err = c.cld.Admin.DeleteFolder(c.ctx, admin.DeleteFolderParams{
+		Folder: folderPath,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to delete empty folder: %w", err)
+	}
+
+	return nil
 }

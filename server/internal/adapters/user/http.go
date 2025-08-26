@@ -9,6 +9,7 @@ import (
 	"match-me/internal/repositories/connections"
 	userRepo "match-me/internal/repositories/user"
 	"match-me/internal/requests"
+	"match-me/internal/usecases/interactions"
 	userUsecase "match-me/internal/usecases/user"
 
 	"github.com/gin-gonic/gin"
@@ -17,20 +18,25 @@ import (
 type UserHandler struct {
 	UserUsecase       userUsecase.UserUsecase
 	connRepo          connections.ConnectionRepository
+	connReqRepo       connections.ConnectionRequestRepository
 	validationService *requests.ValidationService
+	interactionUC     interactions.UserInteractionUsecase
 	cfg               *config.Config
 }
 
 func NewUserHandler(client *ent.Client, cfg *config.Config,
 	connRepo connections.ConnectionRepository,
+	connReqRepo connections.ConnectionRequestRepository,
+	interactionUC interactions.UserInteractionUsecase,
 	validationService *requests.ValidationService,
 	cld cloudinary.Cloudinary) *UserHandler {
 
 	userRepo := userRepo.NewUserRepository(client)
-	userUsecase := userUsecase.NewUserUsecase(userRepo, connRepo, cfg.JWTSecret, cld)
+	userUsecase := userUsecase.NewUserUsecase(userRepo, connRepo, connReqRepo, interactionUC, cfg.JWTSecret, cld)
 	return &UserHandler{
 		UserUsecase:       userUsecase,
 		validationService: validationService,
+		interactionUC:     interactionUC,
 		cfg:               cfg,
 	}
 }

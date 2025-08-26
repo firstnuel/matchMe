@@ -10,6 +10,7 @@ import (
 	"match-me/ent/connectionrequest"
 	"match-me/ent/message"
 	"match-me/ent/user"
+	"match-me/ent/userinteraction"
 	"match-me/ent/userphoto"
 	"reflect"
 	"sync"
@@ -81,6 +82,7 @@ func checkColumn(t, c string) error {
 			connectionrequest.Table: connectionrequest.ValidColumn,
 			message.Table:           message.ValidColumn,
 			user.Table:              user.ValidColumn,
+			userinteraction.Table:   userinteraction.ValidColumn,
 			userphoto.Table:         userphoto.ValidColumn,
 		})
 	})

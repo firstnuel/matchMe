@@ -8,6 +8,7 @@ import (
 	"match-me/ent/message"
 	"match-me/ent/schema"
 	"match-me/ent/user"
+	"match-me/ent/userinteraction"
 	"match-me/ent/userphoto"
 	"time"
 
@@ -244,6 +245,16 @@ func init() {
 	userDescID := userFields[0].Descriptor()
 	// user.DefaultID holds the default value on creation for the id field.
 	user.DefaultID = userDescID.Default.(func() uuid.UUID)
+	userinteractionFields := schema.UserInteraction{}.Fields()
+	_ = userinteractionFields
+	// userinteractionDescCreatedAt is the schema descriptor for created_at field.
+	userinteractionDescCreatedAt := userinteractionFields[4].Descriptor()
+	// userinteraction.DefaultCreatedAt holds the default value on creation for the created_at field.
+	userinteraction.DefaultCreatedAt = userinteractionDescCreatedAt.Default.(func() time.Time)
+	// userinteractionDescID is the schema descriptor for id field.
+	userinteractionDescID := userinteractionFields[0].Descriptor()
+	// userinteraction.DefaultID holds the default value on creation for the id field.
+	userinteraction.DefaultID = userinteractionDescID.Default.(func() uuid.UUID)
 	userphotoFields := schema.UserPhoto{}.Fields()
 	_ = userphotoFields
 	// userphotoDescPhotoURL is the schema descriptor for photo_url field.

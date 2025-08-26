@@ -20,6 +20,8 @@ type Tx struct {
 	Message *MessageClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
+	// UserInteraction is the client for interacting with the UserInteraction builders.
+	UserInteraction *UserInteractionClient
 	// UserPhoto is the client for interacting with the UserPhoto builders.
 	UserPhoto *UserPhotoClient
 
@@ -157,6 +159,7 @@ func (tx *Tx) init() {
 	tx.ConnectionRequest = NewConnectionRequestClient(tx.config)
 	tx.Message = NewMessageClient(tx.config)
 	tx.User = NewUserClient(tx.config)
+	tx.UserInteraction = NewUserInteractionClient(tx.config)
 	tx.UserPhoto = NewUserPhotoClient(tx.config)
 }
 
