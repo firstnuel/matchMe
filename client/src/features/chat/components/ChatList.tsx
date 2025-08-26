@@ -17,12 +17,6 @@ const ChatList: React.FC<ChatListProps> = ({
   isLoading
 }) => {
   const { onlineUsers } = useWebSocketContext();
-    const otherUser = selectedChat?.other_user;
-    const profilePhoto =
-      otherUser?.profile_photo ||
-      (otherUser?.photos && otherUser.photos.length > 0 ? otherUser.photos[0].photo_url : null);
-  
-    const initials = getInitials(otherUser?.first_name ?? "", otherUser?.last_name ?? "");
   
   if (isLoading) {
     return (
@@ -53,6 +47,12 @@ const ChatList: React.FC<ChatListProps> = ({
       {filteredChats.map((chat) => {
         const otherUser = chat.other_user;
         if (!otherUser || !otherUser.first_name || !otherUser.last_name) return null;
+
+        const profilePhoto =
+          otherUser?.profile_photo ||
+          (otherUser?.photos && otherUser.photos.length > 0 ? otherUser.photos[0].photo_url : null);
+        
+        const initials = getInitials(otherUser?.first_name ?? "", otherUser?.last_name ?? "");
 
         return (
           <div

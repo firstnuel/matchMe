@@ -305,7 +305,7 @@ func (r *userRepository) GetDistanceBetweenUsers(ctx context.Context, userAID, u
 
 	distance := R * c
 
-	// Distance is returned in kilometers  
+	// Distance is returned in kilometers
 	return distance, nil
 }
 
@@ -340,7 +340,6 @@ func (r *userRepository) GetUsersByPreference(
 		user.PreferredAgeMaxLTE(currentUser.PreferredAgeMax),
 		user.ProfileCompletionGTE(95),
 		func(s *sql.Selector) {
-			// Use numbered placeholders to align with Ent's query builder
 			s.Where(sql.ExprP(
 				"ST_DWithin(coordinates, ST_SetSRID(ST_MakePoint($5, $6), 4326)::geography, $7)",
 				currentUser.Coordinates.Longitude, currentUser.Coordinates.Latitude, distanceInMeters,
