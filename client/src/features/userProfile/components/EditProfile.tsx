@@ -1,6 +1,6 @@
 import PhotoUploadSection from "./PhotoUploadCard";
 import FormField from "./FormField";
-import Location from "./Location";
+import LocationSearch from "./LocationSearch";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { type Point, type Prompt } from "../../../shared/types/user";
 import { useState } from "react";
@@ -195,7 +195,7 @@ const EditProfile = () => {
       </Section>
 
       <Section title="Location" subtitle="Help others find you nearby">
-        <Location location={location} setLocation={setLocation} />
+        <LocationSearch location={location} setLocation={setLocation} />
       </Section>
 
       <Section title="Your Preferences" subtitle="Select all that apply">
