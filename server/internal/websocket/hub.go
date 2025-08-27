@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 )
 
 // =================================================================================
@@ -330,21 +331,32 @@ func NewStatusHub() *StatusHub {
 func (h *StatusHub) Run() {
 	// Start stale connection cleanup goroutine
 	go h.cleanupStaleConnections()
-	
+
 	for {
 		select {
 		case client := <-h.register:
 			h.mu.Lock()
-			wasOffline := len(h.clientsByUser[client.userID]) == 0
-			h.clients[client] = true
+
+			// Initialize user's client map if it doesn't exist
 			if h.clientsByUser[client.userID] == nil {
 				h.clientsByUser[client.userID] = make(map[*Client]bool)
 			}
+
+			// Check if user was offline BEFORE adding the new client
+			wasOffline := len(h.clientsByUser[client.userID]) == 0
+
+			// Add client to global clients map
+			h.clients[client] = true
+
+			// Add client to user's client map
 			h.clientsByUser[client.userID][client] = true
-			log.Printf("✅ Status client registered for user %s", client.userID)
+			log.Printf("✅ Status client registered for user %s (total connections: %d)", client.userID, len(h.clientsByUser[client.userID]))
 			h.mu.Unlock()
 
-			// Broadcast user online status if they were offline
+			// 1. Send the list of already-online users directly to the new client.
+			h.SendInitialUserStatuses(client)
+
+			// 2. Broadcast the new user's "online" status to everyone else.
 			if wasOffline {
 				h.BroadcastUserStatus(client.userID, "online")
 			}
@@ -409,15 +421,24 @@ func (h *StatusHub) BroadcastToUser(userID uuid.UUID, eventType EventType, data 
 	}
 }
 
-// BroadcastUserStatus broadcasts a user's status change to all connected status clients.
+// BroadcastUserStatus broadcasts a user's status change to all connected status clients except the user themselves.
 func (h *StatusHub) BroadcastUserStatus(userID uuid.UUID, status string) {
 	h.mu.RLock()
-	// Create a copy of all clients to avoid holding the lock during broadcast
+	// Create a copy of all clients except the user whose status is changing
 	clientsToSend := make([]*Client, 0, len(h.clients))
 	for client := range h.clients {
-		clientsToSend = append(clientsToSend, client)
+		// Exclude the user whose status is changing to avoid feedback loops
+		if client.userID != userID {
+			clientsToSend = append(clientsToSend, client)
+		}
 	}
 	h.mu.RUnlock()
+
+	// Don't broadcast if no other clients are connected
+	if len(clientsToSend) == 0 {
+		log.Printf("📡 No other clients to broadcast %s status for user %s", status, userID)
+		return
+	}
 
 	// Create the status event
 	statusEvent := UserStatusEvent{
@@ -439,12 +460,12 @@ func (h *StatusHub) BroadcastUserStatus(userID uuid.UUID, status string) {
 		eventType = EventUserOnline
 	}
 
-	// Broadcast to all status clients
+	// Broadcast to all status clients except the user themselves
 	for _, client := range clientsToSend {
 		client.SendMessage(eventType, statusEvent)
 	}
 
-	log.Printf("📡 Broadcasted %s status for user %s to %d clients", status, userID, len(clientsToSend))
+	log.Printf("📡 Broadcasted %s status for user %s to %d other clients", status, userID, len(clientsToSend))
 }
 
 // SetUserAway marks a user as away and broadcasts the status change
@@ -492,9 +513,33 @@ func (h *StatusHub) IsUserOnline(userID uuid.UUID) bool {
 	return ok
 }
 
+// SendInitialUserStatuses sends the current status of all online users to a single new client.
+func (h *StatusHub) SendInitialUserStatuses(newClient *Client) {
+	h.mu.RLock()
+
+	// Create a list of status events for all users who are already online.
+	// We exclude the new client themselves, as they know they are online.
+	onlineUsers := make([]UserStatusEvent, 0, len(h.clientsByUser))
+	for userID := range h.clientsByUser {
+		if userID != newClient.userID {
+			onlineUsers = append(onlineUsers, UserStatusEvent{
+				UserID:       userID,
+				Status:       "online",
+				LastActivity: time.Now().UTC(), // Or fetch last known activity
+			})
+		}
+	}
+	h.mu.RUnlock()
+
+	// Send this snapshot of online users to the new client.
+	if len(onlineUsers) > 0 {
+		newClient.SendMessage(EventUserStatusInitial, onlineUsers)
+	}
+}
+
 // cleanupStaleConnections periodically removes inactive connections.
 func (h *StatusHub) cleanupStaleConnections() {
-	ticker := time.NewTicker(30 * time.Second)
+	ticker := time.NewTicker(60 * time.Second) // Increased from 30s to 60s for less aggressive cleanup
 	defer ticker.Stop()
 
 	for {
@@ -503,17 +548,24 @@ func (h *StatusHub) cleanupStaleConnections() {
 			h.mu.Lock()
 			var staleClients []*Client
 			for client := range h.clients {
+				// More conservative stale detection - only remove truly dead connections
 				if client.IsStale() {
-					staleClients = append(staleClients, client)
+					// Double-check by testing the WebSocket connection
+					if err := client.conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(5*time.Second)); err != nil {
+						staleClients = append(staleClients, client)
+					} else {
+						// Connection is still alive, update activity
+						client.UpdateActivity()
+					}
 				}
 			}
 			h.mu.Unlock()
 
-			// Unregister stale clients
+			// Only unregister clients that are truly stale
 			for _, client := range staleClients {
 				select {
 				case h.unregister <- client:
-					log.Printf("🧹 Cleaned up stale connection for user %s", client.userID)
+					log.Printf("🧹 Cleaned up truly stale connection for user %s", client.userID)
 				default:
 					// Channel is full, skip this cleanup cycle
 				}

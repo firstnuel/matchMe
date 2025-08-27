@@ -5,6 +5,7 @@ import { type UpdateUserRequest } from "../types/user";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const CURRENT_USER_URL =  API_BASE_URL + "/api/me";
 const UPLOAD_PHOTOS_URL = CURRENT_USER_URL + "/photos";
+const USER_BASE_URL = API_BASE_URL + "/users"
 
 // Create Axios instance
 const api = axios.create({
@@ -144,6 +145,24 @@ export const deleteUserPhoto = async (photoId: string): Promise<{ message: strin
     }
     return {
       error: "Failed to delete photo",
+      details: "An unexpected error occurred. Please try again later.",
+    } as UserError;
+  }
+};
+
+
+export const getUserBio = async (id: string): Promise<UserResponse | UserError> => {
+  try {
+    const { data } = await api.get<UserResponse>(
+      `${USER_BASE_URL}/${id}/bio`
+    );
+    return data;
+  } catch (error) {
+    if (error instanceof AxiosError && error.response?.data) {
+      return error.response.data as UserError;
+    }
+    return {
+      error: "Failed to fetch user profile",
       details: "An unexpected error occurred. Please try again later.",
     } as UserError;
   }

@@ -138,7 +138,17 @@ func ToUser(entUser *ent.User, accessLevel AccessLevel) *User {
 		if entUser.CommunicationStyle != "" {
 			user.CommunicationStyle = &entUser.CommunicationStyle
 		}
-
+		if entUser.Edges.Photos != nil {
+			photos := make([]UserPhoto, len(entUser.Edges.Photos))
+			for i, photo := range entUser.Edges.Photos {
+				photos[i] = UserPhoto{
+					ID:       photo.ID,
+					PhotoURL: photo.PhotoURL,
+					Order:    photo.Order,
+				}
+			}
+			user.Photos = photos
+		}
 	case AccessLevelFull:
 		// Return all data (your original implementation)
 		user.Email = entUser.Email

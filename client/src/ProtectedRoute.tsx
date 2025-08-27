@@ -8,6 +8,7 @@ import { useConnectionWebSocketEvents } from './features/connections/hooks/useCo
 import { useUIStore } from './shared/hooks/uiStore'
 import Header from './shared/components/Header'
 import BottomNav from './shared/components/BottomNav'
+import IsLoading from './shared/components/IsLoading'
 
 const ProtectedRoute = memo(() => {
   const { authToken } = useAuthStore()
@@ -38,7 +39,7 @@ const ProtectedRoute = memo(() => {
   }
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return <IsLoading />
   }
 
   // Hide bottom nav on mobile when in chat message view

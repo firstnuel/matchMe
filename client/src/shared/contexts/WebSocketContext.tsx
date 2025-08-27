@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { createContext, useEffect, useState, type ReactNode, useCallback, useMemo } from 'react';
-import { WebSocketClient, EventType, type UserStatusEvent } from '../services/websocket';
+import { WebSocketClient, EventType, type UserStatusEvent, type UserStatusInitialEvent } from '../services/websocket';
 import { useAuthStore } from '../../features/auth/hooks/authStore';
 import { useCurrentUser } from '../../features/userProfile/hooks/useCurrentUser';
 
@@ -63,6 +63,26 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
     client.addEventListener(EventType.USER_AWAY, (data: UserStatusEvent) => {
       setUserStatuses(prev => new Map([...prev, [data.user_id, 'away']]));
+    });
+
+    // Handle initial status snapshot when client first connects
+    client.addEventListener(EventType.USER_STATUS_INITIAL, (data: UserStatusInitialEvent) => {
+      console.log('📊 Received initial user statuses:', data);
+      
+      // Process the array of online users
+      const onlineUserIds = new Set<string>();
+      const statusMap = new Map<string, 'online' | 'offline' | 'away'>();
+      
+      data.forEach((userStatus: UserStatusEvent) => {
+        if (userStatus.status === 'online') {
+          onlineUserIds.add(userStatus.user_id);
+        }
+        statusMap.set(userStatus.user_id, userStatus.status);
+      });
+      
+      // Update state with all online users at once
+      setOnlineUsers(onlineUserIds);
+      setUserStatuses(statusMap);
     });
 
     client.addEventListener(EventType.CONNECTION_REQUEST, () => {

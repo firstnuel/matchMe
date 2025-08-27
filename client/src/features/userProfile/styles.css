@@ -65,6 +65,13 @@
     border-color: var(--primary-color);
 }
 
+.crd-img{
+    border-radius: 12px;
+    margin-bottom: 1em;
+    max-width: 100%;
+    max-height: 600px;
+}
+
 .form-textarea {
     resize: vertical;
     min-height: 100px;

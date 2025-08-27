@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getCurrentUser, updateUser, uploadUserPhotos, deleteUserPhoto, getLocationCity } from '../api/userProfile';
+import { getCurrentUser, updateUser, uploadUserPhotos, deleteUserPhoto, getLocationCity, getUserBio } from '../api/userProfile';
 import { useAuthStore } from '../../auth/hooks/authStore';
 import { type UpdateUserRequest } from '../types/user';
 import { useUIStore } from '../../../shared/hooks/uiStore';
@@ -45,6 +45,18 @@ export const useUpdateUser = () => {
     },
   });
 };
+
+// Fetch another user's profile bio by id
+export const useUserProfileBio = (id: string) => {
+  const { authToken } = useAuthStore();
+  return useQuery({
+    queryKey: ['userProfileBio', id],
+    queryFn: () => getUserBio(id),
+    enabled: !!(authToken && id),
+    retry: false,
+  });
+};
+
 
 // Upload photos with optimistic update
 export const useUploadPhotos = () => {
@@ -119,3 +131,6 @@ export const useGetLocationCity = () => {
       getLocationCity({ latitude, longitude }),
   });
 };
+
+
+

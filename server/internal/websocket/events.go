@@ -18,10 +18,11 @@ const (
 	EventMessageTyping EventType = "message_typing"
 
 	// User status events
-	EventUserOnline       EventType = "user_online"
-	EventUserOffline      EventType = "user_offline"
-	EventUserAway         EventType = "user_away"
-	EventUserStatusChange EventType = "user_status_change"
+	EventUserOnline        EventType = "user_online"
+	EventUserOffline       EventType = "user_offline"
+	EventUserAway          EventType = "user_away"
+	EventUserStatusChange  EventType = "user_status_change"
+	EventUserStatusInitial EventType = "user_status_initial"
 
 	// Connection events
 	EventConnectionRequest  EventType = "connection_request"

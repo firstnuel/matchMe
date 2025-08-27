@@ -9,6 +9,7 @@ export const EventType = {
   USER_ONLINE: 'user_online',
   USER_OFFLINE: 'user_offline',
   USER_AWAY: 'user_away',
+  USER_STATUS_INITIAL: 'user_status_initial',
 
   // Connection events
   CONNECTION_REQUEST: 'connection_request',
@@ -56,6 +57,9 @@ export interface UserStatusEvent {
   status: 'online' | 'offline' | 'away';
   last_activity: string;
 }
+
+// The server sends an array of UserStatusEvent directly as the data
+export type UserStatusInitialEvent = UserStatusEvent[];
 
 export interface ConnectionRequestEvent {
   request: any;

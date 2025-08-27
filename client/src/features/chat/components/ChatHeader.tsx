@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
 import { getInitials } from '../../../shared/utils/utils';
 import { type ChatListItem } from '../types/chat';
+import { useNavigate } from 'react-router';
 
 interface ChatHeaderProps {
   selectedChat: ChatListItem;
@@ -20,6 +21,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
 }) => {
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate()
 
   const otherUser = selectedChat.other_user;
   const profilePhoto =
@@ -59,7 +61,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
         <Icon icon={isMobile ? 'mdi:arrow-left' : 'mdi:menu'} />
       </button>
 
-      <div className="chat-partner-info">
+      <div className="chat-partner-info" onClick={() => navigate(`/users/${otherUser.id}`)}>
         <div className="chat-partner-avatar"
          style={
             profilePhoto

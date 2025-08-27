@@ -4,16 +4,14 @@ import { useNavigate } from "react-router";
 import "../styles.css";
 import Section from "./Section";
 import FieldDisplay from "./FieldDisplay";
-import { useState } from "react";
+
+import { useCityFromCoordinates } from "../hooks/useCityFromCoordinates";
 
 const ViewProfile = () => {
     const { data: currentUser } = useCurrentUser();
     const user = currentUser && 'user' in currentUser ? currentUser.user : undefined;
     const navigate = useNavigate();
-    const [locationDisplay, setLocationDisplay] = useState<string | null>(null);
-    const [fetchingCity, setFetchingCity] = useState(false);
-    const [retryCount, setRetryCount] = useState(0);
-
+    const { locationDisplay, fetchingCity } = useCityFromCoordinates(user?.coordinates);
 
     // Format gender display
     const formatGender = (gender?: string) => {
@@ -26,12 +24,6 @@ const ViewProfile = () => {
             <ProfileImageCard 
                 user={user} 
                 onEditClick={() => navigate("/edit-profile")}
-                locationDisplay={locationDisplay}
-                setLocationDisplay={setLocationDisplay}
-                fetchingCity={fetchingCity}
-                setFetchingCity={setFetchingCity}
-                retryCount={retryCount}
-                setRetryCount={setRetryCount}
             />
             
             <Section title="Basic Information" subtitle="Your core profile details">
@@ -47,7 +39,7 @@ const ViewProfile = () => {
             </Section>
 
             <Section title="Location" subtitle="Help others find you nearby">
-                <FieldDisplay label="Current Location" value={locationDisplay} />
+                <FieldDisplay label="Current Location" value={fetchingCity? "Fetching Location": locationDisplay} />
             </Section>
 
             <Section title="Your Preferences" subtitle="What you're looking for">

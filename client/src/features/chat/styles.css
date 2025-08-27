@@ -406,6 +406,7 @@
 .chat-partner-info {
   display: flex;
   align-items: center;
+  cursor: pointer;
 }
 
 .chat-partner-avatar {

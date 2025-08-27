@@ -7,6 +7,7 @@ import Home from './features/matches/components/Home'
 import Connection from './features/connections/components/Connections'
 import ProtectedRoute from './ProtectedRoute'
 import ChatInterface from './features/chat/components/ChatInterface'
+import ViewOtherProfile from './features/userProfile/components/ViewOtherProfile'
   
 
 const AppRoutes = () => {
@@ -20,6 +21,7 @@ const AppRoutes = () => {
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Home />} />
         <Route path="/home" element={<Home />} />
+        <Route path="/users/:id" element={<ViewOtherProfile />} />
         <Route path="/profile" element={<ViewProfile />} />
         <Route path="/edit-profile" element={<EditProfile />} />
         <Route path="/connections" element={<Connection />} />

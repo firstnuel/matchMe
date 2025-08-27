@@ -252,11 +252,22 @@ func ServeStatusWS(hub *StatusHub, c *gin.Context, userID uuid.UUID) {
 		log.Printf("WebSocket upgrade error: %v", err)
 		return
 	}
+	
 	client := NewClient(conn, userID)
+	
+	// Ensure cleanup happens if goroutines fail to start
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("🚨 PANIC in ServeStatusWS for user %s: %v", userID, r)
+			client.Close()
+		}
+	}()
+	
+	// Register client with hub
 	hub.register <- client
 
+	// Start goroutines - if either fails, the client will be automatically unregistered via defer in readPump
 	go client.writePump()
-	// The readPump for a status client doesn't need to handle typing events.
 	go client.readPump(hub.unregister, nil)
 }
 

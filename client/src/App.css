@@ -20,6 +20,7 @@
     text-align: center;
     font-size: 1.5rem !important;
     margin-bottom: 0 !important;
+    cursor: pointer;
 }
 
 .nav-item {
@@ -360,6 +361,70 @@
 }
 
 /* Mobile Modal Styles */
+/* Loading Component Styles */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.loading-small {
+  padding: 8px;
+}
+
+.loading-medium {
+  padding: 20px;
+}
+
+.loading-large {
+  padding: 40px;
+}
+
+.loading-spinner {
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-small .loading-spinner {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+.loading-medium .loading-spinner {
+  width: 32px;
+  height: 32px;
+}
+
+.loading-large .loading-spinner {
+  width: 48px;
+  height: 48px;
+  border-width: 4px;
+}
+
+.loading-message {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.loading-small .loading-message {
+  font-size: 12px;
+}
+
+.loading-large .loading-message {
+  font-size: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 @media (max-width: 640px) {
   .modal-content {
     margin: 16px;
