@@ -79,6 +79,13 @@ func (c *Client) UpdateActivity() {
 	c.lastActivity = time.Now()
 }
 
+// IsStale checks if the client connection is stale (inactive for too long).
+func (c *Client) IsStale() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return time.Since(c.lastActivity) > pongWait*2
+}
+
 // readPump pumps messages from the websocket connection.
 // It accepts the specific hub's unregister channel and a reference to the typing hub
 // (which will be nil for non-typing connections).

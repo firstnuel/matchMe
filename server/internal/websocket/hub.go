@@ -328,6 +328,9 @@ func NewStatusHub() *StatusHub {
 
 // Run starts the hub's event loop.
 func (h *StatusHub) Run() {
+	// Start stale connection cleanup goroutine
+	go h.cleanupStaleConnections()
+	
 	for {
 		select {
 		case client := <-h.register:
@@ -487,6 +490,39 @@ func (h *StatusHub) IsUserOnline(userID uuid.UUID) bool {
 
 	_, ok := h.clientsByUser[userID]
 	return ok
+}
+
+// cleanupStaleConnections periodically removes inactive connections.
+func (h *StatusHub) cleanupStaleConnections() {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			h.mu.Lock()
+			var staleClients []*Client
+			for client := range h.clients {
+				if client.IsStale() {
+					staleClients = append(staleClients, client)
+				}
+			}
+			h.mu.Unlock()
+
+			// Unregister stale clients
+			for _, client := range staleClients {
+				select {
+				case h.unregister <- client:
+					log.Printf("🧹 Cleaned up stale connection for user %s", client.userID)
+				default:
+					// Channel is full, skip this cleanup cycle
+				}
+			}
+
+		case <-h.ctx.Done():
+			return
+		}
+	}
 }
 
 // Shutdown gracefully stops the hub and closes all connections.

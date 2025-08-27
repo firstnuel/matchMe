@@ -212,7 +212,7 @@ export class WebSocketClient {
 
   disconnect() {
     if (this.ws) {
-      // this.ws.close();
+      this.ws.close();
       this.ws = null;
     }
     this.eventListeners.clear();

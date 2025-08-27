@@ -76,12 +76,14 @@ const ChatInterface = () => {
     }
   };
 
-  const filteredChats = (chatListData && 'chats' in chatListData ? chatListData.chats : []).filter((chat: ChatListItem) => {
-    if (!chat.other_user) return false;
-    const name = `${chat.other_user.first_name} ${chat.other_user.last_name}`.toLowerCase();
-    const lastMessage = chat.last_message?.content?.toLowerCase() || '';
-    return name.includes(searchTerm.toLowerCase()) || lastMessage.includes(searchTerm.toLowerCase());
-  });
+  const filteredChats = (chatListData && 'chats' in chatListData ? chatListData.chats : [])
+    .filter((chat: ChatListItem) => {
+      if (!chat.other_user) return false;
+      const name = `${chat.other_user.first_name} ${chat.other_user.last_name}`.toLowerCase();
+      const lastMessage = chat.last_message?.content?.toLowerCase() || '';
+      return name.includes(searchTerm.toLowerCase()) || lastMessage.includes(searchTerm.toLowerCase());
+    })
+    .sort((a, b) => new Date(b.last_activity).getTime() - new Date(a.last_activity).getTime());
 
   const handleChatSelect = (chat: ChatListItem | null) => {
     setSelectedChat(chat);

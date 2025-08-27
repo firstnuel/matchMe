@@ -103,7 +103,7 @@ func (r *messageRepository) GetConnectionMessages(ctx context.Context, connectio
 				message.IsDeletedEQ(false),
 			),
 		).
-		Order(message.ByCreatedAt())
+		Order(ent.Desc(message.FieldCreatedAt))
 
 	if limit > 0 {
 		query = query.Limit(limit)

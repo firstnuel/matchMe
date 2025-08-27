@@ -37,6 +37,13 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       return;
     }
 
+    // Disconnect existing client if any to avoid multiple connections
+    if (statusClient) {
+      statusClient.disconnect();
+      setStatusClient(null);
+      setIsStatusConnected(false);
+    }
+
     const client = new WebSocketClient('/ws/status', authToken);
     
     // Set up event listeners
@@ -140,6 +147,28 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       typingClients.delete(connectionId);
     }
   }, []);
+
+  // Cleanup all connections when component unmounts or auth changes
+  useEffect(() => {
+    return () => {
+      // Disconnect all chat clients
+      chatClients.forEach((client) => {
+        client.disconnect();
+      });
+      chatClients.clear();
+
+      // Disconnect all typing clients
+      typingClients.forEach((client) => {
+        client.disconnect();
+      });
+      typingClients.clear();
+
+      // Disconnect status client
+      if (statusClient) {
+        statusClient.disconnect();
+      }
+    };
+  }, [authToken]);
 
   const contextValue = useMemo(() => ({
     statusClient,
