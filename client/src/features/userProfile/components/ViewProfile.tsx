@@ -37,6 +37,7 @@ const ViewProfile = () => {
             <Section title="Basic Information" subtitle="Your core profile details">
                 <FieldDisplay label="First Name" value={user?.first_name} />
                 <FieldDisplay label="Last Name" value={user?.last_name} />
+                <FieldDisplay label="Email" value={user?.email} />
                 <FieldDisplay label="Age" value={user?.age} />
                 <FieldDisplay label="Gender" value={formatGender(user?.gender)} />
             </Section>
