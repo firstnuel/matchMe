@@ -54,7 +54,15 @@ export const useSendTextMessage = () => {
   const { setInfo, setError } = useUIStore();
 
   return useMutation({
-    mutationFn: (body: SendTextMessageBody) => {
+    mutationFn: async (body: SendTextMessageBody) => {
+      // Mark messages as read before sending new message
+      try {
+        await markMessagesAsRead(body.connection_id);
+      } catch (error) {
+        console.warn('Failed to mark messages as read before sending:', error);
+        // Continue with sending even if mark as read fails
+      }
+      
       return sendTextMessage(body);
     },
     onMutate: async (newMessage) => {
@@ -126,7 +134,17 @@ export const useSendMediaMessage = () => {
   const { setInfo, setError } = useUIStore();
 
   return useMutation({
-    mutationFn: (body: SendMediaMessageBody) => sendMediaMessage(body),
+    mutationFn: async (body: SendMediaMessageBody) => {
+      // Mark messages as read before sending new message
+      try {
+        await markMessagesAsRead(body.connection_id);
+      } catch (error) {
+        console.warn('Failed to mark messages as read before sending:', error);
+        // Continue with sending even if mark as read fails
+      }
+      
+      return sendMediaMessage(body);
+    },
     onMutate: async (newMessage) => {
       await queryClient.cancelQueries({ queryKey: ["connectionMessages", newMessage.connection_id] });
 

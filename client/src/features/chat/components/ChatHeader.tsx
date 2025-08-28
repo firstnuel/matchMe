@@ -100,7 +100,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
               <button
                 className="chat-menu-item chat-menu-profile"
                 onClick={() => {
-                  console.log('View user profile clicked');
+                  navigate(`/users/${otherUser.id}`)
                   setShowActionsMenu(false);
                 }}
               >

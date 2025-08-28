@@ -6,6 +6,7 @@ import { EventType, type MessageEvent, type TypingEvent } from '../../../shared/
 import { type ChatListItem, type Message } from '../types/chat';
 import { type User } from '../../../shared/types/user';
 import { useMarkMessagesAsRead } from '../hooks/useChatMessage';
+import { useAutoMarkAsRead } from './useAutoMarkAsRead';
 
 interface UseChatEffectsProps {
   selectedChat: ChatListItem | null;
@@ -42,7 +43,15 @@ export const useChatEffects = ({
   ];
   const messages = allMessages.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
-  // Mark messages as read when chat is opened
+  // Auto-mark messages as read when chat is active
+  useAutoMarkAsRead({
+    connectionId: selectedChat?.connection_id,
+    messages,
+    currentUserId: currentUser?.id,
+    isActive: !!selectedChat
+  });
+
+  // Mark messages as read when chat is opened (initial load only)
   useEffect(() => {
     const connectionId = selectedChat?.connection_id;
     if (
