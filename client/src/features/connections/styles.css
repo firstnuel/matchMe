@@ -56,6 +56,7 @@
     color: white;
     font-weight: bold;
     margin-right: 15px;
+    cursor: pointer;
 }
 
 .connection-info {
@@ -98,6 +99,7 @@
 .connection-name {
     font-weight: 600;
     margin-bottom: 2px;
+    cursor: pointer;
 }
 
 .connection-description {

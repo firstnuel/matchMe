@@ -295,6 +295,10 @@
 .chat-item:hover {
   background-color: #f8f9ff;
 }
+.offline {
+  opacity: 0.8;
+  color: #999 !important;
+}
 
 .chat-item.active {
   background-color: #f3e8ff;

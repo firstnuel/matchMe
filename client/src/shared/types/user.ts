@@ -15,6 +15,11 @@ export interface UserPhoto {
   photo_url: string;
   order: number;
 }
+export interface MessageGroup {
+  dateLabel: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  messages: any[];
+}
 
 export interface User {
   id: string;

@@ -79,7 +79,7 @@ const Home = () => {
                     <div className="message-container">
                         <h2 className="message-title">Complete Your Profile</h2>
                         <p className="message-text">
-                            Your profile is {Math.round(profileCompletion)}% complete. Complete at least 90% of your profile to start seeing recommendations.
+                            Your profile is {Math.round(profileCompletion)}% complete. Yo have to complete your profile to start seeing recommendations.
                         </p>
                         <button 
                             onClick={() => navigate("/edit-profile")}

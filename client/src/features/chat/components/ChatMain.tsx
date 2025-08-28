@@ -1,10 +1,11 @@
 import React from 'react';
 import { Icon } from '@iconify/react/dist/iconify.js';
-import { getInitials } from '../../../shared/utils/utils';
+import { getInitials, groupMessagesByDate } from '../../../shared/utils/utils';
 import { type ChatListItem } from '../types/chat';
 import { type User } from '../../../shared/types/user';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
+import DateBanner from './DateBanner';
 import { useConnectionMessages } from '../hooks/useChatMessage';
 import { useWebSocketContext } from '../../../shared/hooks/useWebSocketContext';
 import { useChatEffects } from '../hooks/useChatEffects';
@@ -110,39 +111,41 @@ const ChatMain: React.FC<ChatMainProps> = ({
           </div>
         ) : (
           <>
-            <div className="message-date">
-              <span>Today</span>
-            </div>
-            <div className="message-group">
-              {messages.map((message, index) => {
-                const isOwnMessage = message.sender_id === currentUser?.id;
-                const prevMessage = index > 0 ? messages[index - 1] : null;
-                const showAvatar = !prevMessage || prevMessage.sender_id !== message.sender_id;
-                return (
-                  <MessageBubble
-                    key={message.id}
-                    message={message}
-                    isOwnMessage={isOwnMessage}
-                    showAvatar={showAvatar}
-                  />
-                );
-              })}
-
-              {isOtherUserTyping && (
-                <div className="typing-indicator">
-                  <div className="typing-avatar">
-                    {getInitials(otherUser.first_name, otherUser.last_name)}
-                  </div>
-                  <div className="typing-bubble">
-                    <div className="typing-dots">
-                      <div className="typing-dot"></div>
-                      <div className="typing-dot"></div>
-                      <div className="typing-dot"></div>
-                    </div>
+            {groupMessagesByDate(messages).map((group) => (
+              <React.Fragment key={group.dateLabel}>
+                <DateBanner dateLabel={group.dateLabel} />
+                <div className="message-group">
+                  {group.messages.map((message, index) => {
+                    const isOwnMessage = message.sender_id === currentUser?.id;
+                    const prevMessage = index > 0 ? group.messages[index - 1] : null;
+                    const showAvatar = !prevMessage || prevMessage.sender_id !== message.sender_id;
+                    return (
+                      <MessageBubble
+                        key={message.id}
+                        message={message}
+                        isOwnMessage={isOwnMessage}
+                        showAvatar={showAvatar}
+                      />
+                    );
+                  })}
+                </div>
+              </React.Fragment>
+            ))}
+            
+            {isOtherUserTyping && (
+              <div className="typing-indicator">
+                <div className="typing-avatar">
+                  {getInitials(otherUser.first_name, otherUser.last_name)}
+                </div>
+                <div className="typing-bubble">
+                  <div className="typing-dots">
+                    <div className="typing-dot"></div>
+                    <div className="typing-dot"></div>
+                    <div className="typing-dot"></div>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </>
         )}
         <div ref={messagesEndRef} />

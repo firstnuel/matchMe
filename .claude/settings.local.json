@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go run:*)",
+      "Bash(psql:*)",
+      "Bash(mkdir:*)",
+      "Bash(go build:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(npm install:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

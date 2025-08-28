@@ -33,7 +33,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   const getStatusText = (userId: string) => {
     const status = userStatuses.get(userId);
     if (status === 'away') return 'Away';
-    return 'Last seen recently';
+    return 'Offline';
   };
 
   // Close actions menu when clicking outside
@@ -79,7 +79,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           <div className="chat-partner-name">
             {otherUser.first_name} {otherUser.last_name}
           </div>
-          <div className="chat-partner-status">
+          <div className={`chat-partner-status ${!onlineUsers.has(otherUser.id)? "offline" : ""}`} >
             {onlineUsers.has(otherUser.id) ? 'Online now' : getStatusText(otherUser.id)}
           </div>
         </div>

@@ -18,6 +18,7 @@ const Header = () => {
   const handleLogout = () => {
     clearAuth()
     setShow(false);
+    window.location.reload()
   };
 
   useEffect(() => {

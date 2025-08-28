@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAcceptConnectionRequest, useRejectConnectionRequest, useDeleteConnection } from '../hooks/useConnections';
 import { type User } from '../../../shared/types/user';
 import ConfirmModal from '../../../shared/components/ConfirmModal';
+import { useNavigate } from 'react-router';
+
 
 interface ConnectionItemProps {
   id: string;
@@ -23,7 +25,7 @@ const ConnectionItem: React.FC<ConnectionItemProps> = ({
   createdAt 
 }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  
+  const navigate = useNavigate()
   const acceptRequest = useAcceptConnectionRequest();
   const rejectRequest = useRejectConnectionRequest();
   const deleteConnection = useDeleteConnection();
@@ -54,7 +56,7 @@ const ConnectionItem: React.FC<ConnectionItemProps> = ({
   return (
     <>
       <div className="connection-item">
-        <div className="connection-avatar">
+        <div className="connection-avatar" onClick={() => navigate(`/users/${user?.id}`)}>
           {displayPhoto ? (
             <img 
               src={displayPhoto} 
@@ -67,7 +69,7 @@ const ConnectionItem: React.FC<ConnectionItemProps> = ({
         </div>
         
         <div className="connection-info">
-          <div className="connection-name">{name}</div>
+          <div className="connection-name" onClick={() => navigate(`/users/${user?.id}`)}>{name}</div>
           <div className="connection-description">{description}</div>
           <div className="connection-time">
             {new Date(createdAt).toLocaleDateString('en-US', {
