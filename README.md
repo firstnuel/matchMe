@@ -1,125 +1,196 @@
-# Match-Me
+# Match-Me 💘
 
-A full-stack dating/matching application built with React TypeScript frontend and Go backend, featuring real-time chat, user profiles, and location-based matching.
+Match-Me is a modern, full-stack dating application designed to connect people through location-based matching and real-time interaction. It features a sleek React/TypeScript frontend and a powerful Go backend, providing a seamless and responsive user experience.
 
-## Tech Stack
+\*\*
 
-**Frontend:**
-- React 19 with TypeScript
-- Vite for build tooling
-- React Router for navigation
-- Bootstrap for styling
-- Zustand for state management
-- React Query for API data management
-- WebSocket for real-time features
+-----
 
-**Backend:**
-- Go 1.24+ with Gin web framework
-- Ent ORM for database operations
-- PostgreSQL database with PostGIS for location features
-- JWT authentication
-- WebSocket for real-time chat
-- Cloudinary for image storage
+## 🚀 Getting Started
 
-## Prerequisites
+Follow these instructions to get a local copy up and running for development and testing.
 
-- Node.js 18+ and npm
-- Go 1.24+
-- PostgreSQL with PostGIS extension
+### Prerequisites
 
-## Setup
+Ensure you have the following installed on your system:
 
-### Database Setup
+  * **Node.js**: `v18` or later
+  * **Go**: `v1.24` or later
+  * **PostgreSQL**: with the **PostGIS** extension enabled
 
-**Install PostgreSQL with PostGIS:**
+### Installation & Setup
+
+1.  **Clone the Repository**
+
+    ```bash
+    git clone https://gitea.kood.tech/ravikantpandit/match-me.git
+    cd match-me
+    ```
+
+2.  **Set Up the Database**
+    This project uses PostgreSQL with the PostGIS extension for location services.
+
+    ```bash
+    # On macOS (using Homebrew)
+    brew install postgresql postgis
+
+    # On Debian/Ubuntu
+    sudo apt-get update
+    sudo apt-get install postgresql postgresql-contrib postgis
+
+    # Create the database and enable the extension
+    createdb matchme
+    psql -d matchme -c "CREATE EXTENSION postgis;"
+    ```
+
+3.  **Configure Environment Variables**
+    Create a `.env` file inside the `server/` directory and populate it with your configuration.
+
+    ```bash
+    # server/.env
+    APP_ENV=development
+    PORT=8080
+    DATABASE_URL=postgres://YOUR_USER:YOUR_PASSWORD@localhost:5432/matchme?sslmode=disable
+    JWT_SECRET=a-very-strong-and-secret-key
+    CLOUDINARY_URL=your-cloudinary-api-environment-variable
+    ```
+
+      Create a `.env` file inside the `client/` directory and add this line.
+
+      ```bash
+      VITE_API_BASE_URL=http://localhost:8080
+      ``` 
+
+      > Remember that the port set in both the client and server must match, for example if you change the `PORT` in `server/.env` to 3000 then the client should be http://localhost:3000
+
+
+4.  **Install Dependencies and Run**
+    The `Makefile` contains all the necessary commands to install dependencies and run the application.
+
+    ```bash
+    # Install dependencies for both client and server
+    make dev-setup
+    ```
+
+    Next, run the frontend and backend servers in **two separate terminal windows**:
+
+    ```bash
+    # In terminal 1: Start the client dev server
+    
+    make dev-client
+    # Frontend will be available at http://localhost:5173
+    ```
+
+    ```bash
+    # In terminal 2: Start the backend server
+    make run-server
+    # Backend will be running at http://localhost:8080
+    ```
+   
+5.  if you do not have make installed
+    
+      ```bash
+      # In terminal 1: Install the client and start the frontend dev server
+      
+      cd client 
+      npm i && npm run dev
+      # Frontend will be available at http://localhost:5173
+      ```
+
+      ```bash
+      # In terminal 2: Start the backend server
+      cd server && go run ./cmd/server
+      # Backend will be running at http://localhost:8080
+      ```
+   
+
+-----
+### Database Management
+
+The backend includes helpful commands for managing the database during development or testing.
+
 ```bash
-# macOS
-brew install postgresql postgis
-
-# Ubuntu/Debian
-sudo apt-get install postgresql postgresql-contrib postgis
-
-# Create database
-createdb matchme
-psql -d matchme -c "CREATE EXTENSION postgis;"
-```
-
-### Application Setup
-
-1. **Clone and setup environment:**
-   ```bash
-   git clone <repository-url>
-   cd match-me
-   ```
-
-2. **Configure environment variables:**
-   Create `server/.env` file:
-   ```env
-   APP_ENV=development
-   PORT=8080
-   DATABASE_URL=postgres://postgres:yourpassword@localhost:5432/matchme?sslmode=disable
-   CLIENT_ADDR=http://someclientdomain #for CORS allowed host config defaults to all if not set
-   DATABASE_NAME=matchme
-   JWT_SECRET=your-secret-key
-   CLOUDINARY_URL=your-cloudinary-url
-   ```
-
-3. **Install dependencies and run:**
-   ```bash
-   # Install client dependencies
-   make install-client
-
-   # Run development servers (in separate terminals)
-   make dev-client    # Frontend on http://localhost:5173
-   make run-server    # Backend on http://localhost:8080
-   ```
-
-## Available Commands
-
-```bash
-make help              # Show all available commands
-make dev-setup         # Setup development environment
-make dev-client        # Start frontend development server
-make run-server        # Start backend server
-make build-all         # Build both client and server for production
-make clean             # Clean build artifacts
-```
-
-## Database Management
-
-The server includes built-in database management commands:
-
-```bash
+# Navigate to the server directory
 cd server
-go run ./cmd/server -h         # Show help
-go run ./cmd/server -r         # Reset database
-go run ./cmd/server -p 50      # Add 50 test users
-go run ./cmd/server -rp 25     # Reset and add 25 test users
+
+# Display all available database commands
+go run ./cmd/server -h
+
+# Seed the database with 50 test users
+go run ./cmd/server -p 50
+
+# Completely reset the database (drop all data)
+go run ./cmd/server -r
+
+# Reset the database and then seed it with 25 test users
+go run ./cmd/server -rp 25
 ```
 
-## Project Structure
+## ⚙️ Usage
+
+### Makefile Commands
+
+A `Makefile` at the root of the project simplifies common tasks.
+
+| Command | Description |
+| :--- | :--- |
+| `make help` | Displays a list of all available commands. |
+| `make dev-setup` | Installs all dependencies for both client and server. |
+| `make dev-client` | Starts the frontend development server with hot-reloading. |
+| `make run-server`| Starts the backend API server. |
+| `make build-all` | Creates production-ready builds for both client and server. |
+| `make clean` | Removes build artifacts and `node_modules`. |
+
+-----
+
+## ✨ Features
+
+  * **✅ Secure User Authentication**: JWT-based authentication for secure sessions and profile management.
+  * **📍 Geospatial Matching**: Utilizes PostGIS to discover and connect with potential matches nearby.
+  * **💬 Real-Time Chat**: Instant messaging between connected users, powered by WebSockets for a fluid conversation experience.
+  * **📸 Cloud-Based Image Handling**: Efficient and secure photo uploads and storage managed via Cloudinary.
+  * **🤝 Connection Management**: A complete system to send, accept, and manage connection requests.
+  * **📱 Fully Responsive Design**: A beautiful and intuitive interface that works flawlessly on both desktop and mobile devices.
+
+-----
+
+## 🛠️ Tech Stack
+
+The project is built with a modern and robust technology stack, separating concerns between a client-side application and a server-side API.
+
+| **Component** | **Technology** | **Purpose** |
+| :--- | :--- | :--- |
+| **Frontend** | React 19 (TypeScript) | UI development |
+| | Vite | Build tooling & dev server |
+| | Zustand & React Query | State management & server-state synchronization |
+| | Bootstrap | Styling and responsive layout |
+| | WebSocket API | Real-time communication |
+| **Backend** | Go 1.24+ | Core application logic |
+| | Gin | High-performance HTTP web framework |
+| | Ent | ORM for type-safe database access |
+| **Database** | PostgreSQL + PostGIS | Relational data and geospatial queries |
+| **Infrastructure** | JWT | Authentication |
+| | Cloudinary | Cloud-based image storage |
+
+
+-----
+
+## 📁 Project Structure
+
+The repository is organized into two main parts: a `client` directory for the frontend and a `server` directory for the backend.
 
 ```
 match-me/
-├── client/           # React TypeScript frontend
+├── client/           # React TypeScript frontend application
 │   ├── src/
-│   │   ├── features/ # Feature-based organization
-│   │   └── shared/   # Shared components and utilities
+│   │   ├── features/ # Feature-based modules (e.g., auth, chat)
+│   │   └── shared/   # Reusable components, hooks, and utilities
 │   └── package.json
-├── server/           # Go backend
-│   ├── cmd/server/   # Main application entry
-│   ├── api/          # HTTP routes and handlers
-│   ├── ent/          # Database models and migrations
-│   └── internal/     # Business logic and services
-└── Makefile         # Build and development commands
+├── server/           # Go backend application
+│   ├── cmd/server/   # Main application entrypoint and flags
+│   ├── api/          # HTTP routes, handlers, and middleware
+│   ├── ent/          # Auto-generated ORM code, models, and migrations
+│   └── internal/     # Core business logic and services
+└── Makefile          # Commands for building and running the project
 ```
-
-## Features
-
-- User authentication and profiles
-- Photo upload with Cloudinary
-- Location-based matching
-- Real-time chat with WebSocket
-- Connection requests and management
-- Mobile-responsive design
 

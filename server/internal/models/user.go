@@ -99,6 +99,10 @@ func ToUser(entUser *ent.User, accessLevel AccessLevel) *User {
 		user.Gender = string(entUser.Gender)
 		user.PreferredGender = string(entUser.PreferredGender)
 
+		if entUser.AboutMe != "" {
+			user.AboutMe = &entUser.AboutMe
+		}
+
 		if entUser.LookingFor != nil {
 			user.LookingFor = entUser.LookingFor
 		}

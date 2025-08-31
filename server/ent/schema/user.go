@@ -108,7 +108,7 @@ func (User) Fields() []ent.Field {
 		field.Int("preferred_distance").
 			Optional().
 			Min(0).
-			Max(100).
+			Max(1000).
 			Comment("Maximum preferred distance (km) for user matches"),
 
 		field.JSON("looking_for", []string{}).
