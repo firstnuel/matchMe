@@ -18,7 +18,7 @@ func LoadConfig() *Config {
 		cfg = &Config{
 			AppEnv:        mustGetEnv("APP_ENV"),
 			Port:          getEnvStr("PORT", "8080"),
-			Host:          getEnvStr("HOST", ""),
+			Host:          getEnvStr("HOST", "http://localhost"),
 			DbURL:         mustGetEnv("DATABASE_URL"),
 			DbName:        mustGetEnv("DATABASE_NAME"),
 			JWTSecret:     mustGetEnv("JWT_SECRET"),
