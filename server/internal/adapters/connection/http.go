@@ -62,8 +62,7 @@ func (h *ConnectionHandler) RegisterRoutes(r *gin.Engine) *gin.Engine {
 	connectionGroup := r.Group("/connections", middleware.VerifyUser(h.UserUsecase, h.cfg.JWTSecret))
 	{
 		// Connection management
-		connectionGroup.GET("/details", h.GetUserConnections)
-		connectionGroup.GET("/", h.GetUserConnectionsIds)
+		connectionGroup.GET("/", h.GetUserConnections)
 		connectionGroup.DELETE("/:connectionId", h.DeleteConnection)
 	}
 
