@@ -50,7 +50,9 @@ Ensure you have the following installed on your system:
     # server/.env
     APP_ENV=development
     PORT=8080
-    DATABASE_URL=postgres://YOUR_USER:YOUR_PASSWORD@localhost:5432/matchme?sslmode=disable
+    DATABASE_URL=postgres://YOUR_USER:YOUR_PASSWORD@localhost:5432/matchme?
+    DATABASE_NAME=postgres
+    sslmode=disable
     JWT_SECRET=a-very-strong-and-secret-key
     CLOUDINARY_URL=your-cloudinary-api-environment-variable
     ```
