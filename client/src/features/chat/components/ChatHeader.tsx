@@ -3,6 +3,8 @@ import { Icon } from '@iconify/react/dist/iconify.js';
 import { getInitials } from '../../../shared/utils/utils';
 import { type ChatListItem } from '../types/chat';
 import { useNavigate } from 'react-router';
+import ConfirmModal from '../../../shared/components/ConfirmModal';
+import { useDeleteConnection } from '../../connections/hooks/useConnections';
 
 interface ChatHeaderProps {
   selectedChat: ChatListItem;
@@ -20,8 +22,10 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   userStatuses,
 }) => {
   const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate()
+  const deleteConnection = useDeleteConnection();
 
   const otherUser = selectedChat.other_user;
   const profilePhoto =
@@ -29,6 +33,19 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
     (otherUser?.photos && otherUser.photos.length > 0 ? otherUser.photos[0].photo_url : null);
 
   const initials = getInitials(otherUser?.first_name ?? "", otherUser?.last_name ?? "");
+
+
+  const handleDelete = () => {
+    setShowActionsMenu(false);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    if (otherUser?.id) {
+      deleteConnection.mutate(otherUser.id);
+    }
+    setShowDeleteModal(false);
+  };
 
   const getStatusText = (userId: string) => {
     const status = userStatuses.get(userId);
@@ -109,10 +126,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
               </button>
               <button
                 className="chat-menu-item chat-menu-remove"
-                onClick={() => {
-                  console.log('Remove chat clicked');
-                  setShowActionsMenu(false);
-                }}
+                onClick={handleDelete}
               >
                 <Icon icon="mdi:delete-outline" />
                 Remove
@@ -121,6 +135,18 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        title="Remove Connection"
+        message={`Are you sure you want to remove your connection with ${otherUser.first_name} ${otherUser.last_name}? This action cannot be undone.`}
+        confirmText="Remove"
+        cancelText="Cancel"
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteModal(false)}
+        isLoading={deleteConnection.isPending}
+        variant="danger"
+      />
     </div>
   );
 };

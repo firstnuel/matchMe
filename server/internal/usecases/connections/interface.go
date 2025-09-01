@@ -10,6 +10,7 @@ import (
 // ConnectionUsecase handles business logic for user connections
 type ConnectionUsecase interface {
 	GetUserConnections(ctx context.Context, userID uuid.UUID) ([]*models.Connection, error)
+	GetUserConnectionsIds(ctx context.Context, userID uuid.UUID) ([]string, error)
 	DeleteConnection(ctx context.Context, userID, connectionID uuid.UUID) error
 }
 

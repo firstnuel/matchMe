@@ -54,6 +54,22 @@ func (u *connectionUsecase) GetUserConnections(ctx context.Context, userID uuid.
 	return connections, nil
 }
 
+func (u *connectionUsecase) GetUserConnectionsIds(ctx context.Context, userID uuid.UUID) ([]string, error) {
+	// Get all connections for the user
+	entConnections, err := u.connectionRepo.GetUserConnections(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user connections: %w", err)
+	}
+
+	// Extract connection IDs and convert to strings
+	connectionIDs := make([]string, len(entConnections))
+	for i, connection := range entConnections {
+		connectionIDs[i] = connection.ID.String()
+	}
+
+	return connectionIDs, nil
+}
+
 func (u *connectionUsecase) DeleteConnection(ctx context.Context, userID, connectionID uuid.UUID) error {
 	// Get the connection to verify ownership
 	connection, err := u.connectionRepo.GetConnection(ctx, connectionID)

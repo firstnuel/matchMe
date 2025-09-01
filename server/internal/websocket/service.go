@@ -38,8 +38,12 @@ func (s *WebSocketService) BroadcastNewMessage(message *models.Message) {
 		SenderID:     message.SenderID,
 	}
 
-	// Use the ChatHub to broadcast the message
+	// Use the ChatHub to broadcast the message to active chat connections
 	s.chatHub.BroadcastMessage(message.ConnectionID, messageEvent, message.SenderID)
+
+	// Also send notification via StatusHub for global real-time updates
+	// This ensures users receive message notifications even when the chat isn't open
+	s.statusHub.BroadcastToUser(message.ReceiverID, EventMessageNew, messageEvent)
 }
 
 // BroadcastMessageRead broadcasts message read status to connection participants

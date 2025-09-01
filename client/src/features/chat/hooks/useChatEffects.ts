@@ -103,6 +103,7 @@ export const useChatEffects = ({
     setLocalMessages([]);
 
     return () => {
+      chatClient.removeEventListener(EventType.MESSAGE_NEW, handleNewMessage);
       disconnectFromChat(connectionId);
     };
   }, [selectedChat?.connection_id, connectToChat, disconnectFromChat, queryClient]);
@@ -143,6 +144,7 @@ export const useChatEffects = ({
     setIsOtherUserTyping(false);
 
     return () => {
+      typingClient.removeEventListener(EventType.MESSAGE_TYPING, handleTypingEvent);
       disconnectFromTyping(connectionId);
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);

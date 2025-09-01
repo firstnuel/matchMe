@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// GetUserConnections handles GET /connections
+// GetUserConnections handles GET /connections/details
 func (h *ConnectionHandler) GetUserConnections(c *gin.Context) {
 	// Get authenticated user
 	user, exists := middleware.GetUserFromGinContext(c)
@@ -31,6 +31,31 @@ func (h *ConnectionHandler) GetUserConnections(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"connections": connections,
 		"count":       len(connections),
+	})
+}
+
+// GetUserConnectionsIds handles GET /connections
+func (h *ConnectionHandler) GetUserConnectionsIds(c *gin.Context) {
+	// Get authenticated user
+	user, exists := middleware.GetUserFromGinContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	// Get user connection IDs
+	connectionIDs, err := h.ConnectionUsecase.GetUserConnectionsIds(c.Request.Context(), user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "Failed to get connection IDs",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"connection_ids": connectionIDs,
+		"count":          len(connectionIDs),
 	})
 }
 

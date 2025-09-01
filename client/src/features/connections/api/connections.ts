@@ -52,7 +52,7 @@ api.interceptors.response.use(
 export const getConnections = async (): Promise<Connections | ConnectionError> => {
   try {
     const { data } = await api.get<Connections>(
-      `${CONNECTIONS_URL}/`
+      `${CONNECTIONS_URL}/details`
     );
     return data;
   } catch (error) {

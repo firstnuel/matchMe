@@ -1,8 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { createContext, useEffect, useState, type ReactNode, useCallback, useMemo } from 'react';
-import { WebSocketClient, EventType, type UserStatusEvent, type UserStatusInitialEvent } from '../services/websocket';
+import { WebSocketClient, EventType, type UserStatusEvent, type UserStatusInitialEvent, type MessageEvent } from '../services/websocket';
 import { useAuthStore } from '../../features/auth/hooks/authStore';
 import { useCurrentUser } from '../../features/userProfile/hooks/useCurrentUser';
+import { useQueryClient } from '@tanstack/react-query';
 
 export interface WebSocketContextType {
   statusClient: WebSocketClient | null;
@@ -24,6 +25,7 @@ interface WebSocketProviderProps {
 export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
   const { authToken } = useAuthStore();
   const { data: currentUserData } = useCurrentUser();
+  const queryClient = useQueryClient();
   const [statusClient, setStatusClient] = useState<WebSocketClient | null>(null);
   const [isStatusConnected, setIsStatusConnected] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
@@ -89,6 +91,23 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
     });
 
     client.addEventListener(EventType.CONNECTION_ACCEPTED, () => {
+    });
+
+    // Handle new message notifications from StatusHub for background chats
+    client.addEventListener(EventType.MESSAGE_NEW, (messageData: MessageEvent) => {
+      // Invalidate chat list to refresh unread counts and last messages
+      // This ensures the chat list updates even when the specific chat isn't open
+      queryClient.invalidateQueries({ queryKey: ['chatList'] });
+      queryClient.invalidateQueries({ queryKey: ['unreadCount'] });
+      
+      // Also invalidate the specific chat's messages if it exists in cache
+      // This helps keep currently open chats in sync even if they're receiving via StatusHub
+      if (messageData.connection_id) {
+        queryClient.invalidateQueries({ 
+          queryKey: ['connectionMessages', messageData.connection_id],
+          exact: false
+        });
+      }
     });
 
     client.connect()
