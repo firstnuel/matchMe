@@ -41,9 +41,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
   };
 
   const confirmDelete = () => {
-    if (otherUser?.id) {
-      deleteConnection.mutate(otherUser.id);
-    }
+      deleteConnection.mutate((selectedChat.connection_id));
     setShowDeleteModal(false);
   };
 
