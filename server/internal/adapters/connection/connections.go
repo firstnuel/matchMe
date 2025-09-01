@@ -10,6 +10,8 @@ import (
 )
 
 // GetUserConnections handles GET /connections
+// Default: returns only IDs
+// Use ?mode=full to return full connection objects
 func (h *ConnectionHandler) GetUserConnections(c *gin.Context) {
 	// Get authenticated user
 	user, exists := middleware.GetUserFromGinContext(c)
@@ -18,19 +20,39 @@ func (h *ConnectionHandler) GetUserConnections(c *gin.Context) {
 		return
 	}
 
-	// Get user connections
-	connections, err := h.ConnectionUsecase.GetUserConnections(c.Request.Context(), user.ID)
+	mode := c.DefaultQuery("mode", "ids") // default = "ids"
+
+	if mode == "full" {
+		// Heavy query: full objects
+		connections, err := h.ConnectionUsecase.GetUserConnections(c.Request.Context(), user.ID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   "Failed to get connections",
+				"details": err.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"connections": connections,
+			"count":       len(connections),
+		})
+		return
+	}
+
+	// Lightweight query: just IDs
+	connectionIDs, err := h.ConnectionUsecase.GetUserConnectionsIds(c.Request.Context(), user.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to get connections",
+			"error":   "Failed to get connection IDs",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"connections": connections,
-		"count":       len(connections),
+		"connection_ids": connectionIDs,
+		"count":          len(connectionIDs),
 	})
 }
 

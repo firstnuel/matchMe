@@ -22,7 +22,7 @@ install-client:
 # Development server for client
 dev-client:
 	@echo "Starting client development server..."
-	cd $(CLIENT_DIR) && npm run dev
+	cd $(CLIENT_DIR) && npm i && npm run dev
 
 # Build and run server
 build-server:

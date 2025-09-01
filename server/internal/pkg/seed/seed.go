@@ -28,17 +28,17 @@ func NewSeeder(client *ent.Client) *Seeder {
 // ResetDatabase drops all data from the database
 func (s *Seeder) ResetDatabase(ctx context.Context) error {
 	log.Println("Resetting database...")
-	
+
 	// Delete all user photos first (due to foreign key constraint)
 	if _, err := s.client.UserPhoto.Delete().Exec(ctx); err != nil {
 		return fmt.Errorf("failed to delete user photos: %w", err)
 	}
-	
+
 	// Delete all users
 	if _, err := s.client.User.Delete().Exec(ctx); err != nil {
 		return fmt.Errorf("failed to delete users: %w", err)
 	}
-	
+
 	log.Println("Database reset completed successfully")
 	return nil
 }
@@ -60,7 +60,7 @@ func (s *Seeder) PopulateUsers(ctx context.Context, n int) error {
 		"Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson", "Walker",
 	}
 
-	genders := []string{"male", "female", "non_binary", "prefer_not_to_say"}
+	genders := []string{"male", "female", "non_binary"}
 	preferredGenders := []string{"male", "female", "non_binary", "all"}
 
 	interests := []string{

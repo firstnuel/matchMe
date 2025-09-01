@@ -25,9 +25,9 @@ const (
 
 func main() {
 	// Parse command line flags
-	var populateFlag = flag.String("p", "", "Populate database with n users (e.g., -p 100)")
+	var populateFlag = flag.String("p", "", "Populate database with n users (e.g., -p 500")
 	var resetFlag = flag.Bool("r", false, "Reset database (delete all data)")
-	var resetPopulateFlag = flag.String("rp", "", "Reset database and populate with n users (e.g., -rp 100)")
+	var resetPopulateFlag = flag.String("rp", "", "Reset database and populate with n users (e.g., -rp 500")
 	var helpFlag = flag.Bool("h", false, "Show help and usage information")
 	flag.Parse()
 
@@ -62,8 +62,8 @@ func main() {
 	// Handle reset and populate flag
 	if *resetPopulateFlag != "" {
 		n, err := strconv.Atoi(*resetPopulateFlag)
-		if err != nil || n <= 0 || n > 100 {
-			log.Fatalf("Invalid number for reset-populate flag: %s. Please provide a positive integer between (0-100).", *resetPopulateFlag)
+		if err != nil || n <= 0 || n > 500 {
+			log.Fatalf("Invalid number for reset-populate flag: %s. Please provide a positive integer between (1-500.", *resetPopulateFlag)
 		}
 
 		if err := seeder.ResetDatabase(initCtx); err != nil {
@@ -80,8 +80,8 @@ func main() {
 	// Handle population flag
 	if *populateFlag != "" {
 		n, err := strconv.Atoi(*populateFlag)
-		if err != nil || n <= 0 || n > 100 {
-			log.Fatalf("Invalid number for population flag: %s. Please provide a positive integer between (0-100).", *populateFlag)
+		if err != nil || n <= 0 || n > 500 {
+			log.Fatalf("Invalid number for population flag: %s. Please provide a positive integer between (1-500.", *populateFlag)
 		}
 
 		if err := seeder.PopulateUsers(initCtx, n); err != nil {
@@ -142,8 +142,8 @@ func printUsage() {
 	fmt.Println("FLAGS:")
 	fmt.Println("  -h          Show help and usage information")
 	fmt.Println("  -r          Reset database (delete all data)")
-	fmt.Println("  -p n        Populate database with n users (1-100)")
-	fmt.Println("  -rp n       Reset database and populate with n users (1-100)")
+	fmt.Println("  -p n        Populate database with n users (1-500")
+	fmt.Println("  -rp n       Reset database and populate with n users (1-500")
 	fmt.Println()
 	fmt.Println("NOTE: Database operations (-r, -p, -rp) will exit after completion.")
 	fmt.Println("      Only use -p or -rp when you want to add test data.")

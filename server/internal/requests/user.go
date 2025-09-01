@@ -36,7 +36,7 @@ type UpdateUser struct {
 	PreferredAgeMin   *int      `json:"preferred_age_min" validate:"omitempty,min=18,max=100"`
 	PreferredAgeMax   *int      `json:"preferred_age_max" validate:"omitempty,min=18,max=100"`
 	PreferredGender   *string   `json:"preferred_gender" validate:"omitempty,oneof=male female non_binary all"`
-	PreferredDistance *int      `json:"preferred_distance" validate:"omitempty,min=0,max=100"`
+	PreferredDistance *int      `json:"preferred_distance" validate:"omitempty,min=0,max=1000"`
 }
 
 type UserPhoto struct {

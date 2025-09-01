@@ -1,6 +1,7 @@
 import { type MessageGroup } from "../types/user";
 
 export const firstToUpper = (s: string): string => {
+    s = s.replaceAll("_", " ")
     return s.length <= 1? s : s.charAt(0).toUpperCase() + s.substring(1, s.length)
 }
 

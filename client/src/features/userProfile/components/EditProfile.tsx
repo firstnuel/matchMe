@@ -32,7 +32,7 @@ const EditProfile = () => {
       : [user?.preferred_age_min ?? 22, user?.preferred_age_max ?? 35]
   );
   const [maxDistance, setMaxDistance] = useState<number>(
-    user?.preferred_distance === 0 ? 25 : user?.preferred_distance ?? 25
+    user?.preferred_distance === 0 ? 150 : user?.preferred_distance ?? 150
   );
  
   const firstName = useField("firstName", "text", user?.first_name)
@@ -250,7 +250,7 @@ const EditProfile = () => {
           type="slider"
           value={maxDistance}
           min={1}
-          max={100}
+          max={1000}
           unit="km(s)"
           onChange={(e) => setMaxDistance(Number((e.target as HTMLInputElement).value))}
         />
